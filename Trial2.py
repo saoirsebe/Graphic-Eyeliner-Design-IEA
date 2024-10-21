@@ -7,8 +7,8 @@ def create_arrow_tip():
     # Arrow tip coordinates (relative to the center)
     arrow_tip = np.array([
         [0, 1],  # Tip of the arrow (pointed upwards)
-        [-0.5, -0.5],  # Bottom-left of the arrow
-        [0.5, -0.5]  # Bottom-right of the arrow
+        [-0.5, 0],  # Bottom-left of the arrow
+        [0.5, 0]  # Bottom-right of the arrow
     ])
     return arrow_tip
 
