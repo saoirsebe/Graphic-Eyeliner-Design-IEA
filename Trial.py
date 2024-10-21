@@ -21,7 +21,7 @@ def bezier_curve(t, P0, P1, P2, P3):
 P0 = np.array([0, 0])      # Start point (inner corner of the eye)
 P1 = np.array([0.5, 0.1])  # First control point (along the eyelid curve)
 P2 = np.array([1, -0.1])  # Second control point (before the wing)
-P3 = np.array([2.0, 0.2])    # End point (sharp wing tip)
+P3 = np.array([2.0, 0.1])    # End point (sharp wing tip)
 
 # Generate t values (from 0 to 1)
 t_values = np.linspace(0, 1, 100)
@@ -51,3 +51,4 @@ plt.title('Cubic Bezier Curve for Eyeliner Shape')
 # Show the plot
 plt.grid(True)
 plt.show()
+
