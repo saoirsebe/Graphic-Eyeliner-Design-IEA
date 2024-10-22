@@ -49,22 +49,13 @@ def plot_curved_star(num_points, center, radius, curve_control, arm_length, num_
     # Generate and plot each arm of the star using bezier curves
     for i in range(num_points):
         angle = 2 * np.pi * i / num_points
-        arm_points = create_star_arm(center=center, radius=radius, curve_control=curve_control, arm_length=arm_length, num_points=num_curve_points)
-
-        # Define a rotation point (e.g., the center of the star)
-        rotation_point = center  # You can change this to any other point
+        arm_points = create_star_arm(center, radius, curve_control, arm_length, num_curve_points)
 
         # Translate the arm points to rotate around the rotation point
-        translated_arm = arm_points - rotation_point
-
-        # Rotation matrix for rotating around the origin
+        translated_arm = arm_points - center
         rotation_matrix = np.array([[np.cos(angle), -np.sin(angle)], [np.sin(angle), np.cos(angle)]])
-
-        # Rotate the translated arm points
         rotated_arm = np.dot(translated_arm, rotation_matrix.T)
-
-        # Translate back to the original position
-        rotated_arm += rotation_point
+        rotated_arm += center
 
         plt.plot(rotated_arm[:, 0], rotated_arm[:, 1], 'b', lw=2)
 
