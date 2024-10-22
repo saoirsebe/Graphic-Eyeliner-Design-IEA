@@ -1,29 +1,36 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.signal.windows import cosine
-
 
 # Function to create a quadratic bezier curve with three control points
 def bezier_curve(t, P0, P1, P2):
     return (1 - t) ** 2 * P0 + 2 * (1 - t) * t * P1 + t ** 2 * P2
 
 
-# Function to create one arm of the star using a quadratic Bézier curve
 def create_star_arm(center, radius, curve_control, arm_length, num_points):
-    centerx = center[0]
-    centery = center[1]
-    angle = 360/num_points
-    # Define the start point (P0) at the center of the star, moved inward by arm_length
-    P0 = np.array([centerx + radius*np.cos(0)  , centery + radius*np.sin(0) ])  # Inner tip of the arm
+    """
+    Create one arm of the star using a quadratic Bézier curve.
 
+    Parameters:
+    - center: The center of the star.
+    - radius: Length from the center to the outer tip of the star.
+    - curve_control: Controls how much the arm curves (0 is straight, 1 is highly curved).
+    - arm_length: Length of the inner part of the arm (towards the center).
+    - num_points: Number of points to use for the curve.
+
+    Returns:
+    - Array of points representing the star arm.
+    """
+    # Define the start point (P0) at the center of the star, moved inward by arm_length
+    P0 = np.array([center[0] + arm_length * np.cos(0), center[1] + arm_length * np.sin(0)])
     # Define the end point (P2) at the tip of the star arm
-    P2 = np.array([centerx + radius*np.cos(angle) ,centery + radius*np.sin(angle)  ])  # Outer tip of the arm (on the positive x-axis)
+    P2 = np.array([center[0] + radius * np.cos(0), center[1] + radius * np.sin(0)])
 
     # Control point (P1) to create the curve
-    control_point_distance = curve_control * radius  # Controls the curvature
+    control_distance = curve_control * np.linalg.norm(P2 - P0)  # Determines how far from P0 to place the control point
 
-    # First control point (P1) - positioned for curvature
-    P1 = np.array([(P0[0]+P2[0])/2 - control_point_distance, (P0[1]+P2[1])/2 - control_point_distance])
+    # Find the midpoint between P0 and P2 and move the control point upwards
+    midpoint = (P0 + P2) / 2
+    P1 = np.array([midpoint[0], midpoint[1] + control_distance])  # Adjust height based on control_distance
 
     # Generate the Bézier curve points for the arm
     t_values = np.linspace(0, 1, num_points)
@@ -32,21 +39,17 @@ def create_star_arm(center, radius, curve_control, arm_length, num_points):
     return arm_points
 
 
-# Function to plot the star with curved edges using quadratic Bézier curves
 def plot_curved_star(num_points, center, radius, curve_control, arm_length, num_curve_points):
-
-    # Set up the plot
     plt.figure(figsize=(6, 6))
     ax = plt.gca()
     ax.set_aspect('equal')
     ax.set_xlim(-2, 2)
     ax.set_ylim(-2, 2)
 
-    # Generate and plot each arm of the star using Bézier curves
+    # Generate and plot each arm of the star using bezier curves
     for i in range(num_points):
         angle = 2 * np.pi * i / num_points
-        arm_points = create_star_arm(center=center, radius=radius, curve_control=curve_control, arm_length=arm_length,
-                                     num_points=num_curve_points)
+        arm_points = create_star_arm(center=center, radius=radius, curve_control=curve_control, arm_length=arm_length, num_points=num_curve_points)
 
         # Define a rotation point (e.g., the center of the star)
         rotation_point = center  # You can change this to any other point
@@ -69,17 +72,5 @@ def plot_curved_star(num_points, center, radius, curve_control, arm_length, num_
     plt.grid(False)
     plt.show()
 
-"""
-# Plot a star with 5 arms, curved edges using quadratic Bézier curves
-#plot_curved_star(6, (0, 0), 1.0, 0.7, 0.5, 100)
-"""
-plt.figure(figsize=(6, 6))
-ax = plt.gca()
-ax.set_aspect('equal')
-ax.set_xlim(-2, 2)
-ax.set_ylim(-2, 2)
-arm_points =create_star_arm((0,0),1,0.5,0.5,5)
-# Plot the star arm
-plt.plot(arm_points[:, 0], arm_points[:, 1], '-o')
-
-plt.show()
+# Plot a star with 5 arms, curved edges using quadratic bezier curves
+plot_curved_star(5, (0, 0), 1.0, 0.5, 0.5, 100)
