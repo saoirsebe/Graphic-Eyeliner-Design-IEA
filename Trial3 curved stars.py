@@ -49,13 +49,7 @@ def plot_curved_star(num_points, center, radius, curve_control, num_curve_points
         angle = 2 * np.pi * i / num_points
         arm_points = create_star_arm(center, radius, curve_control,num_points,angle,num_curve_points)
 
-        # Translate the arm points to rotate around the rotation point
-        translated_arm = arm_points - center
-        rotation_matrix = np.array([[np.cos(angle), -np.sin(angle)], [np.sin(angle), np.cos(angle)]])
-        rotated_arm = np.dot(translated_arm, rotation_matrix.T)
-        rotated_arm += center
-
-        plt.plot(rotated_arm[:, 0], rotated_arm[:, 1], 'b', lw=2)
+        plt.plot(arm_points[:, 0], arm_points[:, 1], 'b', lw=2)
 
     plt.title(f"{num_points}-pointed Star with Curved Arms (Quadratic Bezier)")
     plt.grid(False)
@@ -63,14 +57,14 @@ def plot_curved_star(num_points, center, radius, curve_control, num_curve_points
 
 
 # Plot a star with 5 arms, curved edges using quadratic Bézier curves
-plot_curved_star(5, (0, 0), 1, 0.7, 100)
+plot_curved_star(6, (0, 0), 1, 0.4, 100)
 """
 plt.figure(figsize=(6, 6))
 ax = plt.gca()
 ax.set_aspect('equal')
 ax.set_xlim(-2, 2)
 ax.set_ylim(-2, 2)
-arm_points =create_star_arm((0,0),1,0.5,5,0)
+arm_points =create_star_arm((0,0),1,0.5,6,0,100)
 # Plot the star arm
 plt.plot(arm_points[:, 0], arm_points[:, 1], '-o')
 
