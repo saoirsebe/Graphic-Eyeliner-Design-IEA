@@ -39,9 +39,21 @@ def create_star_arm(center, radius, curve_control, num_points, startAngle,num_cu
     plt.scatter(center[0], center[1], color='red', label='Center')
     return arm_points
 
+def rotation_matrix(theta):
+    """ Return the 2D rotation matrix for an angle theta in degrees """
+    theta_rad = np.deg2rad(theta)
+    return np.array([
+        [np.cos(theta_rad), -np.sin(theta_rad)],
+        [np.sin(theta_rad), np.cos(theta_rad)]
+    ])
+
+def rotate_points(points, theta):
+    """ Rotate a set of 2D points by theta degrees """
+    rot_matrix = rotation_matrix(theta)
+    return np.dot(points, rot_matrix.T)
 
 # Function to plot the star with curved edges using quadratic Bézier curves
-def plot_curved_star(num_points, center, radius, curve_control, num_curve_points,isAsymetric):
+def create_curved_star(num_points, center, radius, curve_control, num_curve_points,isAsymetric):
     # Set up the plot
     plt.figure(figsize=(6, 6))
     ax = plt.gca()
@@ -49,21 +61,23 @@ def plot_curved_star(num_points, center, radius, curve_control, num_curve_points
     ax.set_xlim(-2, 2)
     ax.set_ylim(-2, 2)
 
+    star_points = []
     # Generate and plot each arm of the star using Bézier curves
     for i in range(num_points):
         isArmAsymetric=i
         angle = 2 * np.pi * i / num_points
         arm_points = create_star_arm(center, radius, curve_control,num_points,angle,num_curve_points,isAsymetric,isArmAsymetric)
+        star_points.extend(arm_points)
 
-        plt.plot(arm_points[:, 0], arm_points[:, 1], 'b', lw=2)
-
-    plt.title(f"{num_points}-pointed Star with Curved Arms (Quadratic Bezier)")
-    plt.grid(False)
-    plt.show()
+    star_points = np.array(star_points) # Convert star_points to a numpy array for plotting
+    return star_points
 
 
 # Plot a star with 5 arms, curved edges using quadratic Bézier curves
-plot_curved_star(6, (0, 0), 1, 0.4, 100,0.2)
+star_points = create_curved_star(7, (0, 0), 1, 0.7, 100,0.5)
+plt.plot(star_points[:, 0], star_points[:, 1], 'b', lw=2) # Plot all points as a single object
+plt.grid(False)
+plt.show()
 """
 plt.figure(figsize=(6, 6))
 ax = plt.gca()
