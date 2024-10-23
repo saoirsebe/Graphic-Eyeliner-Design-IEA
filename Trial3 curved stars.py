@@ -27,9 +27,11 @@ def create_star_arm(center, radius, curve_control, num_points, startAngle,num_cu
     P1 = M - direction * control_point_distance
 
     if (asymmetry!=0) and (np.mod(isArmAsymetric,2)==0) and (np.mod(num_points,2)==0):
-        P0 = P0 + (direction * asymmetry)
+        pDirection = P0-center
+        P0 = P0 + (pDirection * asymmetry)
     elif (asymmetry!=0) and (np.mod(isArmAsymetric,2)!=0) and (np.mod(num_points,2)==0):
-        P2 = P2 + (direction * asymmetry)
+        pDirection = P2 - center
+        P2 = P2 + (pDirection * asymmetry)
 
         # Generate the Bézier curve points for the arm
     t_values = np.linspace(0, 1, num_curve_points)
