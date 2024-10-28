@@ -36,10 +36,8 @@ plt.plot(curve_points[:, 0], curve_points[:, 1], color='black', linewidth=2)
 plt.scatter([P0[0], P1[0], P2[0], P3[0]], [P0[1], P1[1], P2[1], P3[1]], color='red')
 
 # Annotate the control points
-plt.text(P0[0], P0[1], 'P0 (Start)', fontsize=12, verticalalignment='bottom')
 plt.text(P1[0], P1[1], 'P1 (Control)', fontsize=12, verticalalignment='bottom')
 plt.text(P2[0], P2[1], 'P2 (Control)', fontsize=12, verticalalignment='bottom')
-plt.text(P3[0], P3[1], 'P3 (End)', fontsize=12, verticalalignment='bottom')
 
 # Set axis limits and labels
 plt.xlim(-0.1, 3.1)
