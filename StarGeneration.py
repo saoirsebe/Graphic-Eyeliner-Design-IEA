@@ -79,7 +79,7 @@ ax.set_xlim(-2, 2)
 ax.set_ylim(-2, 2)
 # Plot a star with 5 arms, curved edges using quadratic Bézier curves
 #star_points = create_curved_star(7, (0, 0), 1, 0.7, 100,0.5)
-star_points = create_star(5, (0, 0), 1,0.7, 0,True)
+star_points = create_star(5, (0, 0), 1,2, 0,True)
 plt.plot(star_points[:, 0], star_points[:, 1], 'b', lw=2) # Plot all points as a single object
 plt.grid(False)
 plt.show()
