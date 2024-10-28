@@ -43,10 +43,10 @@ def find_tangent_point(a, b, c, x1, y1,P):
     return tangent_x, tangent_y
 
 
-def create_eyeliner_wing(length, angle, eye_corner=None):
+def create_eyeliner_wing(length, angle, eye_corner):
     angle = np.deg2rad(angle)
-    e_x = 1 + length * np.cos(angle)
-    e_y = 0.5 + length * np.sin(angle)
+    e_x = eye_corner[0] + length * np.cos(angle)
+    e_y = eye_corner[1] + length * np.sin(angle)
     P1 = (e_x, e_y)
     """
     # Determine P2 based on angle
@@ -78,7 +78,7 @@ x_vals, y_vals = get_quadratic_points(-0.5, 0, 1, -1, 1)
 plt.plot(x_vals, y_vals, label=f"$y = -0.5x^2 + 1$", color="b")
 
 # Wing:
-wing_points = create_eyeliner_wing(1, 20, 10)
+wing_points = create_eyeliner_wing(2, 10, (1,0.5))
 plt.plot(wing_points[:, 0], wing_points[:, 1], 'b', lw=2)  # Plot all points as a single object
 plt.grid(False)
 plt.title("Eyeliner Wing")
