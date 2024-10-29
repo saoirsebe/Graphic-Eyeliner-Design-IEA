@@ -59,13 +59,13 @@ def rotate_points(points, theta):
     rot_matrix = rotation_matrix(theta)
     return np.dot(points, rot_matrix.T)
 
-def create_star(num_points, center, radius, curveCArmL ,isAsymetric,curved):
+def create_star(num_points, center, radius, curveCArmL ,asymmetry,curved):
     star_points = []
     # Generate and plot each arm of the star using Bézier curves
     for i in range(num_points):
         armN=i
         angle = 2 * np.pi * i / num_points
-        arm_points = create_star_arm(center, radius,curveCArmL, num_points, angle, isAsymetric, armN, curved)
+        arm_points = create_star_arm(center, radius,curveCArmL, num_points, angle, asymmetry, armN, curved)
         star_points.extend(arm_points)
 
     star_points = np.array(star_points) # Convert star_points to a numpy array for plotting
@@ -79,7 +79,7 @@ ax.set_xlim(-2, 2)
 ax.set_ylim(-2, 2)
 # Plot a star with 5 arms, curved edges using quadratic Bézier curves
 #star_points = create_curved_star(7, (0, 0), 1, 0.7, 100,0.5)
-star_points = create_star(3, (0, 0), 1,0.5, 0,True)
+star_points = create_star(4, (0, 0), 2,1, 0,True)
 plt.plot(star_points[:, 0], star_points[:, 1], 'b', lw=2) # Plot all points as a single object
 plt.grid(False)
 plt.show()

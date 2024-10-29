@@ -43,32 +43,39 @@ def find_tangent_point(a, b, c, x1, y1,P):
     return tangent_x
 
 
-def create_eyeliner_wing(length, angle, eye_corner,topStart,bottomStart):
+def create_eyeliner_wing(length, angle, liner_corner,topStart ,bottomStart ,thickness):
     a=0.5
     b=0
     c=0
-
+    eye_corner = np.array([1,0.5])
+    liner_corner=np.array(liner_corner)
     angle = np.deg2rad(angle)
-    e_x = eye_corner[0] + length * np.cos(angle)
-    e_y = eye_corner[1] + length * np.sin(angle)
-    P1 = (e_x, e_y)
-    """
-    # Determine P2 based on angle
-    if angle > 0:
-        P2 = (1, 0.5)  # Eye corner as a tuple
+    e_x = liner_corner[0] + length * np.cos(angle)
+    e_y = liner_corner[1] + length * np.sin(angle)
+    P1 = np.array([e_x, e_y])
+
+    if np.array_equal(eye_corner, liner_corner):
+        x_lim = find_tangent_point(-a, b, c + 1, e_x, e_y, 0)
+        p0x = liner_corner[0] - topStart * (liner_corner[0] - x_lim)
+        p0y = (-a) * p0x ** 2 + b * p0x + (c + 1)
+        P0=np.array([p0x, p0y])
+
+        x_lim = find_tangent_point(a, b, c, e_x, e_y,2)
+        p2x = liner_corner[0] - bottomStart * (liner_corner[0] - x_lim)
+        p2y= a * p2x**2 + b * p2x + c
+        P2 = np.array([p2x, p2y])
     else:
-   """
+        direction = P1 - liner_corner
+        norm = np.linalg.norm(direction)  # length of direction vector
+        if norm != 0:
+            direction /= norm  # Normalize the direction vector
+        perpendicular_vector = np.array([-direction[1], direction[0]])
+        distance = perpendicular_vector * thickness
 
-    x_lim = find_tangent_point(-a, b, c + 1, e_x, e_y, 0)
-    p0x = eye_corner[0] - topStart * (eye_corner[0] - x_lim)
-    p0y = (-a) * p0x ** 2 + b * p0x + (c + 1)
-    P0=(p0x, p0y)
-
-    x_lim = find_tangent_point(a, b, c, e_x, e_y,2)
-    p2x = eye_corner[0] - bottomStart * (eye_corner[0] - x_lim)
-    p2y= a * p2x**2 + b * p2x + c
-    P2 = (p2x, p2y)
-
+        P0= liner_corner + distance
+        P0 = P0 + (P0-P1)*topStart
+        P2= liner_corner - distance
+        P2 = P2 + (P2-P1)*bottomStart
 
     # Ensure P0, P1, and P2 are tuples and have consistent shape
     arm_points = np.array([P0, P1, P2])
@@ -90,7 +97,7 @@ x_vals, y_vals = get_quadratic_points(-0.5, 0, 1, -1, 1)
 plt.plot(x_vals, y_vals, label=f"$y = -0.5x^2 + 1$", color="b")
 
 # Wing:
-wing_points = create_eyeliner_wing(2, 10, (1,0.5),0.7,0.5)
+wing_points = create_eyeliner_wing(0.5, 10, (1,1),0.7,0.5,0.2)
 plt.plot(wing_points[:, 0], wing_points[:, 1], 'b', lw=2)  # Plot all points as a single object
 plt.grid(False)
 plt.title("Eyeliner Wing")
