@@ -57,6 +57,17 @@ def find_tangent_point(a, b, c, x1, y1,P):
 
     return tangent_x
 
+def line_curve(start, end, curviness,curveStart,isTop):
+    if isTop:
+        B1 = start + vector_direction(start, end) * ((end - start) * curveStart)
+        B1 = B1 - (perpendicular_direction(start, end)) * curviness
+    else:
+        B1 = start - vector_direction(start, end) * ((end - start) * curveStart)
+        B1 = B1 + (perpendicular_direction(start, end)) * curviness
+
+    b_values = np.linspace(0, 1, 100)
+    return np.array([bezier_curve(b, start, B1, end) for b in b_values])
+
 
 def create_eyeliner_wing(length, angle, liner_corner,topStart ,bottomStart ,thickness, topCurviness, topCurveStart, bottomCurviness, bottomCurveStart):
     a=0.5
@@ -89,24 +100,15 @@ def create_eyeliner_wing(length, angle, liner_corner,topStart ,bottomStart ,thic
         P2 = P2 + (P2-P1)*bottomStart
 
     if topCurviness!=0:
-        T0=P0
-        T2=P1
-        T1=T0 + vector_direction(T0,T2)*((T2-T0)*topCurveStart) #T1 is topCurve start x length between P0 and P1 away from P0
-        T1=T1-(perpendicular_direction(T0,T2))*topCurviness #T1 is topCurviness down perpendicular to direction from P0 to P1
-        t_values = np.linspace(0, 1, 100)
-        topLine = np.array([bezier_curve(t, T0, T1, T2) for t in t_values])
+        topLine = line_curve(P0, P1, topCurviness, topCurveStart,True)
     else:
         topLine = np.array([P0,P1])
 
     if bottomCurviness!=0:
-        B0 = P2
-        B2 = P1
-        B1 = B0 + vector_direction(B0,B2)*((B2-B0) * bottomCurveStart)
-        B1 = B1 - (perpendicular_direction(B0, B2))*bottomCurviness
-        t_values = np.linspace(0, 1, 100)
-        bottomLine = np.array([bezier_curve(t,B0,B1,B2) for t in t_values])
+        bottomLine = line_curve(P1,P2,bottomCurviness,bottomCurveStart,False)
+
     else:
-        bottomLine = np.array([P1,P2])
+        bottomLine = np.array([P2,P1])
 
     return np.concatenate((topLine,bottomLine))
 
@@ -125,7 +127,7 @@ x_vals, y_vals = get_quadratic_points(-0.5, 0, 1, -1, 1)
 plt.plot(x_vals, y_vals, label=f"$y = -0.5x^2 + 1$", color="b")
 
 # Wing:
-wing_points = create_eyeliner_wing(0.5, 10, (1,1),0.7,0.5,0.2, 0.2,0.5,0.2,0.3)
+wing_points = create_eyeliner_wing(0.5, 10, (1,1),0.7,0.5,0.2, 0.5,0.5,0.5,0.7)
 plt.plot(wing_points[:, 0], wing_points[:, 1], 'b', lw=2)  # Plot all points as a single object
 plt.grid(False)
 plt.title("Eyeliner Wing")
