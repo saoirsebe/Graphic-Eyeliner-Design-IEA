@@ -26,7 +26,7 @@ def create_star_arm(center, radius, curveCArmL, num_points, start_angle,asymmetr
     else:
         #P0 = P0 + (P0 - center) * curveCArmL
         #P2 = P2 + (P2 - center) * curveCArmL
-        P1= M - direction *curveCArmL
+        P1= M - direction * (curveCArmL*radius)
 
     if (asymmetry!=0) and (np.mod(arm_n,2)==0) and (np.mod(num_points,2)==0) and (curved==False):
         P1 = P1 + (direction * asymmetry)
@@ -79,7 +79,7 @@ ax.set_xlim(-2, 2)
 ax.set_ylim(-2, 2)
 # Plot a star with 5 arms, curved edges using quadratic Bézier curves
 #star_points = create_curved_star(7, (0, 0), 1, 0.7, 100,0.5)
-star_points = create_star(5, (0, 0), 1,2, 0,True)
+star_points = create_star(3, (0, 0), 1,0.5, 0,True)
 plt.plot(star_points[:, 0], star_points[:, 1], 'b', lw=2) # Plot all points as a single object
 plt.grid(False)
 plt.show()
