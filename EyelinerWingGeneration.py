@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import sympy as sp
-
+import random
 
 def get_quadratic_points(a, b, c, x_start, x_end, num_points=100):
     x = np.linspace(x_start, x_end, num_points)  # Generate x values from x_start to x_end
@@ -38,12 +38,16 @@ def find_tangent_point(a, b, c, x1, y1,P):
     # Since the line is tangent, it should intersect the quadratic at exactly one point
     #tangent_x = float(intersection_points[0])  # Extract the x-coordinate of the tangent point
     tangent_x = intersection_points[0].as_real_imag()[0]  # Gets the real part
-    tangent_y = float(line_eq.subs(x, tangent_x))  # Calculate the y-coordinate
+    #tangent_y = float(line_eq.subs(x, tangent_x))  # Calculate the y-coordinate
 
-    return tangent_x, tangent_y
+    return tangent_x
 
 
 def create_eyeliner_wing(length, angle, eye_corner):
+    a=0.5
+    b=0
+    c=0
+
     angle = np.deg2rad(angle)
     e_x = eye_corner[0] + length * np.cos(angle)
     e_y = eye_corner[1] + length * np.sin(angle)
@@ -54,9 +58,17 @@ def create_eyeliner_wing(length, angle, eye_corner):
         P2 = (1, 0.5)  # Eye corner as a tuple
     else:
    """
-    P2 = find_tangent_point(0.5, 0, 0, e_x, e_y,2)
 
-    P0 = find_tangent_point(-0.5, 0, 1, e_x, e_y,0)
+    x_lim = find_tangent_point(-a, b, c + 1, e_x, e_y, 0)
+    p0x = random.uniform(x_lim, eye_corner[0])
+    p0y = (-a) * p0x ** 2 + b * p0x + (c + 1)
+    P0=(p0x, p0y)
+
+    x_lim = find_tangent_point(a, b, c, e_x, e_y,2)
+    p2x = random.uniform( x_lim,eye_corner[0])
+    p2y= a * p2x**2 + b * p2x + c
+    P2 = (p2x, p2y)
+
 
     # Ensure P0, P1, and P2 are tuples and have consistent shape
     arm_points = np.array([P0, P1, P2])
