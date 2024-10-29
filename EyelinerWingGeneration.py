@@ -3,11 +3,26 @@ import matplotlib.pyplot as plt
 import sympy as sp
 import random
 
+from Trial import bezier_curve
+
+def bezier_curve(t, P0, P1, P2):
+    return (1 - t) ** 2 * P0 + 2 * (1 - t) * t * P1 + t ** 2 * P2
+
 def get_quadratic_points(a, b, c, x_start, x_end, num_points=100):
     x = np.linspace(x_start, x_end, num_points)  # Generate x values from x_start to x_end
     y = a * x ** 2 + b * x + c  # Calculate corresponding y values
     return x, y
 
+def vector_direction(start,end):
+    direction = end - start
+    norm = np.linalg.norm(direction)  # length of direction vector
+    if norm != 0:
+        direction /= norm  # Normalize the direction vector
+    return direction
+
+def perpendicular_direction(start,end):
+    direction = vector_direction(start,end)
+    return np.array([-direction[1], direction[0]])
 
 def find_tangent_point(a, b, c, x1, y1,P):
     x = sp.symbols('x')  # Define the variable x
@@ -43,7 +58,7 @@ def find_tangent_point(a, b, c, x1, y1,P):
     return tangent_x
 
 
-def create_eyeliner_wing(length, angle, liner_corner,topStart ,bottomStart ,thickness):
+def create_eyeliner_wing(length, angle, liner_corner,topStart ,bottomStart ,thickness, topCurviness, topCurveStart, bottomCurviness, bottomCurveStart):
     a=0.5
     b=0
     c=0
@@ -65,11 +80,7 @@ def create_eyeliner_wing(length, angle, liner_corner,topStart ,bottomStart ,thic
         p2y= a * p2x**2 + b * p2x + c
         P2 = np.array([p2x, p2y])
     else:
-        direction = P1 - liner_corner
-        norm = np.linalg.norm(direction)  # length of direction vector
-        if norm != 0:
-            direction /= norm  # Normalize the direction vector
-        perpendicular_vector = np.array([-direction[1], direction[0]])
+        perpendicular_vector = perpendicular_direction(liner_corner,P1)
         distance = perpendicular_vector * thickness
 
         P0= liner_corner + distance
@@ -77,10 +88,29 @@ def create_eyeliner_wing(length, angle, liner_corner,topStart ,bottomStart ,thic
         P2= liner_corner - distance
         P2 = P2 + (P2-P1)*bottomStart
 
-    # Ensure P0, P1, and P2 are tuples and have consistent shape
-    arm_points = np.array([P0, P1, P2])
+    if topCurviness>0:
+        T0=P0
+        T2=P1
+        T1=T0 + vector_direction(T0,T2)*((T0-T2)*topCurveStart)
+        T1=T1-(perpendicular_direction(T0,T2))*topCurviness
+        t_values = np.linspace(0, 1, 100)
+        topLine = np.array([bezier_curve(t, T0, T1, T2) for t in t_values])
+    else:
+        topLine = np.array([P0,P1])
 
-    return arm_points
+    if bottomCurviness>0:
+        B0 = P2
+        B2 = P1
+        B1 = P0 + vector_direction(B0,B2)*((B0 - B2) * bottomCurveStart)
+        B1 = B1 - (perpendicular_direction(B0, B2)) * topCurviness
+        t_values = np.linspace(0, 1, 100)
+        bottomLine = np.array([bezier_curve(t,B0,B1,B2) for t in t_values])
+    else:
+        bottomLine = np.array([P1,P2])
+
+
+
+    return np.concatenate((topLine,bottomLine))
 
 
 # Plotting
@@ -97,7 +127,7 @@ x_vals, y_vals = get_quadratic_points(-0.5, 0, 1, -1, 1)
 plt.plot(x_vals, y_vals, label=f"$y = -0.5x^2 + 1$", color="b")
 
 # Wing:
-wing_points = create_eyeliner_wing(0.5, 10, (1,1),0.7,0.5,0.2)
+wing_points = create_eyeliner_wing(0.5, 10, (1,1),0.7,0.5,0.2, 0.2,0.5,0,0.3)
 plt.plot(wing_points[:, 0], wing_points[:, 1], 'b', lw=2)  # Plot all points as a single object
 plt.grid(False)
 plt.title("Eyeliner Wing")
