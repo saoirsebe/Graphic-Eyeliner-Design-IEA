@@ -57,7 +57,8 @@ def find_tangent_point(a, b, c, x1, y1,P):
 
     return tangent_x
 
-def line_curve(start, end, curviness,curveStart,isTop):
+def line_curve(start, end, curviness,curveStart,isTop, thickness):
+    curviness=thickness*curviness
     if isTop:
         B1 = start + vector_direction(start, end) * ((end - start) * curveStart)
         B1 = B1 - (perpendicular_direction(start, end)) * curviness
@@ -94,18 +95,18 @@ def create_eyeliner_wing(length, angle, liner_corner,topStart ,bottomStart ,thic
         perpendicular_vector = perpendicular_direction(liner_corner,P1)
         distance = perpendicular_vector * thickness
 
-        P0= liner_corner + distance
-        P0 = P0 + (P0-P1)*topStart
-        P2= liner_corner - distance
-        P2 = P2 + (P2-P1)*bottomStart
+        P0= liner_corner + distance #thickness amount up from the liner_corner
+        P0 = P0 + vector_direction(P1,P0)*(topStart*length) #moves in direction away from linerCorner according to topStart proportional to liner length
+        P2= liner_corner - distance #thickness amount down from the liner_corner
+        P2 = P2 + vector_direction(P1,P2)*(bottomStart*length)
 
     if topCurviness!=0:
-        topLine = line_curve(P0, P1, topCurviness, topCurveStart,True)
+        topLine = line_curve(P0, P1, topCurviness, topCurveStart,True, thickness)
     else:
         topLine = np.array([P0,P1])
 
     if bottomCurviness!=0:
-        bottomLine = line_curve(P1,P2,bottomCurviness,bottomCurveStart,False)
+        bottomLine = line_curve(P1,P2,bottomCurviness,bottomCurveStart,False, thickness)
 
     else:
         bottomLine = np.array([P2,P1])
@@ -127,7 +128,7 @@ x_vals, y_vals = get_quadratic_points(-0.5, 0, 1, -1, 1)
 plt.plot(x_vals, y_vals, label=f"$y = -0.5x^2 + 1$", color="b")
 
 # Wing:
-wing_points = create_eyeliner_wing(0.5, 10, (1,1),0.7,0.5,0.2, 0.5,0.5,0.5,0.7)
+wing_points = create_eyeliner_wing(0.7, 30, (1,1),0.7,0,0.5, 1,1,0,0.7)
 plt.plot(wing_points[:, 0], wing_points[:, 1], 'b', lw=2)  # Plot all points as a single object
 plt.grid(False)
 plt.title("Eyeliner Wing")
