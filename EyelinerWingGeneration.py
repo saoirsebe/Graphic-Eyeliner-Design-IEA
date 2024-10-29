@@ -43,7 +43,7 @@ def find_tangent_point(a, b, c, x1, y1,P):
     return tangent_x
 
 
-def create_eyeliner_wing(length, angle, eye_corner):
+def create_eyeliner_wing(length, angle, eye_corner,topStart,bottomStart):
     a=0.5
     b=0
     c=0
@@ -60,12 +60,12 @@ def create_eyeliner_wing(length, angle, eye_corner):
    """
 
     x_lim = find_tangent_point(-a, b, c + 1, e_x, e_y, 0)
-    p0x = random.uniform(x_lim, eye_corner[0])
+    p0x = eye_corner[0] - topStart * (eye_corner[0] - x_lim)
     p0y = (-a) * p0x ** 2 + b * p0x + (c + 1)
     P0=(p0x, p0y)
 
     x_lim = find_tangent_point(a, b, c, e_x, e_y,2)
-    p2x = random.uniform( x_lim,eye_corner[0])
+    p2x = eye_corner[0] - bottomStart * (eye_corner[0] - x_lim)
     p2y= a * p2x**2 + b * p2x + c
     P2 = (p2x, p2y)
 
@@ -90,7 +90,7 @@ x_vals, y_vals = get_quadratic_points(-0.5, 0, 1, -1, 1)
 plt.plot(x_vals, y_vals, label=f"$y = -0.5x^2 + 1$", color="b")
 
 # Wing:
-wing_points = create_eyeliner_wing(2, 10, (1,0.5))
+wing_points = create_eyeliner_wing(2, 10, (1,0.5),0.7,0.5)
 plt.plot(wing_points[:, 0], wing_points[:, 1], 'b', lw=2)  # Plot all points as a single object
 plt.grid(False)
 plt.title("Eyeliner Wing")
