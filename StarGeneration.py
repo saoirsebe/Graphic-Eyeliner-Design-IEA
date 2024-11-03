@@ -1,9 +1,9 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.signal.windows import cosine
+from EAOverallGenome import Segment
 
-
-# Function to create a quadratic Bézier curve with three control points
+    # Function to create a quadratic Bézier curve with three control points
 def bezier_curve(t, P0, P1, P2):
     return (1 - t) ** 2 * P0 + 2 * (1 - t) * t * P1 + t ** 2 * P2
 
@@ -77,6 +77,28 @@ def create_star(num_points, center, radius, arm_length ,asymmetry,curved):
     star_points = np.array(star_points) # Convert star_points to a numpy array for plotting
     return star_points
 
+
+class StarSegment(Segment):
+    """Line segment with additional properties specific to a line."""
+    def __init__(self, start, center, radius, arm_length, num_points, start_angle,asymmetry,arm_n,curved, start_mode):
+        super().__init__(start, start_mode)
+        self.center = center
+        self.radius = radius
+        self.arm_length = arm_length
+        self.num_points = num_points
+        self.start_angle = start_angle
+        self.asymmetry = asymmetry
+        self.arm_n = arm_n
+        self.curved = curved
+
+    def render(self, ax):
+        """Render a line segment with the specified properties."""
+
+    def calculate_end(self):
+        #end
+        self.end =(0,0)
+
+
 # Set up the plot
 plt.figure(figsize=(6, 6))
 ax = plt.gca()
@@ -89,4 +111,6 @@ star_points = create_star(4, (0, 0), 0,2, 0,True)
 plt.plot(star_points[:, 0], star_points[:, 1], 'b', lw=2) # Plot all points as a single object
 plt.grid(False)
 plt.show()
+
+
 

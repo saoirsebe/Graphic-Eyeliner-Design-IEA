@@ -1,5 +1,5 @@
 from enum import Enum
-import random
+import math
 import matplotlib.pyplot as plt
 
 class SegmentType(Enum):
@@ -19,9 +19,9 @@ class StartMode(Enum):
 
 class Segment:
     """Base class for all segments."""
-    def __init__(self, start, end, start_mode):
+    def __init__(self, start, start_mode):
         self.start = start  # Tuple (x, y)
-        self.end = end      # Tuple (x, y)
+        self.end = None      # Calculated by subclass
         self.start_mode = start_mode
 
     def render(self, ax):
@@ -36,30 +36,51 @@ class Segment:
 
 class LineSegment(Segment):
     """Line segment with additional properties specific to a line."""
-    def __init__(self, start, end, direction, start_thickness, end_thickness, color, texture, start_mode):
-        super().__init__(start, end, start_mode)
-        self.direction = direction
+    def __init__(self, start, start_mode, length, direction, start_thickness, end_thickness, color, texture):
+        super().__init__(start, start_mode)
+        self.length = length
+        self.direction = direction  # Angle in degrees
         self.start_thickness = start_thickness
         self.end_thickness = end_thickness
         self.color = color
         self.texture = texture
+        self.calculate_end()  # Calculate the endpoint
+
+    def calculate_end(self):
+        """Calculate the end point based on start, length, and direction."""
+        radians = math.radians(self.direction)
+        end_x = self.start[0] + self.length * math.cos(radians)
+        end_y = self.start[1] + self.length * math.sin(radians)
+        self.end = (end_x, end_y)
 
     def render(self, ax):
-        """Render a line segment with the specified properties."""
+        """Render a line segment."""
         x_values, y_values = zip(self.start, self.end)
         thickness = (self.start_thickness + self.end_thickness) / 2
         ax.plot(x_values, y_values, color=self.color, linewidth=thickness, linestyle='-')
 
 class CurveSegment(Segment):
     """Curve segment with additional properties specific to a curve."""
-    def __init__(self, start, end, curvature, start_thickness, end_thickness, color, texture, start_mode, direction):
-        super().__init__(start, end, start_mode)
+    def __init__(self, start, start_mode, length, curvature, start_thickness, end_thickness, color, texture, direction):
+        super().__init__(start, start_mode)
+        self.length = length
         self.curvature = curvature
         self.start_thickness = start_thickness
         self.end_thickness = end_thickness
         self.color = color
         self.texture = texture
-        self.direction = direction
+        self.direction = direction  # Angle in degrees
+        self.calculate_end()  # Calculate the endpoint
+
+    def calculate_end(self):
+        """Calculate a simple curved endpoint based on start and length."""
+        # This is a basic example; curvature could define a variety of complex paths
+        # Assuming curvature modifies direction within a small range, for simplicity
+        direction_angle = 45  # Fixed angle for simplicity in this example
+        radians = math.radians(direction_angle)
+        end_x = self.start[0] + self.length * math.cos(radians)
+        end_y = self.start[1] + self.length * math.sin(radians)
+        self.end = (end_x, end_y)
 
     def render(self, ax):
         """Render a curved segment with a simple curve approximation."""
@@ -69,29 +90,29 @@ class CurveSegment(Segment):
         ax.plot(x_values, y_values, color=self.color, linewidth=thickness, linestyle='--')
 
 # Factory function to create a specific segment instance and wrap it in Segment
-def create_segment(start, end, start_mode, segment_type, **kwargs):
+def create_segment(start, start_mode, segment_type, **kwargs):
     if segment_type == SegmentType.LINE:
         return LineSegment(
             start=start,
-            end=end,
             start_mode=start_mode,
             direction=kwargs.get('direction', 0),
             start_thickness=kwargs.get('start_thickness', 1),
             end_thickness=kwargs.get('end_thickness', 1),
             color=kwargs.get('color', 'black'),
-            texture=kwargs.get('texture', 'matte')
+            texture=kwargs.get('texture', 'matte'),
+            length = kwargs.get('length', 1)
         )
     elif segment_type == SegmentType.CURVE:
         return CurveSegment(
             start=start,
-            end=end,
             start_mode=start_mode,
             curvature=kwargs.get('curvature', 0),
             start_thickness=kwargs.get('start_thickness', 1),
             end_thickness=kwargs.get('end_thickness', 1),
             color=kwargs.get('color', 'blue'),
             direction=kwargs.get('direction', 0),
-            texture=kwargs.get('texture', 'glitter')
+            texture=kwargs.get('texture', 'glitter'),
+            length=kwargs.get('length', 1),
         )
     else:
         raise ValueError(f"Unsupported segment type: {segment_type}")
@@ -123,30 +144,30 @@ class EyelinerDesign:
 # Example usage
 design = EyelinerDesign()
 
-# Creating a line segment with specific properties and adding it to the design
+# Adding a line segment to the design
 line_segment = create_segment(
     segment_id=1,
     start=(0, 0),
-    end=(1, 2),
     start_mode=StartMode.CONNECT,
     segment_type=SegmentType.LINE,
+    length=2,
     direction=45,
     start_thickness=3,
     end_thickness=1,
     color='black',
-    texture='matte',
-    fork_points=[(0.5, 1), (1, 1.5)]
+    texture='matte'
 )
 design.add_segment(line_segment)
 
-# Creating a curve segment that connects to the previous segment
+# Adding a curve segment that connects to the previous segment
 next_start = design.get_next_start_point()
 curve_segment = create_segment(
     segment_id=2,
     start=next_start,
-    end=(2, 3),
     start_mode=StartMode.FORK,
     segment_type=SegmentType.CURVE,
+    length=1.5,
+    direction=20,
     curvature=0.5,
     start_thickness=2,
     end_thickness=1,
