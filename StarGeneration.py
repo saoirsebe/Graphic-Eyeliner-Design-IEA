@@ -90,16 +90,3 @@ plt.plot(star_points[:, 0], star_points[:, 1], 'b', lw=2) # Plot all points as a
 plt.grid(False)
 plt.show()
 
-
-"""
-plt.figure(figsize=(6, 6))
-ax = plt.gca()
-ax.set_aspect('equal')
-ax.set_xlim(-2, 2)
-ax.set_ylim(-2, 2)
-arm_points =create_star_arm((0,0),1,0.5,6,0,100)
-# Plot the star arm
-plt.plot(arm_points[:, 0], arm_points[:, 1], '-o')
-
-plt.show()
-"""
