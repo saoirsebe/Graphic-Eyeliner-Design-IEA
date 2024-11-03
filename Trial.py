@@ -1,52 +1,65 @@
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
+from math import comb
 
-# Load the image using OpenCV
-#image_path = "ee77d893c56513c4422d87235e6eeeee.jpg"  # Path to your image file
-#img = cv2.imread(image_path)
+def bezier_curve(t, *P):
+    """
+    Calculate a point on a Bézier curve using a set of control points.
 
-# Convert the image from BGR (OpenCV format) to RGB (Matplotlib format)
-#img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    Parameters:
+    t (float): Parameter ranging from 0 to 1.
+    P (tuple): Control points (2D points as tuples or arrays).
 
-# Display the image and manually select points
-#plt.imshow(img_rgb)
+    Returns:
+    np.array: A point on the Bézier curve at parameter t.
+    """
+    n = len(P) - 1
+    curve_point = sum(comb(n, i) * (1 - t) ** (n - i) * t ** i * np.array(P[i]) for i in range(n + 1))
+    return curve_point
 
-# Function to calculate a point on a cubic Bezier curve
-def bezier_curve(t, P0, P1, P2, P3):
-    return (1 - t)**3 * P0 + 3 * (1 - t)**2 * t * P1 + 3 * (1 - t) * t**2 * P2 + t**3 * P3
+def create_bezier_curve(length, number_of_control_points):
+    """
+    Create a Bézier curve using a specified length and number of control points.
 
-# Control points for the eyeliner curve
-# Adjust these points to match the eyeliner curve and wing
-P0 = np.array([0, 0])      # Start point (inner corner of the eye)
-P1 = np.array([0.5, 0.1])  # First control point (along the eyelid curve)
-P2 = np.array([1, -0.1])  # Second control point (before the wing)
-P3 = np.array([2.0, 0.1])    # End point (sharp wing tip)
+    Parameters:
+    length (float): Total length of the curve along the x-axis.
+    number_of_control_points (int): Number of control points to generate.
 
-# Generate t values (from 0 to 1)
-t_values = np.linspace(0, 1, 100)
+    Returns:
+    np.array: Points along the Bézier curve.
+    """
+    # Generate control points along the x-axis with small random variations in y for wiggliness
+    control_points = []
+    for i in range(number_of_control_points):
+        x_pos = i * (length / (number_of_control_points - 1))  # Evenly spaced x-coordinates
+        y_pos = np.random.uniform(-0.5, 0.5)  # Random y variations for wiggles
+        control_points.append((x_pos, y_pos))
 
-# Calculate the Bezier curve points
-curve_points = np.array([bezier_curve(t, P0, P1, P2, P3) for t in t_values])
+    # Generate Bézier curve points using the control points
+    t_values = np.linspace(0, 1, 100)
+    curve_points = np.array([bezier_curve(t, *control_points) for t in t_values])
 
-# Plot the Bezier curve
-plt.plot(curve_points[:, 0], curve_points[:, 1], color='black', linewidth=2)
+    return curve_points, control_points
 
-# Plot control points
-plt.scatter([P0[0], P1[0], P2[0], P3[0]], [P0[1], P1[1], P2[1], P3[1]], color='red')
+def create_line(length, is_straight, nOfWiggles):
+    t_values = np.linspace(0, 1, 100)
+    curve_points = np.array([bezier_curve(t, nOfWiggles) for t in t_values])
+    return curve_points
 
-# Annotate the control points
-plt.text(P1[0], P1[1], 'P1 (Control)', fontsize=12, verticalalignment='bottom')
-plt.text(P2[0], P2[1], 'P2 (Control)', fontsize=12, verticalalignment='bottom')
 
 # Set axis limits and labels
-plt.xlim(-0.1, 3.1)
-plt.ylim(-0.1, 0.6)
-plt.xlabel('x')
-plt.ylabel('y')
-plt.title('Cubic Bezier Curve for Eyeliner Shape')
-
-# Show the plot
-plt.grid(True)
+plt.figure(figsize=(6, 6))
+ax = plt.gca()
+ax.set_aspect('equal')
+ax.set_xlim(-2, 2)
+ax.set_ylim(-2, 2)
+line_points = create_line(10, True, 5)
+plt.plot(line_points[:, 0], line_points[:, 1], 'b', lw=2)
+plt.grid(False)
+plt.title("Eyeliner Wing")
+plt.xlabel("X-axis")
+plt.ylabel("Y-axis")
+plt.legend()
 plt.show()
 
