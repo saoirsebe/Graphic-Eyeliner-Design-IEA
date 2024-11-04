@@ -2,6 +2,8 @@ from enum import Enum
 import math
 import matplotlib.pyplot as plt
 import numpy as np
+
+import StarGeneration
 from StarGeneration import *
 
 class SegmentType(Enum):
@@ -101,6 +103,25 @@ class CurveSegment(Segment):
         thickness = (self.start_thickness + self.end_thickness) / 2
         ax.plot(x_values, y_values, color=self.color, linewidth=thickness, linestyle='--')
 
+class StarSegment(Segment):
+    """Line segment with additional properties specific to a line."""
+    def __init__(self, start, center, radius, arm_length, num_points,asymmetry,curved, start_mode):
+        super().__init__(start, start_mode)
+        self.center = center
+        self.radius = radius
+        self.arm_length = arm_length
+        self.num_points = num_points
+        self.asymmetry = asymmetry
+        self.curved = curved
+        start_angle = 2 * np.pi * num_points / num_points #angle for last arm
+        bin, end_p = StarGeneration.create_star_arm(center, radius, num_points,arm_length,start_angle,asymmetry,num_points,curved) #armN = last arm so num_points
+        self.end = end_p
+
+    def render(self, ax):
+        star_points,end_coord = StarGeneration.create_star(self.num_points, self.center, self.radius, self.arm_length, self.asymmetry, self.curved)
+        plt.plot(star_points[:, 0], star_points[:, 1], 'b', lw=2)  # Plot all points as a single object
+        #self.end = end_coord
+
 # Factory function to create a specific segment instance and wrap it in Segment
 def create_segment(start, start_mode, segment_type, **kwargs):
     if segment_type == SegmentType.LINE:
@@ -130,7 +151,7 @@ def create_segment(start, start_mode, segment_type, **kwargs):
         return StarSegment(
             start=start,
             start_mode=start_mode,
-            center=kwargs.get('center', (0,0)),
+            center=start, #center is the end of previous object
             radius=kwargs.get('radius', 0.5),
             arm_length=kwargs.get('arm_length', 1),
             num_points=kwargs.get('num_points', 5),
@@ -183,6 +204,19 @@ design.add_segment(line_segment)
 
 # Adding a curve segment that connects to the previous segment
 next_start = design.get_next_start_point()
+star_segment = create_segment(
+    start=next_start,
+    start_mode=StartMode.CONNECT,
+    segment_type=SegmentType.STAR,
+    radius=0.5,
+    arm_length=1,
+    num_points=4,
+    asymmetry=0.5,
+    curved=False
+)
+design.add_segment(star_segment)
+
+next_start = design.get_next_start_point()
 curve_segment = create_segment(
     start=next_start,
     start_mode=StartMode.CONNECT,
@@ -196,20 +230,6 @@ curve_segment = create_segment(
     texture='glitter'
 )
 design.add_segment(curve_segment)
-
-next_start = design.get_next_start_point()
-star_segment = create_segment(
-    start=next_start,
-    start_mode=StartMode.CONNECT,
-    segment_type=SegmentType.STAR,
-    center=(0,0),
-    radius=0.5,
-    arm_length=1,
-    num_points=4,
-    asymmetry=0.5,
-    curved=True
-)
-design.add_segment(star_segment)
 
 # Render the design
 design.render()

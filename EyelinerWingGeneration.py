@@ -114,7 +114,7 @@ def create_eyeliner_wing(length, angle, liner_corner,topStart ,bottomStart ,thic
 
     return np.concatenate((topLine,bottomLine))
 
-
+"""
 # Plotting
 plt.figure(figsize=(6, 6))
 ax = plt.gca()
@@ -137,3 +137,4 @@ plt.xlabel("X-axis")
 plt.ylabel("Y-axis")
 plt.legend()
 plt.show()
+"""

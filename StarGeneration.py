@@ -1,7 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.signal.windows import cosine
-from EAOverallGenome import Segment
 
     # Function to create a quadratic Bézier curve with three control points
 def bezier_curve(t, P0, P1, P2):
@@ -50,10 +49,12 @@ def create_star_arm(center, radius, arm_length, num_points, start_angle,asymmetr
         arm_points = np.array([P0, P1, P2])
 
     #plt.scatter(center[0], center[1], color='red', label='Center')
-    return arm_points, P2
+    x,y=P2
+    return arm_points, (x,y)
 
+"""
 def rotation_matrix(theta):
-    """ Return the 2D rotation matrix for an angle theta in degrees """
+    # Return the 2D rotation matrix for an angle theta in degrees 
     theta_rad = np.deg2rad(theta)
     return np.array([
         [np.cos(theta_rad), -np.sin(theta_rad)],
@@ -61,41 +62,26 @@ def rotation_matrix(theta):
     ])
 
 def rotate_points(points, theta):
-    """ Rotate a set of 2D points by theta degrees """
+    # Rotate a set of 2D points by theta degrees 
     rot_matrix = rotation_matrix(theta)
     return np.dot(points, rot_matrix.T)
+"""
 
 def create_star(num_points, center, radius, arm_length ,asymmetry,curved):
     star_points = []
-    p2 = (0,0) #Starts at (0,0) and changed to P2 after each arm creation
+    end_point = (0,0) #Starts at (0,0) and changed to P2 after each arm creation
     # Generate and plot each arm of the star using Bézier curves
     for i in range(num_points):
         armN=i
         angle = 2 * np.pi * i / num_points
-        arm_points , p2 = create_star_arm(center, radius,arm_length, num_points, angle, asymmetry, armN, curved)
+        arm_points , end_point = create_star_arm(center, radius,arm_length, num_points, angle, asymmetry, armN, curved)
         star_points.extend(arm_points)
 
     star_points = np.array(star_points) # Convert star_points to a numpy array for plotting
-    return star_points, p2
+    return star_points, end_point
 
 
-class StarSegment(Segment):
-    """Line segment with additional properties specific to a line."""
-    def __init__(self, start, center, radius, arm_length, num_points,asymmetry,curved, start_mode):
-        super().__init__(start, start_mode)
-        self.center = center
-        self.radius = radius
-        self.arm_length = arm_length
-        self.num_points = num_points
-        self.asymmetry = asymmetry
-        self.curved = curved
-
-    def render(self, ax):
-        star_points,p2 = create_star(self.num_points, self.center, self.radius, self.arm_length, self.asymmetry, self.curved)
-        plt.plot(star_points[:, 0], star_points[:, 1], 'b', lw=2)  # Plot all points as a single object
-        self.end = p2
-
-
+"""
 # Set up the plot
 plt.figure(figsize=(6, 6))
 ax = plt.gca()
@@ -110,5 +96,5 @@ plt.grid(False)
 plt.show()
 plt.plot(p2,color='red')
 print(p2)
-
+"""
 
