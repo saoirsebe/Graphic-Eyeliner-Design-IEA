@@ -3,6 +3,8 @@ import math
 import matplotlib.pyplot as plt
 import numpy as np
 
+import EyelinerWingGeneration
+from EyelinerWingGeneration import vector_direction
 import StarGeneration
 from StarGeneration import *
 
@@ -40,7 +42,7 @@ class Segment:
 
 class LineSegment(Segment):
     """Line segment with additional properties specific to a line."""
-    def __init__(self, start, start_mode, length, direction, start_thickness, end_thickness, color, texture):
+    def __init__(self, start, start_mode, length, direction, start_thickness, end_thickness, color, texture, curviness, curve_direction, curve_location):
         super().__init__(start, start_mode)
         self.length = length
         self.direction = direction  # Angle in degrees
@@ -48,6 +50,15 @@ class LineSegment(Segment):
         self.end_thickness = end_thickness
         self.color = color
         self.texture = texture
+        self.curviness = curviness
+        if curviness>0:  #If curved line then curve direction else no curve direction
+            self.curve_direction = curve_direction #curve direction in degrees
+            self.curve_location = curve_location
+            self.curve_location = curve_location
+        else:
+            self.curve_direction = 0
+            self.curve_location = 0
+            self.curve_location =0
         self.calculate_end()  # Calculate the endpoint
 
     def calculate_end(self):
@@ -59,10 +70,26 @@ class LineSegment(Segment):
 
     def render(self, ax):
         """Render a line segment with thickness tapering from start to end."""
-        num_steps = 50  # Number of points to create a smooth thickness transition
-        x_values = np.linspace(self.start[0], self.end[0], num_steps)
-        y_values = np.linspace(self.start[1], self.end[1], num_steps)
+        num_steps = 50  # Number of points to create a smooth thickness transition/ curve
         thicknesses = np.linspace(self.start_thickness, self.end_thickness, num_steps)
+
+        if self.curviness>0:
+            t_values = np.linspace(0, 1, num_steps)
+            P0 = np.array(self.start)
+            P2 = np.array(self.end)
+            P1 = P0 + ((self.length * self.curve_location) * EyelinerWingGeneration.vector_direction(P0,P2)) #moves curve_location away from P0 towards P2 relative to length of curve segment
+            curve_dir_radians = np.radians(self.curve_direction)
+            # Calculate x and y offsets
+            dx = self.curviness * np.cos(curve_dir_radians)
+            dy = self.curviness * np.sin(curve_dir_radians)
+            P1 = P1 + np.array([dx, dy])
+
+            curve_points = np.array([bezier_curve(t, P0, P1, P2) for t in t_values])
+            print("curve_points shape:", curve_points.shape)
+            x_values, y_values = curve_points[:, 0], curve_points[:, 1]
+        else:
+            x_values = np.linspace(self.start[0], self.end[0], num_steps)
+            y_values = np.linspace(self.start[1], self.end[1], num_steps)
 
         # Plot each small segment with the varying thickness
         for i in range(num_steps - 1):
@@ -73,35 +100,6 @@ class LineSegment(Segment):
                 solid_capstyle='round'
             )
 
-class CurveSegment(Segment):
-    """Curve segment with additional properties specific to a curve."""
-    def __init__(self, start, start_mode, length, curvature, start_thickness, end_thickness, color, texture, direction):
-        super().__init__(start, start_mode)
-        self.length = length
-        self.curvature = curvature
-        self.start_thickness = start_thickness
-        self.end_thickness = end_thickness
-        self.color = color
-        self.texture = texture
-        self.direction = direction  # Angle in degrees
-        self.calculate_end()  # Calculate the endpoint
-
-    def calculate_end(self):
-        """Calculate a simple curved endpoint based on start and length."""
-        # This is a basic example; curvature could define a variety of complex paths
-        # Assuming curvature modifies direction within a small range, for simplicity
-        direction_angle = 45  # Fixed angle for simplicity in this example
-        radians = math.radians(direction_angle)
-        end_x = self.start[0] + self.length * math.cos(radians)
-        end_y = self.start[1] + self.length * math.sin(radians)
-        self.end = (end_x, end_y)
-
-    def render(self, ax):
-        """Render a curved segment with a simple curve approximation."""
-        # Generate curved path here; simplified as straight line for this example
-        x_values, y_values = zip(self.start, self.end)
-        thickness = (self.start_thickness + self.end_thickness) / 2
-        ax.plot(x_values, y_values, color=self.color, linewidth=thickness, linestyle='--')
 
 class StarSegment(Segment):
     """Line segment with additional properties specific to a line."""
@@ -133,19 +131,10 @@ def create_segment(start, start_mode, segment_type, **kwargs):
             end_thickness=kwargs.get('end_thickness', 1),
             color=kwargs.get('color', 'black'),
             texture=kwargs.get('texture', 'matte'),
-            length = kwargs.get('length', 1)
-        )
-    elif segment_type == SegmentType.CURVE:
-        return CurveSegment(
-            start=start,
-            start_mode=start_mode,
-            curvature=kwargs.get('curvature', 0),
-            start_thickness=kwargs.get('start_thickness', 1),
-            end_thickness=kwargs.get('end_thickness', 1),
-            color=kwargs.get('color', 'blue'),
-            direction=kwargs.get('direction', 0),
-            texture=kwargs.get('texture', 'glitter'),
-            length=kwargs.get('length', 1),
+            length = kwargs.get('length', 1),
+            curviness=kwargs.get('curviness', 0),
+            curve_direction=kwargs.get('curve_direction', 0),
+            curve_location=kwargs.get('curve_location', 0)
         )
     elif segment_type == SegmentType.STAR:
         return StarSegment(
@@ -156,14 +145,13 @@ def create_segment(start, start_mode, segment_type, **kwargs):
             arm_length=kwargs.get('arm_length', 1),
             num_points=kwargs.get('num_points', 5),
             asymmetry=kwargs.get('asymmetry', 0),
-            curved=kwargs.get('curved', True),
+            curved=kwargs.get('curved', True)
         )
     else:
         raise ValueError(f"Unsupported segment type: {segment_type}")
 
 
-
-class EyelinerDesign:
+class EyelinerDesign:   #Creates overall design, calculates start points, renders each segment by calling their render function
     def __init__(self):
         self.segments = []
 
@@ -217,19 +205,22 @@ star_segment = create_segment(
 design.add_segment(star_segment)
 
 next_start = design.get_next_start_point()
-curve_segment = create_segment(
+curved_line_segment = create_segment(
     start=next_start,
     start_mode=StartMode.CONNECT,
-    segment_type=SegmentType.CURVE,
+    segment_type=SegmentType.LINE,
     length=1.5,
     direction=20,
     curvature=0.5,
     start_thickness=2,
     end_thickness=1,
     color='green',
-    texture='glitter'
+    texture='glitter',
+    curviness=1,
+    curve_direction=-45,
+    curve_location=0.8
 )
-design.add_segment(curve_segment)
+design.add_segment(curved_line_segment)
 
 # Render the design
 design.render()

@@ -3,9 +3,6 @@ import matplotlib.pyplot as plt
 import sympy as sp
 import random
 
-from Trial import bezier_curve
-
-
 def bezier_curve(t, P0, P1, P2):
     return (1 - t) ** 2 * P0 + 2 * (1 - t) * t * P1 + t ** 2 * P2
 
