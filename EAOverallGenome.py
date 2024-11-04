@@ -25,10 +25,11 @@ class StartMode(Enum):
 
 class Segment:
     """Base class for all segments."""
-    def __init__(self, start, start_mode):
+    def __init__(self, start, start_mode, end_thickness):
         self.start = start  # Tuple (x, y)
         self.end = None     # Calculated by subclass
         self.start_mode = start_mode
+        self.end_thickness = end_thickness
 
     def render(self, ax):
         """Base render method to override in subclasses."""
@@ -43,11 +44,10 @@ class Segment:
 class LineSegment(Segment):
     """Line segment with additional properties specific to a line."""
     def __init__(self, start, start_mode, length, direction, start_thickness, end_thickness, color, texture, curviness, curve_direction, curve_location):
-        super().__init__(start, start_mode)
+        super().__init__(start, start_mode, end_thickness)
         self.length = length
         self.direction = direction  # Angle in degrees
         self.start_thickness = start_thickness
-        self.end_thickness = end_thickness
         self.color = color
         self.texture = texture
         self.curviness = curviness
@@ -100,11 +100,31 @@ class LineSegment(Segment):
                 solid_capstyle='round'
             )
 
+    def mutate(self, mutation_rate=0.1):
+        """Randomly mutate properties of the line segment within a mutation rate."""
+        # Randomly mutate length and direction
+        self.length *= 1 + np.random.uniform(-mutation_rate, mutation_rate)
+        self.direction += np.random.uniform(-mutation_rate,
+                                            mutation_rate) * 360  # random angle mutation within ±mutation rate of a full circle
+
+        # Randomly mutate thicknesses
+        self.start_thickness *= 1 + np.random.uniform(-mutation_rate, mutation_rate)
+        self.end_thickness *= 1 + np.random.uniform(-mutation_rate, mutation_rate)
+
+        # Randomly mutate curviness, curve direction, and curve location
+        if self.curviness > 0:
+            self.curviness *= 1 + np.random.uniform(-mutation_rate, mutation_rate)
+            self.curve_direction += np.random.uniform(-mutation_rate, mutation_rate) * 360
+            self.curve_location = min(1, max(0, self.curve_location + np.random.uniform(-mutation_rate, mutation_rate)))  # keeps curve location within [0, 1]
+
+        # Recalculate the end point
+        self.calculate_end()
+
 
 class StarSegment(Segment):
     """Line segment with additional properties specific to a line."""
-    def __init__(self, start, center, radius, arm_length, num_points,asymmetry,curved, start_mode):
-        super().__init__(start, start_mode)
+    def __init__(self, start, center, radius, arm_length, num_points,asymmetry,curved, start_mode, end_thickness):
+        super().__init__(start, start_mode, end_thickness)
         self.center = center
         self.radius = radius
         self.arm_length = arm_length
@@ -145,7 +165,8 @@ def create_segment(start, start_mode, segment_type, **kwargs):
             arm_length=kwargs.get('arm_length', 1),
             num_points=kwargs.get('num_points', 5),
             asymmetry=kwargs.get('asymmetry', 0),
-            curved=kwargs.get('curved', True)
+            curved=kwargs.get('curved', True),
+            end_thickness = kwargs.get('end_thickness', 1)
         )
     else:
         raise ValueError(f"Unsupported segment type: {segment_type}")
@@ -173,6 +194,12 @@ class EyelinerDesign:   #Creates overall design, calculates start points, render
             segment.render(ax)
         plt.show()
 
+    def get_start_thickness(self):
+        if not self.segments:
+            return 1 # Starting thickness for the first segment
+        last_segment = self.segments[-1]
+        return last_segment.end_thickness
+
 # Example usage
 design = EyelinerDesign()
 
@@ -183,27 +210,14 @@ line_segment = create_segment(
     segment_type=SegmentType.LINE,
     length=2,
     direction=45,
-    start_thickness=5,
+    start_thickness=10,
     end_thickness=1,
     color='black',
     texture='matte'
 )
 design.add_segment(line_segment)
 
-# Adding a curve segment that connects to the previous segment
-next_start = design.get_next_start_point()
-star_segment = create_segment(
-    start=next_start,
-    start_mode=StartMode.CONNECT,
-    segment_type=SegmentType.STAR,
-    radius=0.5,
-    arm_length=1,
-    num_points=4,
-    asymmetry=0.5,
-    curved=True
-)
-design.add_segment(star_segment)
-
+next_start_thickness = design.get_start_thickness()
 next_start = design.get_next_start_point()
 curved_line_segment = create_segment(
     start=next_start,
@@ -212,15 +226,30 @@ curved_line_segment = create_segment(
     length=1.5,
     direction=20,
     curvature=0.5,
-    start_thickness=2,
+    start_thickness=next_start_thickness,
     end_thickness=1,
     color='green',
     texture='glitter',
     curviness=1,
-    curve_direction=-45,
+    curve_direction=-85,
     curve_location=0.8
 )
 design.add_segment(curved_line_segment)
+
+next_start = design.get_next_start_point()
+next_start_thickness = design.get_start_thickness()
+star_segment = create_segment(
+    start=next_start,
+    start_mode=StartMode.CONNECT,
+    segment_type=SegmentType.STAR,
+    radius=0.5,
+    arm_length=1,
+    num_points=4,
+    asymmetry=0.5,
+    curved=True,
+    end_thickness=next_start_thickness
+)
+design.add_segment(star_segment)
 
 # Render the design
 design.render()
