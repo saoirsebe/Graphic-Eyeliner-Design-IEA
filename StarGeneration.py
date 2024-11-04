@@ -49,7 +49,7 @@ def create_star_arm(center, radius, arm_length, num_points, start_angle,asymmetr
         arm_points = np.array([P0, P1, P2])
 
     #plt.scatter(center[0], center[1], color='red', label='Center')
-    x,y=P2
+    x,y=P0
     return arm_points, (x,y)
 
 """

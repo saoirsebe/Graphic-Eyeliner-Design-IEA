@@ -114,7 +114,7 @@ class StarSegment(Segment):
         self.asymmetry = asymmetry
         self.curved = curved
         start_angle = 2 * np.pi * num_points / num_points #angle for last arm
-        bin, end_p = StarGeneration.create_star_arm(center, radius, num_points,arm_length,start_angle,asymmetry,num_points,curved) #armN = last arm so num_points
+        bin, end_p = StarGeneration.create_star_arm(center, radius,arm_length, num_points,start_angle,asymmetry,num_points,curved) #armN = last arm so num_points
         self.end = end_p
 
     def render(self, ax):
@@ -212,7 +212,7 @@ star_segment = create_segment(
     arm_length=1,
     num_points=4,
     asymmetry=0.5,
-    curved=False
+    curved=True
 )
 design.add_segment(star_segment)
 
