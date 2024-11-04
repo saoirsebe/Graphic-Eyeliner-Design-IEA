@@ -2,6 +2,7 @@ from enum import Enum
 import math
 import matplotlib.pyplot as plt
 import numpy as np
+from StarGeneration import *
 
 class SegmentType(Enum):
     LINE = 'LINE'
@@ -125,6 +126,17 @@ def create_segment(start, start_mode, segment_type, **kwargs):
             texture=kwargs.get('texture', 'glitter'),
             length=kwargs.get('length', 1),
         )
+    elif segment_type == SegmentType.STAR:
+        return StarSegment(
+            start=start,
+            start_mode=start_mode,
+            center=kwargs.get('center', (0,0)),
+            radius=kwargs.get('radius', 0.5),
+            arm_length=kwargs.get('arm_length', 1),
+            num_points=kwargs.get('num_points', 5),
+            asymmetry=kwargs.get('asymmetry', 0),
+            curved=kwargs.get('curved', True),
+        )
     else:
         raise ValueError(f"Unsupported segment type: {segment_type}")
 
@@ -157,7 +169,6 @@ design = EyelinerDesign()
 
 # Adding a line segment to the design
 line_segment = create_segment(
-    segment_id=1,
     start=(0, 0),
     start_mode=StartMode.CONNECT,
     segment_type=SegmentType.LINE,
@@ -173,9 +184,8 @@ design.add_segment(line_segment)
 # Adding a curve segment that connects to the previous segment
 next_start = design.get_next_start_point()
 curve_segment = create_segment(
-    segment_id=2,
     start=next_start,
-    start_mode=StartMode.FORK,
+    start_mode=StartMode.CONNECT,
     segment_type=SegmentType.CURVE,
     length=1.5,
     direction=20,
@@ -186,6 +196,20 @@ curve_segment = create_segment(
     texture='glitter'
 )
 design.add_segment(curve_segment)
+
+next_start = design.get_next_start_point()
+star_segment = create_segment(
+    start=next_start,
+    start_mode=StartMode.CONNECT,
+    segment_type=SegmentType.STAR,
+    center=(0,0),
+    radius=0.5,
+    arm_length=1,
+    num_points=4,
+    asymmetry=0.5,
+    curved=True
+)
+design.add_segment(star_segment)
 
 # Render the design
 design.render()
