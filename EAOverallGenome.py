@@ -103,12 +103,13 @@ class LineSegment(Segment):
     def mutate(self, mutation_rate=0.1):
         """Randomly mutate properties of the line segment within a mutation rate."""
         # Randomly mutate length and direction
-        self.length *= 1 + np.random.uniform(-mutation_rate, mutation_rate)
+        if np.random.uniform(0,1)>0.5:
+            self.length *= 1 + np.random.uniform(-mutation_rate, mutation_rate)
         self.direction += np.random.uniform(-mutation_rate,
                                             mutation_rate) * 360  # random angle mutation within ±mutation rate of a full circle
 
         # Randomly mutate thicknesses
-        self.start_thickness *= 1 + np.random.uniform(-mutation_rate, mutation_rate)
+        #self.start_thickness *= 1 + np.random.uniform(-mutation_rate, mutation_rate)
         self.end_thickness *= 1 + np.random.uniform(-mutation_rate, mutation_rate)
 
         # Randomly mutate curviness, curve direction, and curve location
@@ -137,7 +138,7 @@ class StarSegment(Segment):
 
     def render(self, ax):
         star_points,end_coord = StarGeneration.create_star(self.num_points, self.center, self.radius, self.arm_length, self.asymmetry, self.curved)
-        plt.plot(star_points[:, 0], star_points[:, 1], 'b', lw=2)  # Plot all points as a single object
+        plt.plot(star_points[:, 0], star_points[:, 1], 'b', lw=self.end_thickness)  # Plot all points as a single object
         #self.end = end_coord
 
 # Factory function to create a specific segment instance and wrap it in Segment
@@ -215,6 +216,8 @@ line_segment = create_segment(
     color='black',
     texture='matte'
 )
+
+line_segment.mutate(0.1)
 design.add_segment(line_segment)
 
 next_start_thickness = design.get_start_thickness()
