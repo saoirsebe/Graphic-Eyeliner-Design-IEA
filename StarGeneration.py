@@ -92,7 +92,8 @@ class StarSegment(Segment):
         self.curved = curved
 
     def render(self, ax):
-        """Render a line segment with the specified properties."""
+        star_points = create_star(self.num_points, self.center, self.radius, self.arm_length, self.asymmetry, self.curved)
+        plt.plot(star_points[:, 0], star_points[:, 1], 'b', lw=2)  # Plot all points as a single object
 
     def calculate_end(self):
         #end

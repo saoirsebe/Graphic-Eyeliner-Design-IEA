@@ -1,6 +1,7 @@
 from enum import Enum
 import math
 import matplotlib.pyplot as plt
+import numpy as np
 
 class SegmentType(Enum):
     LINE = 'LINE'
@@ -21,7 +22,7 @@ class Segment:
     """Base class for all segments."""
     def __init__(self, start, start_mode):
         self.start = start  # Tuple (x, y)
-        self.end = None      # Calculated by subclass
+        self.end = None     # Calculated by subclass
         self.start_mode = start_mode
 
     def render(self, ax):
@@ -54,10 +55,20 @@ class LineSegment(Segment):
         self.end = (end_x, end_y)
 
     def render(self, ax):
-        """Render a line segment."""
-        x_values, y_values = zip(self.start, self.end)
-        thickness = (self.start_thickness + self.end_thickness) / 2
-        ax.plot(x_values, y_values, color=self.color, linewidth=thickness, linestyle='-')
+        """Render a line segment with thickness tapering from start to end."""
+        num_steps = 50  # Number of points to create a smooth thickness transition
+        x_values = np.linspace(self.start[0], self.end[0], num_steps)
+        y_values = np.linspace(self.start[1], self.end[1], num_steps)
+        thicknesses = np.linspace(self.start_thickness, self.end_thickness, num_steps)
+
+        # Plot each small segment with the varying thickness
+        for i in range(num_steps - 1):
+            ax.plot(
+                [x_values[i], x_values[i + 1]], [y_values[i], y_values[i + 1]],
+                color=self.color,
+                linewidth=thicknesses[i],
+                solid_capstyle='round'
+            )
 
 class CurveSegment(Segment):
     """Curve segment with additional properties specific to a curve."""
@@ -152,7 +163,7 @@ line_segment = create_segment(
     segment_type=SegmentType.LINE,
     length=2,
     direction=45,
-    start_thickness=3,
+    start_thickness=5,
     end_thickness=1,
     color='black',
     texture='matte'
