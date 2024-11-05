@@ -25,7 +25,8 @@ class StartMode(Enum):
 
 class Segment:
     """Base class for all segments."""
-    def __init__(self, start, start_mode, end_thickness):
+    def __init__(self, segment_type, start, start_mode, end_thickness):
+        self.segment_type = segment_type
         self.start = start  # Tuple (x, y)
         self.end = None     # Calculated by subclass
         self.start_mode = start_mode
@@ -43,8 +44,8 @@ class Segment:
 
 class LineSegment(Segment):
     """Line segment with additional properties specific to a line."""
-    def __init__(self, start, start_mode, length, direction, start_thickness, end_thickness, color, curviness, curve_direction, curve_location):
-        super().__init__(start, start_mode, end_thickness)
+    def __init__(self, segment_type, start, start_mode, length, direction, start_thickness, end_thickness, color, curviness, curve_direction, curve_location):
+        super().__init__(segment_type, start, start_mode, end_thickness)
         self.length = length
         self.direction = direction  # Angle in degrees
         self.start_thickness = start_thickness
@@ -125,8 +126,8 @@ class LineSegment(Segment):
 
 class StarSegment(Segment):
     """Line segment with additional properties specific to a line."""
-    def __init__(self, start, center, radius, arm_length, num_points,asymmetry,curved, start_mode, end_thickness):
-        super().__init__(start, start_mode, end_thickness)
+    def __init__(self, segment_type, start, center, radius, arm_length, num_points,asymmetry,curved, start_mode, end_thickness):
+        super().__init__(segment_type, start, start_mode, end_thickness)
         self.center = center
         self.radius = radius
         self.arm_length = arm_length
@@ -149,6 +150,7 @@ class StarSegment(Segment):
 def create_segment(start, start_mode, segment_type, **kwargs):
     if segment_type == SegmentType.LINE:
         return LineSegment(
+            segment_type = segment_type,
             start=start,
             start_mode=start_mode,
             direction=kwargs.get('direction', 0),
@@ -162,6 +164,7 @@ def create_segment(start, start_mode, segment_type, **kwargs):
         )
     elif segment_type == SegmentType.STAR:
         return StarSegment(
+            segment_type=segment_type,
             start=start,
             start_mode=start_mode,
             center=start, #center is the end of previous object
@@ -179,6 +182,9 @@ def create_segment(start, start_mode, segment_type, **kwargs):
 class EyelinerDesign:   #Creates overall design, calculates start points, renders each segment by calling their render function
     def __init__(self):
         self.segments = []
+        self.n_of_lines= 0
+        self.n_of_stars= 0
+        self.n_of_segments= 0
 
     def add_segment(self, segment):
         self.segments.append(segment)
@@ -203,6 +209,17 @@ class EyelinerDesign:   #Creates overall design, calculates start points, render
             return 1 # Starting thickness for the first segment
         last_segment = self.segments[-1]
         return last_segment.end_thickness
+
+    def update_design_info(self):
+        self.n_of_lines = 0
+        self.n_of_stars = 0
+        self.n_of_segments = 0
+        for segment in self.segments:
+            self.n_of_segments += 1
+            if segment.segment_type == SegmentType.LINE:
+                self.n_of_lines += 1
+            elif segment.segment_type == SegmentType.STAR:
+                self.n_of_stars += 1
 
 """
 # Example usage

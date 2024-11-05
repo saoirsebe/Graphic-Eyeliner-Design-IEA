@@ -65,25 +65,22 @@ def random_gene():
 
         design.add_segment(new_segment)
         next_start_thickness = design.get_start_thickness()
+    design.update_design_info()
     return design
 
 
 def initialise_gene_pool():
     gene_pool = [random_gene() for _ in range(6)]  # Generate 6 random genes
-    #gene_grid = np.reshape(gene_pool, (2, 3))  # Reshape into 2x3 grid
-
     fig, axes = plt.subplots(2, 3, figsize=(12, 8))  # Create a 2x3 grid of subplots
-
     axes = axes.flatten()
     # Render each gene in its corresponding subplot
     for idx, gene in enumerate(gene_pool):
         ax = axes[idx]
-        ax.set_title(f"Gene {idx + 1}")
+        ax.set_title(f"Design {idx + 1}")
         gene.render(ax)  # Render each gene on its specific subplot
 
     plt.tight_layout()
     plt.show()
-
 
 initialise_gene_pool()
 
