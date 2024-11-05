@@ -10,7 +10,6 @@ import random
 def random_gene():
     design = EyelinerDesign()
     n_objects = random.randint(1,10)
-    next_start = (0,0)
     next_start_thickness = random.uniform(1,5)
 
     #Parameter ranges:
@@ -37,13 +36,11 @@ def random_gene():
         # Adding a new segment to the design
         new_segment_type = random.choice(list(SegmentType))
         start_type = random.choice(list(StartMode))
-        if start_type == "JUMP":
-            next_start = (random.uniform(*start_x_range), random.uniform(*start_y_range)),
-        print(new_segment_type)
+        print(start_type)
         if new_segment_type == SegmentType.LINE:
             new_segment = create_segment(
                 segment_type=new_segment_type,
-                start = next_start,
+                start = (random.uniform(*start_x_range), random.uniform(*start_y_range)),
                 start_mode=start_type,
                 length=random.uniform(*length_range),
                 direction=random.uniform(*direction_range),
@@ -57,9 +54,8 @@ def random_gene():
         elif new_segment_type == SegmentType.STAR:
             new_segment = create_segment(
                 segment_type=new_segment_type,
-                start=next_start,
+                start=(random.uniform(*start_x_range), random.uniform(*start_y_range)),
                 start_mode=start_type,
-                center=next_start,
                 radius=random.uniform(*radius_range),
                 arm_length=random.uniform(*arm_length_range),
                 num_points=random.randint(*num_points_range),
@@ -69,7 +65,6 @@ def random_gene():
             )
 
         design.add_segment(new_segment)
-        next_start = design.get_next_start_point()
         next_start_thickness = design.get_start_thickness()
 
     design.render()

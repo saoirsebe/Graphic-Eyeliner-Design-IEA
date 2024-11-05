@@ -31,15 +31,15 @@ class Segment:
         self.start_mode = start_mode
         self.end_thickness = end_thickness
 
-    def render(self, ax):
+    def render(self, ax, prev_end):
         """Base render method to override in subclasses."""
         raise NotImplementedError("Subclasses should implement this!")
 
-    def generate_coordinates(self, prev_end=None):
+    def generate_start(self, prev_end=None):
         """Base method to be overridden by subclasses if needed."""
         if self.start_mode == StartMode.CONNECT and prev_end:
             self.start = prev_end
-        return self.start, self.end
+        return self.start
 
 class LineSegment(Segment):
     """Line segment with additional properties specific to a line."""
@@ -67,7 +67,10 @@ class LineSegment(Segment):
         end_y = self.start[1] + self.length * math.sin(radians)
         self.end = (end_x, end_y)
 
-    def render(self, ax):
+    def render(self, ax, prev_end):
+        if self.start_mode == StartMode.CONNECT and prev_end:
+            self.start = prev_end
+
         """Render a line segment with thickness tapering from start to end."""
         num_steps = 50  # Number of points to create a smooth thickness transition/ curve
         thicknesses = np.linspace(self.start_thickness, self.end_thickness, num_steps)
@@ -135,7 +138,10 @@ class StarSegment(Segment):
         bin, end_p = StarGeneration.create_star_arm(center, radius,arm_length, num_points,start_angle,asymmetry,num_points,curved) #armN = last arm so num_points
         self.end = end_p
 
-    def render(self, ax):
+    def render(self, ax, prev_end):
+        if self.start_mode == StartMode.CONNECT and prev_end:
+            self.start = prev_end
+
         star_points,end_coord = StarGeneration.create_star(self.num_points, self.center, self.radius, self.arm_length, self.asymmetry, self.curved)
         plt.plot(star_points[:, 0], star_points[:, 1], 'b', lw=self.end_thickness)  # Plot all points as a single object
         #self.end = end_coord
@@ -190,7 +196,8 @@ class EyelinerDesign:   #Creates overall design, calculates start points, render
         fig, ax = plt.subplots(figsize=(6, 6))
         ax.set_aspect('equal', adjustable='box')
         for segment in self.segments:
-            segment.render(ax)
+            prev_end = self.get_next_start_point()
+            segment.render(ax,prev_end)
         plt.show()
 
     def get_start_thickness(self):
