@@ -10,18 +10,18 @@ from StarGeneration import *
 
 class SegmentType(Enum):
     LINE = 'LINE'
-    CURVE = 'CURVE'
+    #CURVE = 'CURVE'
     #FORK = 'FORK'
-    TAPER = 'TAPER'
+    #TAPER = 'TAPER'
     STAR = 'STAR'
-    WING = 'WING'
-    JOIN_LINE = 'JOIN_LINE'
+    #WING = 'WING'
+    #JOIN_LINE = 'JOIN_LINE'
 
 
 class StartMode(Enum):
     CONNECT = 'CONNECT'
     JUMP = 'JUMP'
-    FORK = 'FORK'
+    #FORK = 'FORK'
 
 class Segment:
     """Base class for all segments."""
@@ -43,13 +43,12 @@ class Segment:
 
 class LineSegment(Segment):
     """Line segment with additional properties specific to a line."""
-    def __init__(self, start, start_mode, length, direction, start_thickness, end_thickness, color, texture, curviness, curve_direction, curve_location):
+    def __init__(self, start, start_mode, length, direction, start_thickness, end_thickness, color, curviness, curve_direction, curve_location):
         super().__init__(start, start_mode, end_thickness)
         self.length = length
         self.direction = direction  # Angle in degrees
         self.start_thickness = start_thickness
         self.color = color
-        self.texture = texture
         self.curviness = curviness
         if curviness>0:  #If curved line then curve direction else no curve direction
             self.curve_direction = curve_direction #curve direction in degrees
@@ -151,7 +150,6 @@ def create_segment(start, start_mode, segment_type, **kwargs):
             start_thickness=kwargs.get('start_thickness', 1),
             end_thickness=kwargs.get('end_thickness', 1),
             color=kwargs.get('color', 'black'),
-            texture=kwargs.get('texture', 'matte'),
             length = kwargs.get('length', 1),
             curviness=kwargs.get('curviness', 0),
             curve_direction=kwargs.get('curve_direction', 0),
@@ -201,6 +199,7 @@ class EyelinerDesign:   #Creates overall design, calculates start points, render
         last_segment = self.segments[-1]
         return last_segment.end_thickness
 
+"""
 # Example usage
 design = EyelinerDesign()
 
@@ -232,7 +231,6 @@ curved_line_segment = create_segment(
     start_thickness=next_start_thickness,
     end_thickness=1,
     color='green',
-    texture='glitter',
     curviness=1,
     curve_direction=-85,
     curve_location=0.8
@@ -256,3 +254,4 @@ design.add_segment(star_segment)
 
 # Render the design
 design.render()
+"""

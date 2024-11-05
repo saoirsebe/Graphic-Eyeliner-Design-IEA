@@ -2,64 +2,77 @@ import cv2
 import numpy as np
 import matplotlib.pyplot as plt
 from math import comb
-
-def bezier_curve(t, *P):
-    """
-    Calculate a point on a Bézier curve using a set of control points.
-
-    Parameters:
-    t (float): Parameter ranging from 0 to 1.
-    P (tuple): Control points (2D points as tuples or arrays).
-
-    Returns:
-    np.array: A point on the Bézier curve at parameter t.
-    """
-    n = len(P) - 1
-    curve_point = sum(comb(n, i) * (1 - t) ** (n - i) * t ** i * np.array(P[i]) for i in range(n + 1))
-    return curve_point
-
-def create_bezier_curve(length, number_of_control_points):
-    """
-    Create a Bézier curve using a specified length and number of control points.
-
-    Parameters:
-    length (float): Total length of the curve along the x-axis.
-    number_of_control_points (int): Number of control points to generate.
-
-    Returns:
-    np.array: Points along the Bézier curve.
-    """
-    # Generate control points along the x-axis with small random variations in y for wiggliness
-    control_points = []
-    for i in range(number_of_control_points):
-        x_pos = i * (length / (number_of_control_points - 1))  # Evenly spaced x-coordinates
-        y_pos = np.random.uniform(-0.5, 0.5)  # Random y variations for wiggles
-        control_points.append((x_pos, y_pos))
-
-    # Generate Bézier curve points using the control points
-    t_values = np.linspace(0, 1, 100)
-    curve_points = np.array([bezier_curve(t, *control_points) for t in t_values])
-
-    return curve_points, control_points
-
-def create_line(length, is_straight, nOfWiggles):
-    t_values = np.linspace(0, 1, 100)
-    curve_points = np.array([bezier_curve(t, nOfWiggles) for t in t_values])
-    return curve_points
+from EAOverallGenome import *
+import random
 
 
-# Set axis limits and labels
-plt.figure(figsize=(6, 6))
-ax = plt.gca()
-ax.set_aspect('equal')
-ax.set_xlim(-2, 2)
-ax.set_ylim(-2, 2)
-line_points = create_line(10, True, 5)
-plt.plot(line_points[:, 0], line_points[:, 1], 'b', lw=2)
-plt.grid(False)
-plt.title("Eyeliner Wing")
-plt.xlabel("X-axis")
-plt.ylabel("Y-axis")
-plt.legend()
-plt.show()
 
+def random_gene():
+    design = EyelinerDesign()
+    n_objects = random.randint(1,10)
+    next_start = (0,0)
+    next_start_thickness = random.uniform(1,5)
+
+    #Parameter ranges:
+    start_x_range = (-2,2)
+    start_y_range = (-2,2)
+    #start_mode_options = list(StartMode)
+    #Segment_type_options = list(SegmentType)
+    length_range = (0, 5)
+    direction_range = (0, 360)
+    thickness_range = (1, 5)
+    colour_options = ["red", "green", "blue", "yellow", "cyan", "magenta"]
+    curviness_range = (0, 10)
+    curve_direction_range = (0, 360)
+    curve_location_range = (0,1)
+    center_x_range = (-2,2)
+    center_y_range = (-2,2)
+    radius_range = (0,3)
+    arm_length_range = (0,3)
+    num_points_range = (3,20)
+    asymmetry_range = (0,3)
+    #curved_range = ["True","False"]
+
+    for i in range(n_objects):
+        # Adding a new segment to the design
+        new_segment_type = random.choice(list(SegmentType))
+        start_type = random.choice(list(StartMode))
+        if start_type == "JUMP":
+            next_start = (random.uniform(*start_x_range), random.uniform(*start_y_range)),
+        print(new_segment_type)
+        if new_segment_type == SegmentType.LINE:
+            new_segment = create_segment(
+                segment_type=new_segment_type,
+                start = next_start,
+                start_mode=start_type,
+                length=random.uniform(*length_range),
+                direction=random.uniform(*direction_range),
+                start_thickness=next_start_thickness,
+                end_thickness=random.uniform(*thickness_range),
+                color=random.choice(colour_options),
+                curviness=random.uniform(*curviness_range),
+                curve_direction=random.uniform(*curve_direction_range),
+                curve_location=random.uniform(*curve_location_range)
+            )
+        elif new_segment_type == SegmentType.STAR:
+            new_segment = create_segment(
+                segment_type=new_segment_type,
+                start=next_start,
+                start_mode=start_type,
+                center=next_start,
+                radius=random.uniform(*radius_range),
+                arm_length=random.uniform(*arm_length_range),
+                num_points=random.randint(*num_points_range),
+                asymmetry=random.uniform(*asymmetry_range),
+                curved=random.choice([True, False]),
+                end_thickness=random.uniform(*thickness_range),
+            )
+
+        design.add_segment(new_segment)
+        next_start = design.get_next_start_point()
+        next_start_thickness = design.get_start_thickness()
+
+    design.render()
+    return design
+
+makeup_design = random_gene()
