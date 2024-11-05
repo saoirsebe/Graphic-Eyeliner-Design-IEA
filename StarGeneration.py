@@ -1,3 +1,5 @@
+import math
+
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.signal.windows import cosine
@@ -70,15 +72,26 @@ def rotate_points(points, theta):
 def create_star(num_points, center, radius, arm_length ,asymmetry,curved):
     star_points = []
     end_point = (0,0) #Starts at (0,0) and changed to P2 after each arm creation
+    start_point = (0,0)
     # Generate and plot each arm of the star using Bézier curves
+    half_way_arm = num_points //2
+    print("center:",center)
     for i in range(num_points):
         armN=i
         angle = 2 * np.pi * i / num_points
-        arm_points , end_point = create_star_arm(center, radius,arm_length, num_points, angle, asymmetry, armN, curved)
+        if i == half_way_arm:
+            arm_points , end_point = create_star_arm(center, radius,arm_length, num_points, angle, asymmetry, armN, curved)
+            print("end",end_point)
+        elif i == num_points-1:
+            arm_points, start_point = create_star_arm(center, radius, arm_length, num_points, angle, asymmetry, armN, curved)
+            print("start",start_point)
+        else:
+            arm_points, bin_point = create_star_arm(center, radius, arm_length, num_points, angle, asymmetry, armN, curved)
+
         star_points.extend(arm_points)
 
     star_points = np.array(star_points) # Convert star_points to a numpy array for plotting
-    return star_points, end_point
+    return star_points, end_point , start_point
 
 
 """
@@ -89,8 +102,8 @@ ax.set_aspect('equal')
 ax.set_xlim(-2, 2)
 ax.set_ylim(-2, 2)
 # Plot a star with 5 arms, curved edges using quadratic Bézier curves
-#star_points = create_curved_star(7, (0, 0), 1, 0.7, 100,0.5)
-star_points_plot ,p2= create_star(4, (0, 0), 0,0.5, 0,True)
+star_points_plot,p2 = create_star_arm((0,0), 0,0.5,4,math.radians(45),0,0,True)
+#star_points_plot ,p2= create_star(4, (0, 0), 0,0.5, 0,True)
 plt.plot(star_points_plot[:, 0], star_points_plot[:, 1], 'b', lw=2) # Plot all points as a single object
 plt.grid(False)
 plt.show()

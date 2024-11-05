@@ -67,10 +67,12 @@ class LineSegment(Segment):
         end_x = self.start[0] + self.length * math.cos(radians)
         end_y = self.start[1] + self.length * math.sin(radians)
         self.end = (end_x, end_y)
+        print("line end:", self.end)
 
     def render(self, ax_n, prev_end):
         if self.start_mode == StartMode.CONNECT and prev_end:
             self.start = prev_end
+            print("line start:",self.start)
 
         """Render a line segment with thickness tapering from start to end."""
         num_steps = 50  # Number of points to create a smooth thickness transition/ curve
@@ -134,17 +136,23 @@ class StarSegment(Segment):
         self.num_points = num_points
         self.asymmetry = asymmetry
         self.curved = curved
-        start_angle = 2 * np.pi * num_points / num_points #angle for last arm
-        bin, end_p = StarGeneration.create_star_arm(center, radius,arm_length, num_points,start_angle,asymmetry,num_points,curved) #armN = last arm so num_points
-        self.end = end_p
+        #start_angle = 2 * np.pi * num_points / num_points #angle for last arm
+        #bin, end_p = StarGeneration.create_star_arm(center, radius,arm_length, num_points,start_angle,asymmetry,num_points,curved) #armN = last arm so num_points
+        self.end = (0,0)
 
     def render(self, ax_n, prev_end):
         if self.start_mode == StartMode.CONNECT and prev_end:
             self.start = prev_end
+            self.center = prev_end
+            print("star start:", self.start)
 
-        star_points,end_coord = StarGeneration.create_star(self.num_points, self.center, self.radius, self.arm_length, self.asymmetry, self.curved)
-        ax_n.plot(star_points[:, 0], star_points[:, 1], 'b', lw=self.end_thickness)  # Plot all points as a single object
-        #self.end = end_coord
+        star_points, end_coord, start_coord = StarGeneration.create_star(self.num_points, self.center, self.radius, self.arm_length, self.asymmetry, self.curved)
+        transformation_vector = (self.center[0] - start_coord[0], self.center[1] - start_coord[1])
+        self.end = (end_coord[0]+transformation_vector[0], end_coord[1]+transformation_vector[1])
+        transformed_star_points = np.array([(point[0] + transformation_vector[0], point[1] + transformation_vector[1]) for point in star_points])
+        ax_n.plot(transformed_star_points[:, 0], transformed_star_points[:, 1], 'b', lw=self.end_thickness)  # Plot all points as a single object
+
+
 
 # Factory function to create a specific segment instance and wrap it in Segment
 def create_segment(start, start_mode, segment_type, **kwargs):
@@ -189,20 +197,23 @@ class EyelinerDesign:   #Creates overall design, calculates start points, render
     def add_segment(self, segment):
         self.segments.append(segment)
 
-    def get_next_start_point(self):
+    def get_next_start_point(self,segment_n):
         """Choose the next start point based on the last segment's available points."""
-        if not self.segments:
-            return (0, 0)  # Starting point for the first segment
-        last_segment = self.segments[-1]
+        if segment_n==0:
+            return self.start  # Starting point for the first segment
+        last_segment = self.segments[segment_n-1]
         return last_segment.end
 
     def render(self,ax_n):
         """Render the eyeliner design using matplotlib."""
         draw_eye_shape(ax_n)
+        segment_n = 0
+        prev_end = self.segments[0].start
         for segment in self.segments:
-            prev_end = self.get_next_start_point()
+            print("prev end:", prev_end)
             segment.render(ax_n,prev_end)
-        #plt.show()
+            segment_n += 1
+            prev_end = self.segments[segment_n - 1].end
 
     def get_start_thickness(self):
         if not self.segments:
