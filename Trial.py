@@ -13,8 +13,8 @@ def random_gene():
     next_start_thickness = random.uniform(1,5)
 
     #Parameter ranges:
-    start_x_range = (-2,2)
-    start_y_range = (-2,2)
+    start_x_range = (-1,10)
+    start_y_range = (0,10)
     #start_mode_options = list(StartMode)
     #Segment_type_options = list(SegmentType)
     length_range = (0, 5)
@@ -26,8 +26,8 @@ def random_gene():
     curve_location_range = (0,1)
     center_x_range = (-2,2)
     center_y_range = (-2,2)
-    radius_range = (0,3)
-    arm_length_range = (0,3)
+    radius_range = (0,2)
+    arm_length_range = (0,2)
     num_points_range = (3,20)
     asymmetry_range = (0,3)
     #curved_range = ["True","False"]
@@ -36,7 +36,6 @@ def random_gene():
         # Adding a new segment to the design
         new_segment_type = random.choice(list(SegmentType))
         start_type = random.choice(list(StartMode))
-        print(start_type)
         if new_segment_type == SegmentType.LINE:
             new_segment = create_segment(
                 segment_type=new_segment_type,
@@ -66,8 +65,25 @@ def random_gene():
 
         design.add_segment(new_segment)
         next_start_thickness = design.get_start_thickness()
-
-    design.render()
     return design
 
-makeup_design = random_gene()
+
+def initialise_gene_pool():
+    gene_pool = [random_gene() for _ in range(6)]  # Generate 6 random genes
+    #gene_grid = np.reshape(gene_pool, (2, 3))  # Reshape into 2x3 grid
+
+    fig, axes = plt.subplots(2, 3, figsize=(12, 8))  # Create a 2x3 grid of subplots
+
+    axes = axes.flatten()
+    # Render each gene in its corresponding subplot
+    for idx, gene in enumerate(gene_pool):
+        ax = axes[idx]
+        ax.set_title(f"Gene {idx + 1}")
+        gene.render(ax)  # Render each gene on its specific subplot
+
+    plt.tight_layout()
+    plt.show()
+
+
+initialise_gene_pool()
+

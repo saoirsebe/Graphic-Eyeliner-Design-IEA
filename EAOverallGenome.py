@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 import EyelinerWingGeneration
-from EyelinerWingGeneration import vector_direction
+from EyelinerWingGeneration import vector_direction, draw_eye_shape
 import StarGeneration
 from StarGeneration import *
 
@@ -31,7 +31,7 @@ class Segment:
         self.start_mode = start_mode
         self.end_thickness = end_thickness
 
-    def render(self, ax, prev_end):
+    def render(self, ax_n, prev_end):
         """Base render method to override in subclasses."""
         raise NotImplementedError("Subclasses should implement this!")
 
@@ -67,7 +67,7 @@ class LineSegment(Segment):
         end_y = self.start[1] + self.length * math.sin(radians)
         self.end = (end_x, end_y)
 
-    def render(self, ax, prev_end):
+    def render(self, ax_n, prev_end):
         if self.start_mode == StartMode.CONNECT and prev_end:
             self.start = prev_end
 
@@ -87,7 +87,6 @@ class LineSegment(Segment):
             P1 = P1 + np.array([dx, dy])
 
             curve_points = np.array([bezier_curve(t, P0, P1, P2) for t in t_values])
-            print("curve_points shape:", curve_points.shape)
             x_values, y_values = curve_points[:, 0], curve_points[:, 1]
         else:
             x_values = np.linspace(self.start[0], self.end[0], num_steps)
@@ -95,7 +94,7 @@ class LineSegment(Segment):
 
         # Plot each small segment with the varying thickness
         for i in range(num_steps - 1):
-            ax.plot(
+            ax_n.plot(
                 [x_values[i], x_values[i + 1]], [y_values[i], y_values[i + 1]],
                 color=self.color,
                 linewidth=thicknesses[i],
@@ -138,12 +137,12 @@ class StarSegment(Segment):
         bin, end_p = StarGeneration.create_star_arm(center, radius,arm_length, num_points,start_angle,asymmetry,num_points,curved) #armN = last arm so num_points
         self.end = end_p
 
-    def render(self, ax, prev_end):
+    def render(self, ax_n, prev_end):
         if self.start_mode == StartMode.CONNECT and prev_end:
             self.start = prev_end
 
         star_points,end_coord = StarGeneration.create_star(self.num_points, self.center, self.radius, self.arm_length, self.asymmetry, self.curved)
-        plt.plot(star_points[:, 0], star_points[:, 1], 'b', lw=self.end_thickness)  # Plot all points as a single object
+        ax_n.plot(star_points[:, 0], star_points[:, 1], 'b', lw=self.end_thickness)  # Plot all points as a single object
         #self.end = end_coord
 
 # Factory function to create a specific segment instance and wrap it in Segment
@@ -191,14 +190,13 @@ class EyelinerDesign:   #Creates overall design, calculates start points, render
         last_segment = self.segments[-1]
         return last_segment.end
 
-    def render(self):
+    def render(self,ax_n):
         """Render the eyeliner design using matplotlib."""
-        fig, ax = plt.subplots(figsize=(6, 6))
-        ax.set_aspect('equal', adjustable='box')
+        draw_eye_shape(ax_n)
         for segment in self.segments:
             prev_end = self.get_next_start_point()
-            segment.render(ax,prev_end)
-        plt.show()
+            segment.render(ax_n,prev_end)
+        #plt.show()
 
     def get_start_thickness(self):
         if not self.segments:

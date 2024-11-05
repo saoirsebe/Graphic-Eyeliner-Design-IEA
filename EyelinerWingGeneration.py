@@ -111,6 +111,20 @@ def create_eyeliner_wing(length, angle, liner_corner,topStart ,bottomStart ,thic
 
     return np.concatenate((topLine,bottomLine))
 
+
+def draw_eye_shape(ax_n):
+    # Get points with the same x-range but scale y-values for vertical stretch
+    x_vals, y_vals = get_quadratic_points(0.5, 0, 0, -1, 1)
+    x_vals = [x * 3 for x in x_vals]
+    y_vals = [y * 3 for y in y_vals]  # Scale y-values
+    ax_n.plot(x_vals, y_vals, label=f"$y = 0.5x^2$", color="b")
+
+    x_vals, y_vals = get_quadratic_points(-0.5, 0, 1, -1, 1)
+    x_vals = [x * 3 for x in x_vals]
+    y_vals = [y * 3 for y in y_vals]  # Scale y-values
+    ax_n.plot(x_vals, y_vals, label=f"$y = -0.5x^2 + 1$", color="b")
+
+
 """
 # Plotting
 plt.figure(figsize=(6, 6))
@@ -120,10 +134,7 @@ ax.set_xlim(-2, 2)
 ax.set_ylim(-2, 2)
 
 # Eye: Plotting the quadratics
-x_vals, y_vals = get_quadratic_points(0.5, 0, 0, -1, 1)
-plt.plot(x_vals, y_vals, label=f"$y = 0.5x^2$", color="b")
-x_vals, y_vals = get_quadratic_points(-0.5, 0, 1, -1, 1)
-plt.plot(x_vals, y_vals, label=f"$y = -0.5x^2 + 1$", color="b")
+
 
 # Wing:
 wing_points = create_eyeliner_wing(0.7, 30, (1,1),0.7,0,0.5, 1,1,0,0.7)
