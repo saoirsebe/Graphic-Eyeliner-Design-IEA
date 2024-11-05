@@ -7,7 +7,7 @@ import random
 
 
 
-def random_gene():
+def random_gene(gene_n):
     design = EyelinerDesign()
     n_objects = random.randint(1,10)
     next_start_thickness = random.uniform(1,5)
@@ -33,13 +33,18 @@ def random_gene():
     #curved_range = ["True","False"]
 
     for i in range(n_objects):
+        if (gene_n ==0 and i==0) or (gene_n ==1 and i==0):
+            segment_start = (3,1.5)
+        else:
+            segment_start = (random.uniform(*start_x_range), random.uniform(*start_y_range))
+
         # Adding a new segment to the design
         new_segment_type = random.choice(list(SegmentType))
         start_type = random.choice(list(StartMode))
         if new_segment_type == SegmentType.LINE:
             new_segment = create_segment(
                 segment_type=new_segment_type,
-                start = (random.uniform(*start_x_range), random.uniform(*start_y_range)),
+                start = segment_start,
                 start_mode=start_type,
                 length=random.uniform(*length_range),
                 direction=random.uniform(*direction_range),
@@ -53,7 +58,7 @@ def random_gene():
         elif new_segment_type == SegmentType.STAR:
             new_segment = create_segment(
                 segment_type=new_segment_type,
-                start=(random.uniform(*start_x_range), random.uniform(*start_y_range)),
+                start = segment_start,
                 start_mode=start_type,
                 radius=random.uniform(*radius_range),
                 arm_length=random.uniform(*arm_length_range),
@@ -70,7 +75,7 @@ def random_gene():
 
 
 def initialise_gene_pool():
-    gene_pool = [random_gene() for _ in range(6)]  # Generate 6 random genes
+    gene_pool = [random_gene(i) for i in range(6)]  # Generate 6 random genes
     fig, axes = plt.subplots(2, 3, figsize=(12, 8))  # Create a 2x3 grid of subplots
     axes = axes.flatten()
     # Render each gene in its corresponding subplot
