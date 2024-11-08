@@ -121,7 +121,7 @@ new_segment = create_segment(
                 start = (0,0),
                 start_mode=StartMode.CONNECT,
                 length=random.uniform(*length_range),
-                direction=random.uniform(*direction_range),
+                relative_angle=random.uniform(*direction_range),
                 start_thickness=next_start_thickness,
                 end_thickness=random.uniform(*thickness_range),
                 color=random.choice(colour_options),
@@ -142,6 +142,7 @@ new_star_segment = create_segment(
                 asymmetry=random.uniform(*asymmetry_range),
                 curved=random.choice([True, False]),
                 end_thickness=random.uniform(*thickness_range),
+                relative_angle = random.uniform(*direction_range)
             )
 design.add_segment(new_star_segment)
 next_start_thickness = design.get_start_thickness()
@@ -151,7 +152,7 @@ new_line_segment = create_segment(
                 start = (0,0),
                 start_mode=StartMode.CONNECT,
                 length=random.uniform(*length_range),
-                direction=random.uniform(*direction_range),
+                relative_angle=random.uniform(*direction_range),
                 start_thickness=next_start_thickness,
                 end_thickness=random.uniform(*thickness_range),
                 color=random.choice(colour_options),

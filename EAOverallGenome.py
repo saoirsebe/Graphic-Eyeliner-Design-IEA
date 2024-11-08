@@ -25,14 +25,16 @@ class StartMode(Enum):
 
 class Segment:
     """Base class for all segments."""
-    def __init__(self, segment_type, start, start_mode, end_thickness):
+    def __init__(self, segment_type, start, start_mode, end_thickness, relative_angle):
         self.segment_type = segment_type
         self.start = start  # Tuple (x, y)
         self.end = None     # Calculated by subclass
         self.start_mode = start_mode
         self.end_thickness = end_thickness
+        self.relative_angle = relative_angle
+        self.absolute_angle = 0  # initialise to 0 and re-set after rendered
 
-    def render(self, ax_n, prev_end):
+    def render(self, ax_n, prev_end, prev_angle):
         """Base render method to override in subclasses."""
         raise NotImplementedError("Subclasses should implement this!")
 
@@ -44,10 +46,9 @@ class Segment:
 
 class LineSegment(Segment):
     """Line segment with additional properties specific to a line."""
-    def __init__(self, segment_type, start, start_mode, length, direction, start_thickness, end_thickness, color, curviness, curve_direction, curve_location):
-        super().__init__(segment_type, start, start_mode, end_thickness)
+    def __init__(self, segment_type, start, start_mode, length, relative_angle, start_thickness, end_thickness, color, curviness, curve_direction, curve_location):
+        super().__init__(segment_type, start, start_mode, end_thickness, relative_angle)
         self.length = length
-        self.direction = direction  # Angle in degrees
         self.start_thickness = start_thickness
         self.color = color
         self.curviness = curviness
@@ -59,20 +60,20 @@ class LineSegment(Segment):
             self.curve_direction = 0
             self.curve_location = 0
             self.curve_location =0
-        self.calculate_end()  # Calculate the endpoint
 
-    def calculate_end(self):
+    def calculate_end(self, prev_angle):
         """Calculate the end point based on start, length, and direction."""
-        radians = math.radians(self.direction)
+        self.absolute_angle = prev_angle + self.relative_angle
+
+        radians = math.radians(self.absolute_angle) # Convert to radians
         end_x = self.start[0] + self.length * math.cos(radians)
         end_y = self.start[1] + self.length * math.sin(radians)
         self.end = (end_x, end_y)
-        print("line end:", self.end)
 
-    def render(self, ax_n, prev_end):
+    def render(self, ax_n, prev_end, prev_angle):
+        self.calculate_end(prev_angle)  # Calculate the endpoint
         if self.start_mode == StartMode.CONNECT and prev_end:
             self.start = prev_end
-            print("line start:",self.start)
 
         """Render a line segment with thickness tapering from start to end."""
         num_steps = 50  # Number of points to create a smooth thickness transition/ curve
@@ -83,7 +84,8 @@ class LineSegment(Segment):
             P0 = np.array(self.start)
             P2 = np.array(self.end)
             P1 = P0 + ((self.length * self.curve_location) * EyelinerWingGeneration.vector_direction(P0,P2)) #moves curve_location away from P0 towards P2 relative to length of curve segment
-            curve_dir_radians = np.radians(self.curve_direction)
+            relative_curve_direction = self.absolute_angle + self.curve_direction
+            curve_dir_radians = np.radians(relative_curve_direction)
             # Calculate x and y offsets
             dx = self.curviness * np.cos(curve_dir_radians)
             dy = self.curviness * np.sin(curve_dir_radians)
@@ -109,7 +111,7 @@ class LineSegment(Segment):
         # Randomly mutate length and direction
         if np.random.uniform(0,1)>0.5:
             self.length *= 1 + np.random.uniform(-mutation_rate, mutation_rate)
-        self.direction += np.random.uniform(-mutation_rate,
+        self.relative_angle += np.random.uniform(-mutation_rate,
                                             mutation_rate) * 360  # random angle mutation within ±mutation rate of a full circle
 
         # Randomly mutate thicknesses
@@ -128,8 +130,8 @@ class LineSegment(Segment):
 
 class StarSegment(Segment):
     """Line segment with additional properties specific to a line."""
-    def __init__(self, segment_type, start, center, radius, arm_length, num_points,asymmetry,curved, start_mode, end_thickness):
-        super().__init__(segment_type, start, start_mode, end_thickness)
+    def __init__(self, segment_type, start, center, radius, arm_length, num_points,asymmetry,curved, start_mode, end_thickness, relative_angle):
+        super().__init__(segment_type, start, start_mode, end_thickness,relative_angle)
         self.center = center
         self.radius = radius
         self.arm_length = arm_length
@@ -140,7 +142,7 @@ class StarSegment(Segment):
         #bin, end_p = StarGeneration.create_star_arm(center, radius,arm_length, num_points,start_angle,asymmetry,num_points,curved) #armN = last arm so num_points
         self.end = (0,0)
 
-    def render(self, ax_n, prev_end):
+    def render(self, ax_n, prev_end, prev_angle):
         if self.start_mode == StartMode.CONNECT and prev_end:
             self.start = prev_end
             self.center = prev_end
@@ -151,7 +153,7 @@ class StarSegment(Segment):
         self.end = (end_coord[0]+transformation_vector[0], end_coord[1]+transformation_vector[1])
         transformed_star_points = np.array([(point[0] + transformation_vector[0], point[1] + transformation_vector[1]) for point in star_points])
         ax_n.plot(transformed_star_points[:, 0], transformed_star_points[:, 1], 'b', lw=self.end_thickness)  # Plot all points as a single object
-
+        #self.absolute_angle = self.relative_angle
 
 
 # Factory function to create a specific segment instance and wrap it in Segment
@@ -161,7 +163,7 @@ def create_segment(start, start_mode, segment_type, **kwargs):
             segment_type = segment_type,
             start=start,
             start_mode=start_mode,
-            direction=kwargs.get('direction', 0),
+            relative_angle=kwargs.get('relative_angle', 0),
             start_thickness=kwargs.get('start_thickness', 1),
             end_thickness=kwargs.get('end_thickness', 1),
             color=kwargs.get('color', 'black'),
@@ -181,7 +183,8 @@ def create_segment(start, start_mode, segment_type, **kwargs):
             num_points=kwargs.get('num_points', 5),
             asymmetry=kwargs.get('asymmetry', 0),
             curved=kwargs.get('curved', True),
-            end_thickness = kwargs.get('end_thickness', 1)
+            end_thickness = kwargs.get('end_thickness', 1),
+            relative_angle =kwargs.get('relative_angle', 0)
         )
     else:
         raise ValueError(f"Unsupported segment type: {segment_type}")
@@ -200,7 +203,7 @@ class EyelinerDesign:   #Creates overall design, calculates start points, render
     def get_next_start_point(self,segment_n):
         """Choose the next start point based on the last segment's available points."""
         if segment_n==0:
-            return self.start  # Starting point for the first segment
+            return segment_n.start  # Starting point for the first segment
         last_segment = self.segments[segment_n-1]
         return last_segment.end
 
@@ -209,11 +212,13 @@ class EyelinerDesign:   #Creates overall design, calculates start points, render
         draw_eye_shape(ax_n)
         segment_n = 0
         prev_end = self.segments[0].start
+        prev_angle = 0
         for segment in self.segments:
             print("prev end:", prev_end)
-            segment.render(ax_n,prev_end)
+            segment.render(ax_n, prev_end, prev_angle)
+            prev_end = self.segments[segment_n].end
+            prev_angle = self.segments[segment_n].absolute_angle
             segment_n += 1
-            prev_end = self.segments[segment_n - 1].end
 
     def get_start_thickness(self):
         if not self.segments:
