@@ -69,17 +69,17 @@ def rotate_points(points, theta):
     return np.dot(points, rot_matrix.T)
 """
 
-def create_star(num_points, center, radius, arm_length ,asymmetry,curved):
+def create_star(num_points, center, radius, arm_length ,asymmetry,curved, end_arm,prev_angle):
     star_points = []
     end_point = (0,0) #Starts at (0,0) and changed to P2 after each arm creation
     start_point = (0,0)
     # Generate and plot each arm of the star using Bézier curves
-    half_way_arm = num_points //2
     print("center:",center)
     for i in range(num_points):
         armN=i
         angle = 2 * np.pi * i / num_points
-        if i == half_way_arm:
+        print("end arm:",end_arm)
+        if i == end_arm:
             arm_points , end_point = create_star_arm(center, radius,arm_length, num_points, angle, asymmetry, armN, curved)
             print("end",end_point)
         elif i == num_points-1:

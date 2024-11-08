@@ -130,7 +130,7 @@ class LineSegment(Segment):
 
 class StarSegment(Segment):
     """Line segment with additional properties specific to a line."""
-    def __init__(self, segment_type, start, center, radius, arm_length, num_points,asymmetry,curved, start_mode, end_thickness, relative_angle):
+    def __init__(self, segment_type, start, center, radius, arm_length, num_points,asymmetry,curved, start_mode, end_thickness, relative_angle, end_arm):
         super().__init__(segment_type, start, start_mode, end_thickness,relative_angle)
         self.center = center
         self.radius = radius
@@ -141,6 +141,10 @@ class StarSegment(Segment):
         #start_angle = 2 * np.pi * num_points / num_points #angle for last arm
         #bin, end_p = StarGeneration.create_star_arm(center, radius,arm_length, num_points,start_angle,asymmetry,num_points,curved) #armN = last arm so num_points
         self.end = (0,0)
+        if end_arm > num_points:
+            self.end_arm = num_points //2 #if end_point is bigger then the number of points then end at the opposite point to start (num_points div 2)
+        else:
+            self.end_arm = end_arm
 
     def render(self, ax_n, prev_end, prev_angle):
         if self.start_mode == StartMode.CONNECT and prev_end:
@@ -148,7 +152,7 @@ class StarSegment(Segment):
             self.center = prev_end
             print("star start:", self.start)
 
-        star_points, end_coord, start_coord = StarGeneration.create_star(self.num_points, self.center, self.radius, self.arm_length, self.asymmetry, self.curved)
+        star_points, end_coord, start_coord = StarGeneration.create_star(self.num_points, self.center, self.radius, self.arm_length, self.asymmetry, self.curved, self.end_arm, prev_angle)
         transformation_vector = (self.center[0] - start_coord[0], self.center[1] - start_coord[1])
         self.end = (end_coord[0]+transformation_vector[0], end_coord[1]+transformation_vector[1])
         transformed_star_points = np.array([(point[0] + transformation_vector[0], point[1] + transformation_vector[1]) for point in star_points])
@@ -184,7 +188,8 @@ def create_segment(start, start_mode, segment_type, **kwargs):
             asymmetry=kwargs.get('asymmetry', 0),
             curved=kwargs.get('curved', True),
             end_thickness = kwargs.get('end_thickness', 1),
-            relative_angle =kwargs.get('relative_angle', 0)
+            relative_angle =kwargs.get('relative_angle', 0),
+            end_arm=kwargs.get('end_point', 0)
         )
     else:
         raise ValueError(f"Unsupported segment type: {segment_type}")

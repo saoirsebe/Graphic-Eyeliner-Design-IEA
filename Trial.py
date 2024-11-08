@@ -43,11 +43,11 @@ def random_gene(gene_n):
         start_type = random.choice(list(StartMode))
         if new_segment_type == SegmentType.LINE:
             new_segment = create_segment(
-                segment_type=new_segment_type,
-                start = segment_start,
-                start_mode=start_type,
+                segment_type=SegmentType.LINE,
+                start=random.uniform(*start_x_range,*start_y_range),
+                start_mode=StartMode.CONNECT,
                 length=random.uniform(*length_range),
-                direction=random.uniform(*direction_range),
+                relative_angle=random.uniform(*direction_range),
                 start_thickness=next_start_thickness,
                 end_thickness=random.uniform(*thickness_range),
                 color=random.choice(colour_options),
@@ -56,16 +56,19 @@ def random_gene(gene_n):
                 curve_location=random.uniform(*curve_location_range)
             )
         elif new_segment_type == SegmentType.STAR:
+            num_points = random.randint(*num_points_range)
             new_segment = create_segment(
-                segment_type=new_segment_type,
-                start = segment_start,
-                start_mode=start_type,
+                segment_type=SegmentType.STAR,
+                start=random.uniform(*start_x_range,*start_y_range),
+                start_mode=StartMode.CONNECT,
                 radius=random.uniform(*radius_range),
                 arm_length=random.uniform(*arm_length_range),
                 num_points=random.randint(*num_points_range),
                 asymmetry=random.uniform(*asymmetry_range),
                 curved=random.choice([True, False]),
                 end_thickness=random.uniform(*thickness_range),
+                relative_angle=random.uniform(*direction_range),
+                end_arm=random.randint(0, num_points-1)
             )
 
         design.add_segment(new_segment)
@@ -131,18 +134,19 @@ new_segment = create_segment(
             )
 design.add_segment(new_segment)
 next_start_thickness = design.get_start_thickness()
-
+num_points=random.randint(*num_points_range)
 new_star_segment = create_segment(
                 segment_type=SegmentType.STAR,
                 start = (0,0),
                 start_mode=StartMode.CONNECT,
                 radius=random.uniform(*radius_range),
                 arm_length=random.uniform(*arm_length_range),
-                num_points=random.randint(*num_points_range),
+                num_points=num_points,
                 asymmetry=random.uniform(*asymmetry_range),
                 curved=random.choice([True, False]),
                 end_thickness=random.uniform(*thickness_range),
-                relative_angle = random.uniform(*direction_range)
+                relative_angle = random.uniform(*direction_range),
+                end_arm= random.uniform(0,num_points-1)
             )
 design.add_segment(new_star_segment)
 next_start_thickness = design.get_start_thickness()
