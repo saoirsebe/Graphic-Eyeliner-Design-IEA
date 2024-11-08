@@ -8,7 +8,7 @@ from scipy.signal.windows import cosine
 def bezier_curve(t, P0, P1, P2):
     return (1 - t) ** 2 * P0 + 2 * (1 - t) * t * P1 + t ** 2 * P2
 
-def create_star_arm(center, radius, arm_length, num_points, start_angle,asymmetry,arm_n,curved):
+def create_star_arm(center, radius, arm_length, num_points, start_angle, asymmetry, arm_n,curved):
     centerx = center[0]
     centery = center[1]
     angle = 2 * np.pi / num_points
@@ -51,7 +51,12 @@ def create_star_arm(center, radius, arm_length, num_points, start_angle,asymmetr
         arm_points = np.array([P0, P1, P2])
 
     #plt.scatter(center[0], center[1], color='red', label='Center')
-    x,y=P0
+    if asymmetry==0 and curved:
+        x, y = P2
+    elif asymmetry==0 and curved==False:
+        x, y = P1
+    else:
+        x, y = P0
     return arm_points, (x,y)
 
 """
@@ -69,7 +74,7 @@ def rotate_points(points, theta):
     return np.dot(points, rot_matrix.T)
 """
 
-def create_star(num_points, center, radius, arm_length ,asymmetry,curved, end_arm,prev_angle):
+def create_star(num_points, center, radius, arm_length , asymmetry, curved, end_arm, star_direction):
     star_points = []
     end_point = (0,0) #Starts at (0,0) and changed to P2 after each arm creation
     start_point = (0,0)
@@ -77,7 +82,7 @@ def create_star(num_points, center, radius, arm_length ,asymmetry,curved, end_ar
     print("center:",center)
     for i in range(num_points):
         armN=i
-        angle = 2 * np.pi * i / num_points
+        angle = (2 * np.pi * i / num_points) + math.radians(star_direction)
         print("end arm:",end_arm)
         if i == end_arm:
             arm_points , end_point = create_star_arm(center, radius,arm_length, num_points, angle, asymmetry, armN, curved)

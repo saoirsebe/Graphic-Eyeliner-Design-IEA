@@ -152,12 +152,13 @@ class StarSegment(Segment):
             self.center = prev_end
             print("star start:", self.start)
 
-        star_points, end_coord, start_coord = StarGeneration.create_star(self.num_points, self.center, self.radius, self.arm_length, self.asymmetry, self.curved, self.end_arm, prev_angle)
+        self.absolute_angle = prev_angle + self.relative_angle
+
+        star_points, end_coord, start_coord = StarGeneration.create_star(self.num_points, self.center, self.radius, self.arm_length, self.asymmetry, self.curved, self.end_arm, self.absolute_angle)
         transformation_vector = (self.center[0] - start_coord[0], self.center[1] - start_coord[1])
         self.end = (end_coord[0]+transformation_vector[0], end_coord[1]+transformation_vector[1])
         transformed_star_points = np.array([(point[0] + transformation_vector[0], point[1] + transformation_vector[1]) for point in star_points])
         ax_n.plot(transformed_star_points[:, 0], transformed_star_points[:, 1], 'b', lw=self.end_thickness)  # Plot all points as a single object
-        #self.absolute_angle = self.relative_angle
 
 
 # Factory function to create a specific segment instance and wrap it in Segment

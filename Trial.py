@@ -44,7 +44,7 @@ def random_gene(gene_n):
         if new_segment_type == SegmentType.LINE:
             new_segment = create_segment(
                 segment_type=SegmentType.LINE,
-                start=random.uniform(*start_x_range,*start_y_range),
+                start=(random.uniform(*start_x_range),random.uniform(*start_y_range)),
                 start_mode=StartMode.CONNECT,
                 length=random.uniform(*length_range),
                 relative_angle=random.uniform(*direction_range),
@@ -59,7 +59,7 @@ def random_gene(gene_n):
             num_points = random.randint(*num_points_range)
             new_segment = create_segment(
                 segment_type=SegmentType.STAR,
-                start=random.uniform(*start_x_range,*start_y_range),
+                start=(random.uniform(*start_x_range),random.uniform(*start_y_range)),
                 start_mode=StartMode.CONNECT,
                 radius=random.uniform(*radius_range),
                 arm_length=random.uniform(*arm_length_range),
@@ -90,8 +90,8 @@ def initialise_gene_pool():
     plt.tight_layout()
     plt.show()
 
-#initialise_gene_pool()
-
+initialise_gene_pool()
+"""
 design = EyelinerDesign()
 next_start_thickness = random.uniform(1,5)
 
@@ -140,9 +140,9 @@ new_star_segment = create_segment(
                 start = (0,0),
                 start_mode=StartMode.CONNECT,
                 radius=random.uniform(*radius_range),
-                arm_length=random.uniform(*arm_length_range),
+                arm_length=2,#random.uniform(*arm_length_range),
                 num_points=num_points,
-                asymmetry=random.uniform(*asymmetry_range),
+                asymmetry= 0,#random.uniform(*asymmetry_range),
                 curved=random.choice([True, False]),
                 end_thickness=random.uniform(*thickness_range),
                 relative_angle = random.uniform(*direction_range),
@@ -168,3 +168,4 @@ design.add_segment(new_line_segment)
 
 design.render(ax)
 plt.show()
+"""
