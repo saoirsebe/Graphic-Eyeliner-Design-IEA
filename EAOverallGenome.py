@@ -107,10 +107,11 @@ class LineSegment(Segment):
                 linewidth=thicknesses[i],
                 solid_capstyle='round'
             )
-        direction_vector = vector_direction(np.array(self.start), np.array(self.end))
-        end = self.start + direction_vector * self.end_location * self.length # Scale the vector by end_location
-        self.end = (end[0], end[1])
         self.points_array = np.column_stack((x_values, y_values))
+        num_points = len(self.points_array)
+        target_index = round(self.end_location * (num_points - 1))
+        end = self.points_array[target_index]
+        self.end = (end[0], end[1])
 
     def mutate(self, mutation_rate=0.1):
         """Randomly mutate properties of the line segment within a mutation rate."""
