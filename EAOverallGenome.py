@@ -33,6 +33,7 @@ class Segment:
         self.end_thickness = end_thickness
         self.relative_angle = relative_angle
         self.absolute_angle = 0  # initialise to 0 and re-set after rendered
+        self.points_array = []
 
     def render(self, ax_n, prev_end, prev_angle):
         """Base render method to override in subclasses."""
@@ -105,7 +106,7 @@ class LineSegment(Segment):
                 linewidth=thicknesses[i],
                 solid_capstyle='round'
             )
-        return np.column_stack((x_values, y_values))
+        self.points_array = np.column_stack((x_values, y_values))
 
     def mutate(self, mutation_rate=0.1):
         """Randomly mutate properties of the line segment within a mutation rate."""
@@ -147,6 +148,7 @@ class StarSegment(Segment):
         else:
             self.end_arm = end_arm
 
+
     def render(self, ax_n, prev_end, prev_angle):
         if self.start_mode == StartMode.CONNECT and prev_end:
             self.start = prev_end
@@ -159,7 +161,7 @@ class StarSegment(Segment):
         self.end = (end_coord[0]+transformation_vector[0], end_coord[1]+transformation_vector[1])
         transformed_star_points = np.array([(point[0] + transformation_vector[0], point[1] + transformation_vector[1]) for point in star_points])
         ax_n.plot(transformed_star_points[:, 0], transformed_star_points[:, 1], 'b', lw=self.end_thickness)  # Plot all points as a single object
-        return transformed_star_points
+        self.points_array = transformed_star_points
 
 
 # Factory function to create a specific segment instance and wrap it in Segment
@@ -216,18 +218,16 @@ class EyelinerDesign:   #Creates overall design, calculates start points, render
 
     def render(self,ax_n):
         """Render the eyeliner design using matplotlib."""
-        segments = []
         draw_eye_shape(ax_n)
         segment_n = 0
         prev_end = self.segments[0].start
         prev_angle = 0
         for segment in self.segments:
-            segment_array = segment.render(ax_n, prev_end, prev_angle)
-            segments.append(segment_array)
+            segment.render(ax_n, prev_end, prev_angle)
             prev_end = self.segments[segment_n].end
             prev_angle = self.segments[segment_n].absolute_angle
             segment_n += 1
-        return segments
+        return self.segments
 
     def get_start_thickness(self):
         if not self.segments:

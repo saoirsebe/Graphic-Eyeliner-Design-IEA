@@ -104,14 +104,17 @@ def check_overlap(segment1, segment2):
     return len(overlap)
 
 
-def analyze_gene(gene):
-    gene_overlaps = 0  # Count how many overlaps there are in this gene
+def analyze_gene(segments):
+    score = 0  # Count how many overlaps there are in this gene
     # Compare each pair of segments for overlap
-    for i in range(len(gene)):
-        for j in range(i + 1, len(gene)):  # Only compare each pair once
-            gene_overlaps = gene_overlaps + check_overlap(gene[i], gene[j])
-
-    return gene_overlaps
+    for i in range(len(segments)):
+        for j in range(i + 1, len(segments)):  # Only compare each pair once
+            score = score - check_overlap(segments[i].points_array , segments[j].points_array)
+        if i+1<len(segments):
+            if segments[i].segment_type == SegmentType.LINE and segments[i+1].segment_type == SegmentType.LINE:
+                if segments[i+1].start_mode == StartMode.CONNECT and 0 <= segments[i+1].relative_angle <= 50:
+                    score = score + 1
+    return score
 
 genes_array_list = initialise_gene_pool()
 for gene_array in genes_array_list:
