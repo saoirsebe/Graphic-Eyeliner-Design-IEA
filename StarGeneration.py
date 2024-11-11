@@ -53,7 +53,7 @@ def create_star_arm(center, radius, arm_length, num_points, start_angle, asymmet
     #plt.scatter(center[0], center[1], color='red', label='Center')
     if asymmetry==0 and curved:
         x, y = P2
-    elif asymmetry==0 and curved==False:
+    elif not curved:
         x, y = P1
     else:
         x, y = P0
@@ -79,17 +79,13 @@ def create_star(num_points, center, radius, arm_length , asymmetry, curved, end_
     end_point = (0,0) #Starts at (0,0) and changed to P2 after each arm creation
     start_point = (0,0)
     # Generate and plot each arm of the star using Bézier curves
-    print("center:",center)
     for i in range(num_points):
         armN=i
         angle = (2 * np.pi * i / num_points) + math.radians(star_direction)
-        print("end arm:",end_arm)
         if i == end_arm:
             arm_points , end_point = create_star_arm(center, radius,arm_length, num_points, angle, asymmetry, armN, curved)
-            print("end",end_point)
         elif i == num_points-1:
             arm_points, start_point = create_star_arm(center, radius, arm_length, num_points, angle, asymmetry, armN, curved)
-            print("start",start_point)
         else:
             arm_points, bin_point = create_star_arm(center, radius, arm_length, num_points, angle, asymmetry, armN, curved)
 

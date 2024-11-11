@@ -2,6 +2,9 @@ import cv2
 import numpy as np
 import matplotlib.pyplot as plt
 from math import comb
+
+#from dask_expr.diagnostics import analyze
+
 from EAOverallGenome import *
 import random
 
@@ -9,7 +12,7 @@ import random
 
 def random_gene(gene_n):
     design = EyelinerDesign()
-    n_objects = random.randint(1,10)
+    n_objects = random.randint(1,5)
     next_start_thickness = random.uniform(1,5)
 
     #Parameter ranges:
@@ -44,14 +47,14 @@ def random_gene(gene_n):
         if new_segment_type == SegmentType.LINE:
             new_segment = create_segment(
                 segment_type=SegmentType.LINE,
-                start=(random.uniform(*start_x_range),random.uniform(*start_y_range)),
+                start=segment_start,
                 start_mode=StartMode.CONNECT,
                 length=random.uniform(*length_range),
                 relative_angle=random.uniform(*direction_range),
                 start_thickness=next_start_thickness,
                 end_thickness=random.uniform(*thickness_range),
                 color=random.choice(colour_options),
-                curviness=random.uniform(*curviness_range),
+                curviness = 0 if random.random() < 0.5 else random.uniform(*curviness_range),
                 curve_direction=random.uniform(*curve_direction_range),
                 curve_location=random.uniform(*curve_location_range)
             )
@@ -59,11 +62,11 @@ def random_gene(gene_n):
             num_points = random.randint(*num_points_range)
             new_segment = create_segment(
                 segment_type=SegmentType.STAR,
-                start=(random.uniform(*start_x_range),random.uniform(*start_y_range)),
+                start=segment_start,
                 start_mode=StartMode.CONNECT,
                 radius=random.uniform(*radius_range),
                 arm_length=random.uniform(*arm_length_range),
-                num_points=random.randint(*num_points_range),
+                num_points=num_points,
                 asymmetry=random.uniform(*asymmetry_range),
                 curved=random.choice([True, False]),
                 end_thickness=random.uniform(*thickness_range),
@@ -81,16 +84,39 @@ def initialise_gene_pool():
     gene_pool = [random_gene(i) for i in range(6)]  # Generate 6 random genes
     fig, axes = plt.subplots(2, 3, figsize=(12, 8))  # Create a 2x3 grid of subplots
     axes = axes.flatten()
+    genes_array_list = []
     # Render each gene in its corresponding subplot
     for idx, gene in enumerate(gene_pool):
         ax = axes[idx]
         ax.set_title(f"Design {idx + 1}")
-        gene.render(ax)  # Render each gene on its specific subplot
+        gene_array = gene.render(ax)  # Render each gene on its specific subplot
+        genes_array_list.append(gene_array)
 
     plt.tight_layout()
     plt.show()
+    return genes_array_list
 
-initialise_gene_pool()
+def check_overlap(segment1, segment2):
+    segment1_inner = segment1[:-1]
+    segment2_inner = segment2[1:]
+
+    overlap = np.intersect1d(segment1_inner, segment2_inner)
+    return len(overlap)
+
+
+def analyze_gene(gene):
+    gene_overlaps = 0  # Count how many overlaps there are in this gene
+    # Compare each pair of segments for overlap
+    for i in range(len(gene)):
+        for j in range(i + 1, len(gene)):  # Only compare each pair once
+            gene_overlaps = gene_overlaps + check_overlap(gene[i], gene[j])
+
+    return gene_overlaps
+
+genes_array_list = initialise_gene_pool()
+for gene_array in genes_array_list:
+    score = analyze_gene(gene_array)
+    print("score: ",score)
 """
 design = EyelinerDesign()
 next_start_thickness = random.uniform(1,5)
