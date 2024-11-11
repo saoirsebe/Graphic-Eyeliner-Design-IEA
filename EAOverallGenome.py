@@ -47,7 +47,7 @@ class Segment:
 
 class LineSegment(Segment):
     """Line segment with additional properties specific to a line."""
-    def __init__(self, segment_type, start, start_mode, length, relative_angle, start_thickness, end_thickness, color, curviness, curve_direction, curve_location):
+    def __init__(self, segment_type, start, start_mode, length, relative_angle, start_thickness, end_thickness, color, curviness, curve_direction, curve_location, end_location):
         super().__init__(segment_type, start, start_mode, end_thickness, relative_angle)
         self.length = length
         self.start_thickness = start_thickness
@@ -61,6 +61,7 @@ class LineSegment(Segment):
             self.curve_direction = 0
             self.curve_location = 0
             self.curve_location =0
+        self.end_location = end_location
 
     def calculate_end(self, prev_angle):
         """Calculate the end point based on start, length, and direction."""
@@ -106,6 +107,9 @@ class LineSegment(Segment):
                 linewidth=thicknesses[i],
                 solid_capstyle='round'
             )
+        direction_vector = vector_direction(np.array(self.start), np.array(self.end))
+        end = self.start + direction_vector * self.end_location * self.length # Scale the vector by end_location
+        self.end = (end[0], end[1])
         self.points_array = np.column_stack((x_values, y_values))
 
     def mutate(self, mutation_rate=0.1):
@@ -177,8 +181,10 @@ def create_segment(start, start_mode, segment_type, **kwargs):
             color=kwargs.get('color', 'black'),
             length = kwargs.get('length', 1),
             curviness=kwargs.get('curviness', 0),
-            curve_direction=kwargs.get('curve_direction', 0),
-            curve_location=kwargs.get('curve_location', 0)
+            curve_direction=kwargs.get('curve_direction', 90),
+            curve_location=kwargs.get('curve_location', 0.5),
+            end_location = kwargs.get('end_location', 1)
+
         )
     elif segment_type == SegmentType.STAR:
         return StarSegment(

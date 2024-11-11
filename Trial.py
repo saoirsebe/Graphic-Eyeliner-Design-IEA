@@ -56,7 +56,8 @@ def random_gene(gene_n):
                 color=random.choice(colour_options),
                 curviness = 0 if random.random() < 0.5 else random.uniform(*curviness_range),
                 curve_direction=random.uniform(*curve_direction_range),
-                curve_location=random.uniform(*curve_location_range)
+                curve_location=random.uniform(*curve_location_range),
+                end_location=random.uniform(*curve_location_range),
             )
         elif new_segment_type == SegmentType.STAR:
             num_points = random.randint(*num_points_range)
