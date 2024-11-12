@@ -249,7 +249,6 @@ class EyelinerDesign:   #Creates overall design, calculates start points, render
             prev_end = self.segments[segment_n].end
             prev_angle = self.segments[segment_n].absolute_angle
             segment_n += 1
-        return self.segments
 
     def get_start_thickness(self):
         if not self.segments:

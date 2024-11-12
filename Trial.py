@@ -12,7 +12,7 @@ import random
 
 def random_gene(gene_n):
     design = EyelinerDesign()
-    n_objects = random.randint(1,5)
+    n_objects = random.randint(1,10)
     next_start_thickness = random.uniform(1,5)
 
     #Parameter ranges:
@@ -42,7 +42,8 @@ def random_gene(gene_n):
             segment_start = (random.uniform(*start_x_range), random.uniform(*start_y_range))
 
         # Adding a new segment to the design
-        new_segment_type = random.choice(list(SegmentType))
+        #new_segment_type = random.choice(list(SegmentType))
+        new_segment_type = SegmentType.LINE
         if new_segment_type == SegmentType.LINE:
             new_segment = create_segment(
                 segment_type=SegmentType.LINE,
@@ -85,27 +86,26 @@ def initialise_gene_pool():
     gene_pool = [random_gene(i) for i in range(6)]  # Generate 6 random genes
     fig, axes = plt.subplots(2, 3, figsize=(12, 8))  # Create a 2x3 grid of subplots
     axes = axes.flatten()
-    genes_array_list = []
     # Render each gene in its corresponding subplot
     for idx, gene in enumerate(gene_pool):
         ax = axes[idx]
         ax.set_title(f"Design {idx + 1}")
-        gene_array = gene.render(ax)  # Render each gene on its specific subplot
-        genes_array_list.append(gene_array)
+        gene.render(ax)  # Render each gene on its specific subplot
+        analyze_gene(gene)
 
     plt.tight_layout()
     plt.show()
-    return genes_array_list
 
 def check_overlap(segment1, segment2):
-    segment1_inner = segment1[:-1]
-    segment2_inner = segment2[1:]
+    segment1_inner = segment1#[:-1]
+    segment2_inner = segment2#[1:]
 
     overlap = np.intersect1d(segment1_inner, segment2_inner)
     return len(overlap)
 
 
-def analyze_gene(segments):
+def analyze_gene(design ):
+    segments = design.segments
     score = 0  # Count how many overlaps there are in this gene
     # Compare each pair of segments for overlap
     for i in range(len(segments)):
@@ -115,13 +115,30 @@ def analyze_gene(segments):
             if segments[i].segment_type == SegmentType.LINE and segments[i+1].segment_type == SegmentType.LINE:
                 if segments[i+1].start_mode == StartMode.CONNECT and 0 <= segments[i+1].relative_angle <= 50:
                     score = score + 1
-    return score
-
-genes_array_list = initialise_gene_pool()
-for gene_array in genes_array_list:
-    score = analyze_gene(gene_array)
     print("score: ",score)
+
+initialise_gene_pool()
+
+
 """
+num_points=random.randint(*num_points_range)
+new_star_segment = create_segment(
+                segment_type=SegmentType.STAR,
+                start = (0,0),
+                start_mode=StartMode.CONNECT,
+                radius=random.uniform(*radius_range),
+                arm_length=2,#random.uniform(*arm_length_range),
+                num_points=num_points,
+                asymmetry= 0,#random.uniform(*asymmetry_range),
+                curved=random.choice([True, False]),
+                end_thickness=random.uniform(*thickness_range),
+                relative_angle = random.uniform(*direction_range),
+                end_arm= random.uniform(0,num_points-1)
+            )
+design.add_segment(new_star_segment)
+next_start_thickness = design.get_start_thickness()
+
+
 design = EyelinerDesign()
 next_start_thickness = random.uniform(1,5)
 
@@ -149,52 +166,26 @@ ax = plt.gca()
 ax.set_aspect('equal')
 ax.set_xlim(-5,10)
 ax.set_ylim(-5,10)
-new_segment = create_segment(
-                segment_type=SegmentType.LINE,
-                start = (0,0),
-                start_mode=StartMode.CONNECT,
-                length=random.uniform(*length_range),
-                relative_angle=random.uniform(*direction_range),
-                start_thickness=next_start_thickness,
-                end_thickness=random.uniform(*thickness_range),
-                color=random.choice(colour_options),
-                curviness=random.uniform(*curviness_range),
-                curve_direction=random.uniform(*curve_direction_range),
-                curve_location=random.uniform(*curve_location_range)
-            )
-design.add_segment(new_segment)
-next_start_thickness = design.get_start_thickness()
-num_points=random.randint(*num_points_range)
-new_star_segment = create_segment(
-                segment_type=SegmentType.STAR,
-                start = (0,0),
-                start_mode=StartMode.CONNECT,
-                radius=random.uniform(*radius_range),
-                arm_length=2,#random.uniform(*arm_length_range),
-                num_points=num_points,
-                asymmetry= 0,#random.uniform(*asymmetry_range),
-                curved=random.choice([True, False]),
-                end_thickness=random.uniform(*thickness_range),
-                relative_angle = random.uniform(*direction_range),
-                end_arm= random.uniform(0,num_points-1)
-            )
-design.add_segment(new_star_segment)
-next_start_thickness = design.get_start_thickness()
+for i in range(5):
+    new_segment = create_segment(
+        segment_type=SegmentType.LINE,
+        start = (0,0),
+        start_mode=random.choice([StartMode.CONNECT, StartMode.SPLIT]),
+        length=random.uniform(*length_range),
+        relative_angle=random.uniform(*direction_range),
+        start_thickness=next_start_thickness,
+        end_thickness=random.uniform(*thickness_range),
+        color=random.choice(colour_options),
+        curviness= 0 if random.random() < 0.5 else random.uniform(*curviness_range),
+        curve_direction=random.uniform(*curve_direction_range),
+        curve_location=random.uniform(*curve_location_range),
+        end_location=random.uniform(*curve_location_range),
+        split_point=random.uniform(*curve_location_range)
 
-new_line_segment = create_segment(
-                segment_type=SegmentType.LINE,
-                start = (0,0),
-                start_mode=StartMode.CONNECT,
-                length=random.uniform(*length_range),
-                relative_angle=random.uniform(*direction_range),
-                start_thickness=next_start_thickness,
-                end_thickness=random.uniform(*thickness_range),
-                color=random.choice(colour_options),
-                curviness=random.uniform(*curviness_range),
-                curve_direction=random.uniform(*curve_direction_range),
-                curve_location=random.uniform(*curve_location_range)
-            )
-design.add_segment(new_line_segment)
+    )
+    design.add_segment(new_segment)
+    next_start_thickness = design.get_start_thickness()
+
 
 design.render(ax)
 plt.show()
