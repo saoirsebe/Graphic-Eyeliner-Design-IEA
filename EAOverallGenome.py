@@ -95,7 +95,6 @@ class LineSegment(Segment):
             self.start = (prev_array[-1][0], prev_array[-1][1])
         elif self.start_mode == StartMode.CONNECT_MID and len(prev_array)>0:
             start_array_point = point_in_array(prev_array, self.start_location)
-            print(start_array_point)
             self.start = (start_array_point[0], start_array_point[1])
 
         self.calculate_end(prev_angle)  # Calculate the endpoint

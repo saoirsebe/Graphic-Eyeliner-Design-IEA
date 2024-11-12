@@ -20,15 +20,13 @@ def random_gene(gene_n):
     start_y_range = (0,10)
     #start_mode_options = list(StartMode)
     #Segment_type_options = list(SegmentType)
-    length_range = (0, 5)
+    length_range = (0.5, 5)
     direction_range = (0, 360)
     thickness_range = (1, 5)
-    colour_options = ["red", "green", "blue", "yellow", "cyan", "magenta"]
+    colour_options = ["red", "green", "blue", "cyan", "magenta"]
     curviness_range = (0, 10)
     curve_direction_range = (0, 360)
     curve_location_range = (0,1)
-    center_x_range = (-2,2)
-    center_y_range = (-2,2)
     radius_range = (0,2)
     arm_length_range = (0,2)
     num_points_range = (3,20)
@@ -43,7 +41,7 @@ def random_gene(gene_n):
 
         # Adding a new segment to the design
         #new_segment_type = random.choice(list(SegmentType))
-        new_segment_type = SegmentType.LINE
+        new_segment_type = SegmentType.LINE if random.random() < 0.8 else SegmentType.STAR
         if new_segment_type == SegmentType.LINE:
             new_segment = create_segment(
                 segment_type=SegmentType.LINE,
@@ -96,12 +94,27 @@ def initialise_gene_pool():
     plt.tight_layout()
     plt.show()
 
-def check_overlap(segment1, segment2):
-    segment1_inner = segment1#[:-1]
-    segment2_inner = segment2#[1:]
+def check_overlap(i, segments):
+    segment = segments[i].points_array
+    overlaps =0
+    for j in range (len(segments)):
+        if j!=i:
+            segment_i = segments[j].points_array
+            if len(segment) >= 100:
+                segment = segment[::2]
+            if len(segment_i) >= 100:
+                segment_i = segment_i[::2]
 
-    overlap = np.intersect1d(segment1_inner, segment2_inner)
-    return len(overlap)
+            segment = segment[:-1]
+            segment_i = segment_i[1:]
+            for point1 in segment:
+                for point2 in segment_i:
+                    # Calculate Euclidean distance between point1 and point2
+                    distance = np.linalg.norm(point1 - point2)
+                    # Check if distance is within the tolerance
+                    if distance <= 0.001:
+                        overlaps +=1  # Overlap found
+    return overlaps
 
 
 def analyze_gene(design ):
@@ -109,11 +122,10 @@ def analyze_gene(design ):
     score = 0  # Count how many overlaps there are in this gene
     # Compare each pair of segments for overlap
     for i in range(len(segments)):
-        for j in range(i + 1, len(segments)):  # Only compare each pair once
-            score = score - check_overlap(segments[i].points_array , segments[j].points_array)
+        score = score - check_overlap(i , segments)
         if i+1<len(segments):
             if segments[i].segment_type == SegmentType.LINE and segments[i+1].segment_type == SegmentType.LINE:
-                if segments[i+1].start_mode == StartMode.CONNECT and 0 <= segments[i+1].relative_angle <= 50:
+                if segments[i+1].start_mode == StartMode.CONNECT and 0 <= segments[i+1].relative_angle <= 90:
                     score = score + 1
     print("score: ",score)
 
@@ -170,7 +182,7 @@ for i in range(5):
     new_segment = create_segment(
         segment_type=SegmentType.LINE,
         start = (0,0),
-        start_mode=random.choice([StartMode.CONNECT, StartMode.SPLIT]),
+        start_mode=random.choice([StartMode.CONNECT, StartMode.SPLIT, StartMode.CONNECT_MID]),
         length=random.uniform(*length_range),
         relative_angle=random.uniform(*direction_range),
         start_thickness=next_start_thickness,
@@ -179,7 +191,7 @@ for i in range(5):
         curviness= 0 if random.random() < 0.5 else random.uniform(*curviness_range),
         curve_direction=random.uniform(*curve_direction_range),
         curve_location=random.uniform(*curve_location_range),
-        end_location=random.uniform(*curve_location_range),
+        start_location=random.uniform(*curve_location_range),
         split_point=random.uniform(*curve_location_range)
 
     )

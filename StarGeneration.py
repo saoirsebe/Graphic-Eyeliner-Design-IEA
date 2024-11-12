@@ -92,7 +92,7 @@ def create_star(num_points, center, radius, arm_length , asymmetry, curved, end_
         """
         arm_points, arm_point = create_star_arm(center, radius, arm_length, num_points, angle, asymmetry, armN, curved)
         star_points.extend(arm_points)
-        star_arm_points.extend(arm_point)
+        star_arm_points.append(arm_point)
 
     star_points = np.array(star_points) # Convert star_points to a numpy array for plotting
     return star_points, star_arm_points #end_point , start_point
