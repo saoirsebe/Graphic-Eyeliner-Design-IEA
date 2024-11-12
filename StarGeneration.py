@@ -50,7 +50,6 @@ def create_star_arm(center, radius, arm_length, num_points, start_angle, asymmet
     else:
         arm_points = np.array([P0, P1, P2])
 
-    #plt.scatter(center[0], center[1], color='red', label='Center')
     if asymmetry==0 and curved:
         x, y = P2
     elif not curved:
@@ -78,21 +77,25 @@ def create_star(num_points, center, radius, arm_length , asymmetry, curved, end_
     star_points = []
     end_point = (0,0) #Starts at (0,0) and changed to P2 after each arm creation
     start_point = (0,0)
+    star_arm_points =[]
     # Generate and plot each arm of the star using Bézier curves
     for i in range(num_points):
         armN=i
         angle = (2 * np.pi * i / num_points) + math.radians(star_direction)
+        """
         if i == end_arm:
             arm_points , end_point = create_star_arm(center, radius,arm_length, num_points, angle, asymmetry, armN, curved)
         elif i == num_points-1:
             arm_points, start_point = create_star_arm(center, radius, arm_length, num_points, angle, asymmetry, armN, curved)
         else:
             arm_points, bin_point = create_star_arm(center, radius, arm_length, num_points, angle, asymmetry, armN, curved)
-
+        """
+        arm_points, arm_point = create_star_arm(center, radius, arm_length, num_points, angle, asymmetry, armN, curved)
         star_points.extend(arm_points)
+        star_arm_points.extend(arm_point)
 
     star_points = np.array(star_points) # Convert star_points to a numpy array for plotting
-    return star_points, end_point , start_point
+    return star_points, star_arm_points #end_point , start_point
 
 
 """

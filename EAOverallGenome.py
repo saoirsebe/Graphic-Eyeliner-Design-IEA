@@ -23,6 +23,7 @@ class StartMode(Enum):
     JUMP = 'JUMP'
     #FORK = 'FORK'
     SPLIT = 'SPLIT' #connect but end of prev is in segment
+    CONNECT_MID = 'CONNECT_MID'
 
 class Segment:
     """Base class for all segments."""
@@ -49,11 +50,12 @@ class Segment:
 def point_in_array(array,location_in_array):
     num_points = len(array)
     target_index = round(location_in_array * (num_points - 1))
-    return array[target_index]
+    point = array[target_index]
+    return point
 
 class LineSegment(Segment):
     """Line segment with additional properties specific to a line."""
-    def __init__(self, segment_type, start, start_mode, length, relative_angle, start_thickness, end_thickness, color, curviness, curve_direction, curve_location, end_location, split_point):
+    def __init__(self, segment_type, start, start_mode, length, relative_angle, start_thickness, end_thickness, color, curviness, curve_direction, curve_location, start_location, split_point):
         super().__init__(segment_type, start, start_mode, end_thickness, relative_angle)
         self.length = length
         self.start_thickness = start_thickness
@@ -67,8 +69,16 @@ class LineSegment(Segment):
             self.curve_direction = 0
             self.curve_location = 0
             self.curve_location =0
-        self.end_location = end_location
-        self.split_point = split_point
+        if start_mode == StartMode.CONNECT_MID:
+            self.start_location = start_location
+            self.split_point = 0
+        elif start_mode == StartMode.SPLIT:
+            self.split_point = split_point  #if mode is split then set split_point else splits from 0 (i.e. no split)
+            self.start_location = 1
+        else:
+            self.start_location = 1
+            self.split_point = 0
+
 
     def calculate_end(self, prev_angle):
         """Calculate the end point based on start, length, and direction."""
@@ -80,10 +90,15 @@ class LineSegment(Segment):
         self.end = (end_x, end_y)
 
 
-    def render(self, ax_n, prev_end, prev_angle):
+    def render(self, ax_n, prev_array, prev_angle):
+        if self.start_mode == StartMode.CONNECT and len(prev_array)>0:
+            self.start = (prev_array[-1][0], prev_array[-1][1])
+        elif self.start_mode == StartMode.CONNECT_MID and len(prev_array)>0:
+            start_array_point = point_in_array(prev_array, self.start_location)
+            print(start_array_point)
+            self.start = (start_array_point[0], start_array_point[1])
+
         self.calculate_end(prev_angle)  # Calculate the endpoint
-        if self.start_mode == StartMode.CONNECT and prev_end or self.start_mode == StartMode.SPLIT and prev_end:
-            self.start = prev_end
 
         """Render a line segment with thickness tapering from start to end."""
         num_steps = 50  # Number of points to create a smooth thickness transition/ curve
@@ -115,8 +130,6 @@ class LineSegment(Segment):
             transformation_vector = vector_direction(split_point_point,self.start)
             self.points_array = np.array([(point[0] + transformation_vector[0], point[1] + transformation_vector[1]) for point in self.points_array])
             x_values, y_values = self.points_array[:, 0], self.points_array[:, 1]
-        end = point_in_array(self.points_array,self.end_location)
-        self.end = (end[0], end[1])
 
         # Plot each small segment with the varying thickness
         for i in range(num_steps - 1):
@@ -166,20 +179,26 @@ class StarSegment(Segment):
             self.end_arm = num_points //2 #if end_point is bigger then the number of points then end at the opposite point to start (num_points div 2)
         else:
             self.end_arm = end_arm
+        self.arm_points_array = []
 
 
-    def render(self, ax_n, prev_end, prev_angle):
-        if self.start_mode == StartMode.CONNECT and prev_end:
-            self.start = prev_end
-            self.center = prev_end
+    def render(self, ax_n, prev_array, prev_angle):
+        if self.start_mode == StartMode.CONNECT and len(prev_array)>0:
+            self.start = (prev_array[-1][0], prev_array[-1][1])
+            self.center = self.start
+        #elif self.start_mode == StartMode.CONNECT_MID and prev_array:
+
 
         self.absolute_angle = prev_angle + self.relative_angle
 
-        star_points, end_coord, start_coord = StarGeneration.create_star(self.num_points, self.center, self.radius, self.arm_length, self.asymmetry, self.curved, self.end_arm, self.absolute_angle)
+        star_points, star_arm_points = StarGeneration.create_star(self.num_points, self.center, self.radius, self.arm_length, self.asymmetry, self.curved, self.end_arm, self.absolute_angle)
+        start_coord = star_arm_points[-1]
         transformation_vector = (self.center[0] - start_coord[0], self.center[1] - start_coord[1])
-        self.end = (end_coord[0]+transformation_vector[0], end_coord[1]+transformation_vector[1])
+        #self.end = (end_coord[0]+transformation_vector[0], end_coord[1]+transformation_vector[1])
         transformed_star_points = np.array([(point[0] + transformation_vector[0], point[1] + transformation_vector[1]) for point in star_points])
         ax_n.plot(transformed_star_points[:, 0], transformed_star_points[:, 1], 'b', lw=self.end_thickness)  # Plot all points as a single object
+        transformed_arm_points = np.array([(point[0] + transformation_vector[0], point[1] + transformation_vector[1]) for point in star_arm_points])
+        self.arm_points_array = transformed_arm_points
         self.points_array = transformed_star_points
 
 
@@ -198,7 +217,7 @@ def create_segment(start, start_mode, segment_type, **kwargs):
             curviness=kwargs.get('curviness', 0),
             curve_direction=kwargs.get('curve_direction', 90),
             curve_location=kwargs.get('curve_location', 0.5),
-            end_location = kwargs.get('end_location', 1),
+            start_location = kwargs.get('start_location', 1),
             split_point = kwargs.get('split_point', 0.5)
 
         )
@@ -231,22 +250,18 @@ class EyelinerDesign:   #Creates overall design, calculates start points, render
     def add_segment(self, segment):
         self.segments.append(segment)
 
-    def get_next_start_point(self,segment_n):
-        """Choose the next start point based on the last segment's available points."""
-        if segment_n==0:
-            return segment_n.start  # Starting point for the first segment
-        last_segment = self.segments[segment_n-1]
-        return last_segment.end
-
     def render(self,ax_n):
         """Render the eyeliner design using matplotlib."""
         draw_eye_shape(ax_n)
         segment_n = 0
-        prev_end = self.segments[0].start
+        prev_array = np.array([self.segments[0].start])
         prev_angle = 0
         for segment in self.segments:
-            segment.render(ax_n, prev_end, prev_angle)
-            prev_end = self.segments[segment_n].end
+            segment.render(ax_n, prev_array, prev_angle)
+            if segment.segment_type == SegmentType.STAR:
+                prev_array = self.segments[segment_n].arm_points_array #if previous segment was a star then pass in the arm points that the next segment should start at
+            else:
+                prev_array = self.segments[segment_n].points_array
             prev_angle = self.segments[segment_n].absolute_angle
             segment_n += 1
 
