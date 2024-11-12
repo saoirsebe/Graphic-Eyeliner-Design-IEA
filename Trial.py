@@ -43,12 +43,11 @@ def random_gene(gene_n):
 
         # Adding a new segment to the design
         new_segment_type = random.choice(list(SegmentType))
-        start_type = random.choice(list(StartMode))
         if new_segment_type == SegmentType.LINE:
             new_segment = create_segment(
                 segment_type=SegmentType.LINE,
                 start=segment_start,
-                start_mode=StartMode.CONNECT,
+                start_mode=random.choice(list(StartMode)),
                 length=random.uniform(*length_range),
                 relative_angle=random.uniform(*direction_range),
                 start_thickness=next_start_thickness,
@@ -58,13 +57,14 @@ def random_gene(gene_n):
                 curve_direction=random.uniform(*curve_direction_range),
                 curve_location=random.uniform(*curve_location_range),
                 end_location=random.uniform(*curve_location_range),
+                split_point = random.uniform(*curve_location_range)
             )
         elif new_segment_type == SegmentType.STAR:
             num_points = random.randint(*num_points_range)
             new_segment = create_segment(
                 segment_type=SegmentType.STAR,
                 start=segment_start,
-                start_mode=StartMode.CONNECT,
+                start_mode=random.choice([StartMode.CONNECT, StartMode.JUMP]),
                 radius=random.uniform(*radius_range),
                 arm_length=random.uniform(*arm_length_range),
                 num_points=num_points,

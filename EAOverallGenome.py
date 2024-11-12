@@ -22,6 +22,7 @@ class StartMode(Enum):
     CONNECT = 'CONNECT'
     JUMP = 'JUMP'
     #FORK = 'FORK'
+    SPLIT = 'SPLIT' #connect but end of prev is in segment
 
 class Segment:
     """Base class for all segments."""
@@ -45,9 +46,14 @@ class Segment:
             self.start = prev_end
         return self.start
 
+def point_in_array(array,location_in_array):
+    num_points = len(array)
+    target_index = round(location_in_array * (num_points - 1))
+    return array[target_index]
+
 class LineSegment(Segment):
     """Line segment with additional properties specific to a line."""
-    def __init__(self, segment_type, start, start_mode, length, relative_angle, start_thickness, end_thickness, color, curviness, curve_direction, curve_location, end_location):
+    def __init__(self, segment_type, start, start_mode, length, relative_angle, start_thickness, end_thickness, color, curviness, curve_direction, curve_location, end_location, split_point):
         super().__init__(segment_type, start, start_mode, end_thickness, relative_angle)
         self.length = length
         self.start_thickness = start_thickness
@@ -62,6 +68,7 @@ class LineSegment(Segment):
             self.curve_location = 0
             self.curve_location =0
         self.end_location = end_location
+        self.split_point = split_point
 
     def calculate_end(self, prev_angle):
         """Calculate the end point based on start, length, and direction."""
@@ -72,9 +79,10 @@ class LineSegment(Segment):
         end_y = self.start[1] + self.length * math.sin(radians)
         self.end = (end_x, end_y)
 
+
     def render(self, ax_n, prev_end, prev_angle):
         self.calculate_end(prev_angle)  # Calculate the endpoint
-        if self.start_mode == StartMode.CONNECT and prev_end:
+        if self.start_mode == StartMode.CONNECT and prev_end or self.start_mode == StartMode.SPLIT and prev_end:
             self.start = prev_end
 
         """Render a line segment with thickness tapering from start to end."""
@@ -93,11 +101,22 @@ class LineSegment(Segment):
             dy = self.curviness * np.sin(curve_dir_radians)
             P1 = P1 + np.array([dx, dy])
 
-            curve_points = np.array([bezier_curve(t, P0, P1, P2) for t in t_values])
-            x_values, y_values = curve_points[:, 0], curve_points[:, 1]
+            self.points_array = np.array([bezier_curve(t, P0, P1, P2) for t in t_values])
+            x_values, y_values = self.points_array[:, 0], self.points_array[:, 1]
         else:
             x_values = np.linspace(self.start[0], self.end[0], num_steps)
             y_values = np.linspace(self.start[1], self.end[1], num_steps)
+            self.points_array = np.column_stack((x_values, y_values))
+
+        """Set self.points_array and move line if split type"""
+
+        if self.start_mode == StartMode.SPLIT:
+            split_point_point = point_in_array(self.points_array, self.split_point)
+            transformation_vector = vector_direction(split_point_point,self.start)
+            self.points_array = np.array([(point[0] + transformation_vector[0], point[1] + transformation_vector[1]) for point in self.points_array])
+            x_values, y_values = self.points_array[:, 0], self.points_array[:, 1]
+        end = point_in_array(self.points_array,self.end_location)
+        self.end = (end[0], end[1])
 
         # Plot each small segment with the varying thickness
         for i in range(num_steps - 1):
@@ -107,11 +126,6 @@ class LineSegment(Segment):
                 linewidth=thicknesses[i],
                 solid_capstyle='round'
             )
-        self.points_array = np.column_stack((x_values, y_values))
-        num_points = len(self.points_array)
-        target_index = round(self.end_location * (num_points - 1))
-        end = self.points_array[target_index]
-        self.end = (end[0], end[1])
 
     def mutate(self, mutation_rate=0.1):
         """Randomly mutate properties of the line segment within a mutation rate."""
@@ -184,7 +198,8 @@ def create_segment(start, start_mode, segment_type, **kwargs):
             curviness=kwargs.get('curviness', 0),
             curve_direction=kwargs.get('curve_direction', 90),
             curve_location=kwargs.get('curve_location', 0.5),
-            end_location = kwargs.get('end_location', 1)
+            end_location = kwargs.get('end_location', 1),
+            split_point = kwargs.get('split_point', 0.5)
 
         )
     elif segment_type == SegmentType.STAR:
