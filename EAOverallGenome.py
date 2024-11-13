@@ -51,7 +51,7 @@ def point_in_array(array,location_in_array):
     num_points = len(array)
     target_index = round(location_in_array * (num_points - 1))
     point = array[target_index]
-    return point
+    return target_index
 
 class LineSegment(Segment):
     """Line segment with additional properties specific to a line."""
@@ -91,17 +91,15 @@ class LineSegment(Segment):
 
 
     def render(self, ax_n, prev_array, prev_angle):
-        if self.start_mode == StartMode.CONNECT and len(prev_array)>0:
+        if self.start_mode == StartMode.CONNECT and len(prev_array)>0 or self.start_mode == StartMode.SPLIT and len(prev_array)>0:
             self.start = (prev_array[-1][0], prev_array[-1][1])
         elif self.start_mode == StartMode.CONNECT_MID and len(prev_array)>0:
-            start_array_point = point_in_array(prev_array, self.start_location)
+            start_array_point_index = point_in_array(prev_array, self.start_location)
+            start_array_point = prev_array[start_array_point_index]
             self.start = (start_array_point[0], start_array_point[1])
 
         self.calculate_end(prev_angle)  # Calculate the endpoint
-
-        """Render a line segment with thickness tapering from start to end."""
         num_steps = 50  # Number of points to create a smooth thickness transition/ curve
-        thicknesses = np.linspace(self.start_thickness, self.end_thickness, num_steps)
 
         if self.curviness>0:
             t_values = np.linspace(0, 1, num_steps)
@@ -125,18 +123,43 @@ class LineSegment(Segment):
         """Set self.points_array and move line if split type"""
 
         if self.start_mode == StartMode.SPLIT:
-            split_point_point = point_in_array(self.points_array, self.split_point)
+            split_point_point_index = point_in_array(self.points_array, self.split_point)
+            split_point_point = self.points_array[split_point_point_index]
             transformation_vector = vector_direction(split_point_point,self.start)
             self.points_array = np.array([(point[0] + transformation_vector[0], point[1] + transformation_vector[1]) for point in self.points_array])
             x_values, y_values = self.points_array[:, 0], self.points_array[:, 1]
 
+        """Render a line segment with thickness tapering from start to end."""
+        thicknesses = np.linspace(self.start_thickness, self.end_thickness, num_steps)
+        if self.start_mode == StartMode.CONNECT_MID and len(prev_array)>1:
+            P0 = np.array(prev_array[start_array_point_index-5])
+            P2 = np.array(self.points_array[10])
+            P1 = np.array(self.start)
+            t_values = np.linspace(0, 1, 20)
+            left_curve = np.array([bezier_curve(t, P0, P1, P2) for t in t_values])
+
+            if len(prev_array) < (start_array_point_index + 5):
+                beep = len(prev_array)-1
+            else:
+                beep = start_array_point_index + 5
+            P0 = np.array(self.points_array[10])
+            P2 = np.array(prev_array[beep])
+            P1 = np.array(self.start)#np.array((prev_array[start_array_point_index+2]) - np.array(self.points_array[2]))/2
+            right_curve = np.array([bezier_curve(t, P0, P1, P2) for t in t_values])
+            self.points_array = np.concatenate((left_curve,right_curve,self.points_array), axis=0)
+            x_values, y_values = self.points_array[:, 0], self.points_array[:, 1]
+
         # Plot each small segment with the varying thickness
-        for i in range(num_steps - 1):
+        for i in range(len(self.points_array)-1):
+            if i <= 40:
+                thickness = thicknesses[0]
+            else:
+                thickness = thicknesses[i-41]
             ax_n.plot(
                 [x_values[i], x_values[i + 1]], [y_values[i], y_values[i + 1]],
                 color=self.color,
-                linewidth=thicknesses[i],
-                solid_capstyle='round'
+                linewidth=thickness,
+                solid_capstyle='butt',
             )
 
     def mutate(self, mutation_rate=0.1):
