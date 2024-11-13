@@ -132,13 +132,17 @@ class LineSegment(Segment):
         """Render a line segment with thickness tapering from start to end."""
         thicknesses = np.linspace(self.start_thickness, self.end_thickness, num_steps)
         if self.start_mode == StartMode.CONNECT_MID and len(prev_array)>1:
-            P0 = np.array(prev_array[start_array_point_index-5])
+            if start_array_point_index <= 4:
+                beep = 0
+            else:
+                beep = start_array_point_index - 5
+            P0 = np.array(prev_array[beep])
             P2 = np.array(self.points_array[10])
             P1 = np.array(self.start)
             t_values = np.linspace(0, 1, 20)
             left_curve = np.array([bezier_curve(t, P0, P1, P2) for t in t_values])
 
-            if len(prev_array) < (start_array_point_index + 5):
+            if len(prev_array) <= (start_array_point_index + 5):
                 beep = len(prev_array)-1
             else:
                 beep = start_array_point_index + 5
@@ -148,7 +152,7 @@ class LineSegment(Segment):
             right_curve = np.array([bezier_curve(t, P0, P1, P2) for t in t_values])
             self.points_array = np.concatenate((left_curve,right_curve,self.points_array), axis=0)
             x_values, y_values = self.points_array[:, 0], self.points_array[:, 1]
-
+        print("Len points_array:",len(self.points_array))
         # Plot each small segment with the varying thickness
         for i in range(len(self.points_array)-1):
             if i <= 40:
