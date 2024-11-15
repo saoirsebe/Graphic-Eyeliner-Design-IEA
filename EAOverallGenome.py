@@ -90,7 +90,16 @@ class LineSegment(Segment):
         self.end = (end_x, end_y)
 
 
+    def curve_between_lines(self, P0, P1, P2, P3):
+        t_values = np.linspace(0, 1, 20)
+        left_curve = np.array([bezier_curve(t, P0, P1, P2) for t in t_values])
+        # np.array((prev_array[start_array_point_index+2]) - np.array(self.points_array[2]))/2
+        right_curve = np.array([bezier_curve(t, P2, P1, P3) for t in t_values])
+        return np.concatenate((left_curve, right_curve, self.points_array), axis=0)
+
+
     def render(self, ax_n, prev_array, prev_angle):
+        new_array=[]
         if self.start_mode == StartMode.CONNECT and len(prev_array)>0 or self.start_mode == StartMode.SPLIT and len(prev_array)>0:
             self.start = (prev_array[-1][0], prev_array[-1][1])
         elif self.start_mode == StartMode.CONNECT_MID and len(prev_array)>0:
@@ -128,37 +137,52 @@ class LineSegment(Segment):
             transformation_vector = vector_direction(split_point_point,self.start)
             self.points_array = np.array([(point[0] + transformation_vector[0], point[1] + transformation_vector[1]) for point in self.points_array])
             x_values, y_values = self.points_array[:, 0], self.points_array[:, 1]
+            if len(prev_array) > 0:
+                P2 = np.array(prev_array[-10])
+                if split_point_point_index <= 4:
+                    beep = 0
+                else:
+                    beep = split_point_point_index - 5
+                P0 = np.array(self.points_array[beep])
+                if len(self.points_array) <= (split_point_point_index + 5):
+                    beep = len(prev_array) - 1
+                else:
+                    beep = split_point_point_index + 5
+                P3 = np.array(self.points_array[beep])
+                P1 = np.array(self.start)
+                new_array = self.curve_between_lines(P0, P1, P2, P3)
+                x_values, y_values = new_array[:, 0], new_array[:, 1]
 
-        """Render a line segment with thickness tapering from start to end."""
-        thicknesses = np.linspace(self.start_thickness, self.end_thickness, num_steps)
+        thicknesses = np.linspace(self.start_thickness, self.end_thickness, num_steps) #Render a line segment with thickness tapering from start to end
+        """Add curve from bottom of connect mid line"""
         if self.start_mode == StartMode.CONNECT_MID and len(prev_array)>1:
+            P2 = np.array(self.points_array[10])
             if start_array_point_index <= 4:
                 beep = 0
             else:
                 beep = start_array_point_index - 5
             P0 = np.array(prev_array[beep])
-            P2 = np.array(self.points_array[10])
-            P1 = np.array(self.start)
-            t_values = np.linspace(0, 1, 20)
-            left_curve = np.array([bezier_curve(t, P0, P1, P2) for t in t_values])
-
             if len(prev_array) <= (start_array_point_index + 5):
-                beep = len(prev_array)-1
+                beep = len(prev_array) - 1
             else:
                 beep = start_array_point_index + 5
-            P0 = np.array(self.points_array[10])
-            P2 = np.array(prev_array[beep])
-            P1 = np.array(self.start)#np.array((prev_array[start_array_point_index+2]) - np.array(self.points_array[2]))/2
-            right_curve = np.array([bezier_curve(t, P0, P1, P2) for t in t_values])
-            self.points_array = np.concatenate((left_curve,right_curve,self.points_array), axis=0)
-            x_values, y_values = self.points_array[:, 0], self.points_array[:, 1]
-        print("Len points_array:",len(self.points_array))
+            P3 = np.array(prev_array[beep])
+            P1 = np.array(self.start)
+            new_array = self.curve_between_lines(P0, P1, P2, P3)
+            x_values, y_values = new_array[:, 0], new_array[:, 1]
+
         # Plot each small segment with the varying thickness
-        for i in range(len(self.points_array)-1):
-            if i <= 40:
+        length = len(self.points_array) -1
+        if len(new_array) > 0:
+            length = len(new_array) - 1
+        print(length)
+        for i in range(length):
+            if i <= 40 and self.start_mode == StartMode.CONNECT_MID or i <= 40 and self.start_mode == StartMode.SPLIT:
                 thickness = thicknesses[0]
-            else:
+            elif i>40 and self.start_mode == StartMode.CONNECT_MID or i>40 and self.start_mode == StartMode.SPLIT:
                 thickness = thicknesses[i-41]
+            else:
+                thickness = thicknesses[i]
             ax_n.plot(
                 [x_values[i], x_values[i + 1]], [y_values[i], y_values[i + 1]],
                 color=self.color,
