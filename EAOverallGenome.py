@@ -174,24 +174,44 @@ class LineSegment(Segment):
             x_values, y_values = new_array[:, 0], new_array[:, 1]
 
         # Plot each small segment with the varying thickness
-        length = len(self.points_array) -1
         if len(new_array) > 0:
-            length = len(new_array) - 1
-        for i in range(length):
-            if i <= 40 and self.start_mode == StartMode.CONNECT_MID:
-                thickness = thicknesses[start_array_point_index]
-            elif i <= 40 and self.start_mode == StartMode.SPLIT:
-                thickness = thicknesses[split_point_point_index]
-            elif i>40 and self.start_mode == StartMode.CONNECT_MID or i>40 and self.start_mode == StartMode.SPLIT:
-                thickness = thicknesses[i-41]
-            else:
+            # Plot the first 40 points as one segment
+            for i in range(min(40, len(x_values) - 1)):
+                if self.start_mode == StartMode.CONNECT_MID:
+                    thickness = thicknesses[start_array_point_index]
+                elif self.start_mode == StartMode.SPLIT:
+                    thickness = thicknesses[split_point_point_index]
+                else:
+                    thickness = thicknesses[i]
+                ax_n.plot(
+                    [x_values[i], x_values[i + 1]], [y_values[i], y_values[i + 1]],
+                    color=self.color,
+                    linewidth=thickness,
+                    solid_capstyle='butt',
+                )
+
+            # Start a new segment for the remaining points
+            for i in range(40, len(x_values) - 1):
+                if self.start_mode == StartMode.CONNECT_MID or self.start_mode == StartMode.SPLIT:
+                    thickness = thicknesses[i - 41]
+                else:
+                    thickness = thicknesses[i]
+                ax_n.plot(
+                    [x_values[i], x_values[i + 1]], [y_values[i], y_values[i + 1]],
+                    color=self.color,
+                    linewidth=thickness,
+                    solid_capstyle='butt',
+                )
+        else:
+            # Plot normally if no new_array exists
+            for i in range(len(x_values) - 1):
                 thickness = thicknesses[i]
-            ax_n.plot(
-                [x_values[i], x_values[i + 1]], [y_values[i], y_values[i + 1]],
-                color=self.color,
-                linewidth=thickness,
-                solid_capstyle='butt',
-            )
+                ax_n.plot(
+                    [x_values[i], x_values[i + 1]], [y_values[i], y_values[i + 1]],
+                    color=self.color,
+                    linewidth=thickness,
+                    solid_capstyle='butt',
+                )
 
     def mutate(self, mutation_rate=0.1):
         """Randomly mutate properties of the line segment within a mutation rate."""

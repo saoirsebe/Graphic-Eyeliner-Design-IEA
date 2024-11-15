@@ -24,8 +24,7 @@ def random_gene(gene_n):
     direction_range = (0, 360)
     thickness_range = (1, 5)
     colour_options = [
-        "red", "green", "blue", "cyan", "magenta",
-        "yellow", "black", "white", "orange", "purple",
+        "red", "green", "blue", "cyan", "magenta", "black", "white", "orange", "purple",
         "pink", "brown", "gray", "lime", "navy",
         "teal", "maroon", "gold", "silver", "olive"
     ]
@@ -35,7 +34,7 @@ def random_gene(gene_n):
     curve_location_range = (0,1)
     radius_range = (0,2)
     arm_length_range = (0,2)
-    num_points_range = (3,20)
+    num_points_range = (3,15)
     asymmetry_range = (0,3)
     #curved_range = ["True","False"]
 
@@ -103,23 +102,33 @@ def initialise_gene_pool():
 def check_overlap(i, segments):
     segment = segments[i].points_array
     overlaps =0
-    for j in range (len(segments)):
-        if j!=i:
-            segment_i = segments[j].points_array
-            if len(segment) >= 100:
-                segment = segment[::2]
-            if len(segment_i) >= 100:
-                segment_i = segment_i[::2]
+    for j in range (i+1,len(segments)-1):
+        segment_j = segments[j].points_array
+        if len(segment) >= 1200:
+            segment = segment[::3]
+        elif len(segment) >= 800:
+            segment = segment[::2]
 
-            segment = segment[:-1]
-            segment_i = segment_i[1:]
-            for point1 in segment:
-                for point2 in segment_i:
-                    # Calculate Euclidean distance between point1 and point2
-                    distance = np.linalg.norm(point1 - point2)
-                    # Check if distance is within the tolerance
-                    if distance <= 0.001:
-                        overlaps +=1  # Overlap found
+        if len(segment_j) >= 1200:
+            segment_j = segment_j[::3]
+        elif len(segment_j) >= 800:
+            segment_j = segment_j[::2]
+
+        if j == (i + 1) and (segments[j].start_mode == StartMode.CONNECT_MID or segments[j].start_mode == StartMode.CONNECT ):
+            segment_j = segment_j[2:]
+        elif j == (i + 1) and (segments[j].start_mode == StartMode.CONNECT or segments[j].start_mode == StartMode.SPLIT):
+            segment = segment[:-2]
+        for point1 in segment:
+            for point2 in segment_j:
+                # Calculate Euclidean distance between point1 and point2
+                distance = np.linalg.norm(point1 - point2)
+                # Check if distance is within the tolerance
+                if distance <= 0.05:
+                    overlaps +=1  # Overlap found
+                    #print(segments[i].segment_type)
+                    #print(segments[j].segment_type)
+
+
     return overlaps
 
 
@@ -131,7 +140,7 @@ def analyze_gene(design ):
         score = score - check_overlap(i , segments)
         if i+1<len(segments):
             if segments[i].segment_type == SegmentType.LINE and segments[i+1].segment_type == SegmentType.LINE:
-                if segments[i+1].start_mode == StartMode.CONNECT and 0 <= segments[i+1].relative_angle <= 90:
+                if segments[i+1].start_mode == StartMode.CONNECT and 90 <= segments[i+1].relative_angle <= 180:
                     score = score + 1
     print("score: ",score)
 
