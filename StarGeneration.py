@@ -26,10 +26,11 @@ def create_star_arm(center, radius, arm_length, num_points, start_angle, asymmet
 
     M = (P0 + P2) / 2
     direction = M - center
+    """
     norm = np.linalg.norm(direction) #length of direction vector
     if norm != 0:
         direction /= norm  # Normalize the direction vector
-
+    """
     if curved==False:
         P1 = M + direction * arm_length
     else:

@@ -135,9 +135,11 @@ class LineSegment(Segment):
             split_point_point_index = point_in_array(self.points_array, self.split_point)
             split_point_point = self.points_array[split_point_point_index]
             transformation_vector = vector_direction(split_point_point,self.start)
+
             self.points_array = np.array([(point[0] + transformation_vector[0], point[1] + transformation_vector[1]) for point in self.points_array])
             x_values, y_values = self.points_array[:, 0], self.points_array[:, 1]
-            if len(prev_array) > 0:
+
+            if len(prev_array) > 20:
                 P2 = np.array(prev_array[-10])
                 if split_point_point_index <= 4:
                     beep = 0
@@ -155,7 +157,7 @@ class LineSegment(Segment):
 
         thicknesses = np.linspace(self.start_thickness, self.end_thickness, num_steps) #Render a line segment with thickness tapering from start to end
         """Add curve from bottom of connect mid line"""
-        if self.start_mode == StartMode.CONNECT_MID and len(prev_array)>1:
+        if self.start_mode == StartMode.CONNECT_MID and len(prev_array)>20:
             P2 = np.array(self.points_array[10])
             if start_array_point_index <= 4:
                 beep = 0
@@ -175,10 +177,11 @@ class LineSegment(Segment):
         length = len(self.points_array) -1
         if len(new_array) > 0:
             length = len(new_array) - 1
-        print(length)
         for i in range(length):
-            if i <= 40 and self.start_mode == StartMode.CONNECT_MID or i <= 40 and self.start_mode == StartMode.SPLIT:
-                thickness = thicknesses[0]
+            if i <= 40 and self.start_mode == StartMode.CONNECT_MID:
+                thickness = thicknesses[start_array_point_index]
+            elif i <= 40 and self.start_mode == StartMode.SPLIT:
+                thickness = thicknesses[split_point_point_index]
             elif i>40 and self.start_mode == StartMode.CONNECT_MID or i>40 and self.start_mode == StartMode.SPLIT:
                 thickness = thicknesses[i-41]
             else:

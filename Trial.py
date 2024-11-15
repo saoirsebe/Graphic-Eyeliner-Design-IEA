@@ -23,7 +23,13 @@ def random_gene(gene_n):
     length_range = (0.5, 5)
     direction_range = (0, 360)
     thickness_range = (1, 5)
-    colour_options = ["red", "green", "blue", "cyan", "magenta"]
+    colour_options = [
+        "red", "green", "blue", "cyan", "magenta",
+        "yellow", "black", "white", "orange", "purple",
+        "pink", "brown", "gray", "lime", "navy",
+        "teal", "maroon", "gold", "silver", "olive"
+    ]
+
     curviness_range = (0, 10)
     curve_direction_range = (0, 360)
     curve_location_range = (0,1)
@@ -129,7 +135,7 @@ def analyze_gene(design ):
                     score = score + 1
     print("score: ",score)
 
-#initialise_gene_pool()
+initialise_gene_pool()
 
 
 """
@@ -200,7 +206,7 @@ for i in range(5):
     print("start mode:", new_segment.start_mode)
     design.add_segment(new_segment)
     next_start_thickness = design.get_start_thickness()
-"""
+
 new_segment = create_segment(
         segment_type=SegmentType.LINE,
         start = (3,1.5),
@@ -217,7 +223,6 @@ new_segment = create_segment(
         split_point=random.uniform(*curve_location_range)
 
 )
-print("start mode:", new_segment.start_mode)
 design.add_segment(new_segment)
 next_start_thickness = design.get_start_thickness()
 
@@ -237,7 +242,6 @@ new_segment = create_segment(
         split_point=random.uniform(*curve_location_range)
 
 )
-print("start mode:", new_segment.start_mode)
 design.add_segment(new_segment)
 next_start_thickness = design.get_start_thickness()
 
@@ -264,4 +268,4 @@ next_start_thickness = design.get_start_thickness()
 
 design.render(ax)
 plt.show()
-#
+"""
