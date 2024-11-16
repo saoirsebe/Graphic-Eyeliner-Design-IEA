@@ -10,7 +10,6 @@ from StarGeneration import *
 
 class SegmentType(Enum):
     LINE = 'LINE'
-    #CURVE = 'CURVE'
     #FORK = 'FORK'
     #TAPER = 'TAPER'
     STAR = 'STAR'
@@ -100,8 +99,11 @@ class LineSegment(Segment):
 
     def render(self, ax_n, prev_array, prev_angle):
         new_array=[]
-        if self.start_mode == StartMode.CONNECT and len(prev_array)>0 or self.start_mode == StartMode.SPLIT and len(prev_array)>0:
+        if self.start_mode == StartMode.CONNECT and len(prev_array)>15 or self.start_mode == StartMode.SPLIT and len(prev_array)>15:
             self.start = (prev_array[-1][0], prev_array[-1][1])
+        elif self.start_mode == StartMode.CONNECT and len(prev_array)<=15 or self.start_mode == StartMode.SPLIT and len(prev_array)<=15:
+            end_index = point_in_array(prev_array, 0.5)
+            self.start = (prev_array[end_index][0], prev_array[end_index][1])
         elif self.start_mode == StartMode.CONNECT_MID and len(prev_array)>0:
             start_array_point_index = point_in_array(prev_array, self.start_location)
             start_array_point = prev_array[start_array_point_index]
@@ -251,16 +253,19 @@ class StarSegment(Segment):
         if end_arm > num_points:
             self.end_arm = num_points //2 #if end_point is bigger then the number of points then end at the opposite point to start (num_points div 2)
         else:
-            self.end_arm = end_arm
+            self.end_arm = end_arm #No need for end arm?!??!?!?!?!?!!!
         self.arm_points_array = []
 
 
     def render(self, ax_n, prev_array, prev_angle):
-        if self.start_mode == StartMode.CONNECT and len(prev_array)>0:
+        if self.start_mode == StartMode.CONNECT and len(prev_array)>15:
             self.start = (prev_array[-1][0], prev_array[-1][1])
             self.center = self.start
+        elif self.start_mode == StartMode.CONNECT and len(prev_array)<=15:
+            end_index = point_in_array(prev_array, 0.5)
+            self.start = (prev_array[end_index][0], prev_array[end_index][1])
+            self.center = self.start
         #elif self.start_mode == StartMode.CONNECT_MID and prev_array:
-
 
         self.absolute_angle = prev_angle + self.relative_angle
 
