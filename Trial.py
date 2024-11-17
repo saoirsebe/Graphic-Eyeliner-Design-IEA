@@ -16,17 +16,17 @@ def random_gene(gene_n):
     next_start_thickness = random.uniform(1,5)
 
     #Parameter ranges:
-    start_x_range = (-1,10)
-    start_y_range = (0,10)
+    start_x_range = (-1,7)
+    start_y_range = (0,6)
     #start_mode_options = list(StartMode)
     #Segment_type_options = list(SegmentType)
     length_range = (0.5, 5)
     direction_range = (0, 360)
     thickness_range = (1, 5)
     colour_options = [
-        "red", "green", "blue", "cyan", "magenta", "black", "white", "orange", "purple",
+        "red", "green", "blue", "cyan", "magenta", "black", "orange", "purple",
         "pink", "brown", "gray", "lime", "navy",
-        "teal", "maroon", "gold", "silver", "olive"
+        "teal", "maroon", "gold", "olive"
     ]
 
     curviness_range = (0, 10)
@@ -48,13 +48,18 @@ def random_gene(gene_n):
         #new_segment_type = random.choice(list(SegmentType))
         new_segment_type = SegmentType.LINE if random.random() < 0.8 else SegmentType.STAR
         if new_segment_type == SegmentType.LINE:
+            start_mode = random.choice(list(StartMode))
+            if start_mode == StartMode.JUMP:
+                start_thickness = random.uniform(*thickness_range)
+            else:
+                start_thickness = next_start_thickness
             new_segment = create_segment(
                 segment_type=SegmentType.LINE,
                 start=segment_start,
-                start_mode=random.choice(list(StartMode)),
+                start_mode=start_mode,
                 length=random.uniform(*length_range),
                 relative_angle=random.uniform(*direction_range),
-                start_thickness=next_start_thickness,
+                start_thickness=start_thickness,
                 end_thickness=random.uniform(*thickness_range),
                 colour=random.choice(colour_options),
                 curviness = 0 if random.random() < 0.5 else random.uniform(*curviness_range),
@@ -64,17 +69,21 @@ def random_gene(gene_n):
                 split_point = random.uniform(*curve_location_range)
             )
         elif new_segment_type == SegmentType.STAR:
-            num_points = random.randint(*num_points_range)
+            start_mode = random.choice(list(StartMode))
+            if start_mode == StartMode.JUMP:
+                start_thickness = random.uniform(*thickness_range)
+            else:
+                start_thickness = next_start_thickness
             new_segment = create_segment(
                 segment_type=SegmentType.STAR,
                 start=segment_start,
                 start_mode=random.choice([StartMode.CONNECT, StartMode.JUMP]),
                 radius=random.uniform(*radius_range),
                 arm_length=random.uniform(*arm_length_range),
-                num_points=num_points,
+                num_points=random.randint(*num_points_range),
                 asymmetry=random.uniform(*asymmetry_range),
                 curved=random.choice([True, False]),
-                end_thickness=random.uniform(*thickness_range),
+                end_thickness=start_thickness,
                 relative_angle=random.uniform(*direction_range),
                 colour=random.choice(colour_options),
             )
@@ -95,6 +104,7 @@ def initialise_gene_pool():
         ax.set_title(f"Design {idx + 1}")
         gene.render(ax)  # Render each gene on its specific subplot
         delete_segment = analyze_gene(gene)
+
         while delete_segment:
             gene_pool[idx] = random_gene(idx)
             gene = gene_pool[idx]  # Update the loop variable with the new gene
