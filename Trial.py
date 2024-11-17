@@ -12,7 +12,7 @@ import random
 
 def random_gene(gene_n):
     design = EyelinerDesign()
-    n_objects = random.randint(1,10)
+    n_objects = random.randint(4,15)
     next_start_thickness = random.uniform(1,5)
 
     #Parameter ranges:
@@ -39,8 +39,8 @@ def random_gene(gene_n):
     #curved_range = ["True","False"]
 
     for i in range(n_objects):
-        if (gene_n ==0 and i==0) or (gene_n ==1 and i==0):
-            segment_start = (3,1.5)
+        if i==0:#(gene_n ==0 and i==0) or (gene_n ==1 and i==0):
+            segment_start = (3, 1.5)
         else:
             segment_start = (random.uniform(*start_x_range), random.uniform(*start_y_range))
 
@@ -56,7 +56,7 @@ def random_gene(gene_n):
                 relative_angle=random.uniform(*direction_range),
                 start_thickness=next_start_thickness,
                 end_thickness=random.uniform(*thickness_range),
-                color=random.choice(colour_options),
+                colour=random.choice(colour_options),
                 curviness = 0 if random.random() < 0.5 else random.uniform(*curviness_range),
                 curve_direction=random.uniform(*curve_direction_range),
                 curve_location=random.uniform(*curve_location_range),
@@ -76,7 +76,7 @@ def random_gene(gene_n):
                 curved=random.choice([True, False]),
                 end_thickness=random.uniform(*thickness_range),
                 relative_angle=random.uniform(*direction_range),
-                end_arm=random.randint(0, num_points-1)
+                colour=random.choice(colour_options),
             )
 
         design.add_segment(new_segment)
@@ -94,7 +94,15 @@ def initialise_gene_pool():
         ax = axes[idx]
         ax.set_title(f"Design {idx + 1}")
         gene.render(ax)  # Render each gene on its specific subplot
-        analyze_gene(gene)
+        delete_segment = analyze_gene(gene)
+        while delete_segment:
+            gene_pool[idx] = random_gene(idx)
+            gene = gene_pool[idx]  # Update the loop variable with the new gene
+            ax.clear()  # Clear the previous gene's rendering
+            ax.set_title(f"New design {idx + 1}")  # Reset the title
+            gene.render(ax)  # Render the new gene
+            print("Gene replaced")
+            delete_segment = analyze_gene(gene)
 
     plt.tight_layout()
     plt.show()
@@ -103,7 +111,9 @@ def check_overlap(i, segments):
     segment = segments[i].points_array
     overlaps =0
     for j in range (i+1,len(segments)-1):
+        overlap_found = False
         segment_j = segments[j].points_array
+        """
         if len(segment) >= 1200:
             segment = segment[::3]
         elif len(segment) >= 800:
@@ -113,6 +123,7 @@ def check_overlap(i, segments):
             segment_j = segment_j[::3]
         elif len(segment_j) >= 800:
             segment_j = segment_j[::2]
+        """
 
         if j == (i + 1) and (segments[j].start_mode == StartMode.CONNECT_MID or segments[j].start_mode == StartMode.CONNECT ):
             segment_j = segment_j[2:]
@@ -124,15 +135,15 @@ def check_overlap(i, segments):
                 distance = np.linalg.norm(point1 - point2)
                 # Check if distance is within the tolerance
                 if distance <= 0.05:
-                    overlaps +=1  # Overlap found
+                    overlap_found = True
+        if overlap_found :
+            overlaps += 1  # Overlap found
                     #print(segments[i].segment_type)
                     #print(segments[j].segment_type)
-
-
     return overlaps
 
 
-def analyze_gene(design ):
+def analyze_gene(design):
     segments = design.segments
     score = 0  # Count how many overlaps there are in this gene
     # Compare each pair of segments for overlap
@@ -143,6 +154,10 @@ def analyze_gene(design ):
                 if segments[i+1].start_mode == StartMode.CONNECT and 90 <= segments[i+1].relative_angle <= 180:
                     score = score + 1
     print("score: ",score)
+    if score < -3:
+        return True
+    else:
+        return False
 
 initialise_gene_pool()
 

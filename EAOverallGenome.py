@@ -26,15 +26,15 @@ class StartMode(Enum):
 
 class Segment:
     """Base class for all segments."""
-    def __init__(self, segment_type, start, start_mode, end_thickness, relative_angle):
+    def __init__(self, segment_type, start, start_mode, end_thickness, relative_angle, colour):
         self.segment_type = segment_type
         self.start = start  # Tuple (x, y)
-        self.end = None     # Calculated by subclass
         self.start_mode = start_mode
         self.end_thickness = end_thickness
         self.relative_angle = relative_angle
         self.absolute_angle = 0  # initialise to 0 and re-set after rendered
         self.points_array = []
+        self.colour = colour
 
     def render(self, ax_n, prev_end, prev_angle):
         """Base render method to override in subclasses."""
@@ -54,11 +54,11 @@ def point_in_array(array,location_in_array):
 
 class LineSegment(Segment):
     """Line segment with additional properties specific to a line."""
-    def __init__(self, segment_type, start, start_mode, length, relative_angle, start_thickness, end_thickness, color, curviness, curve_direction, curve_location, start_location, split_point):
-        super().__init__(segment_type, start, start_mode, end_thickness, relative_angle)
+    def __init__(self, segment_type, start, start_mode, length, relative_angle, start_thickness, end_thickness, colour, curviness, curve_direction, curve_location, start_location, split_point):
+        super().__init__(segment_type, start, start_mode, end_thickness, relative_angle, colour)
+        self.end = None  # Calculated in render
         self.length = length
         self.start_thickness = start_thickness
-        self.color = color
         self.curviness = curviness
         if curviness>0:  #If curved line then curve direction else no curve direction
             self.curve_direction = curve_direction #curve direction in degrees
@@ -187,7 +187,7 @@ class LineSegment(Segment):
                     thickness = thicknesses[i]
                 ax_n.plot(
                     [x_values[i], x_values[i + 1]], [y_values[i], y_values[i + 1]],
-                    color=self.color,
+                    color=self.colour,
                     linewidth=thickness,
                     solid_capstyle='butt',
                 )
@@ -200,7 +200,7 @@ class LineSegment(Segment):
                     thickness = thicknesses[i]
                 ax_n.plot(
                     [x_values[i], x_values[i + 1]], [y_values[i], y_values[i + 1]],
-                    color=self.color,
+                    color=self.colour,
                     linewidth=thickness,
                     solid_capstyle='butt',
                 )
@@ -210,7 +210,7 @@ class LineSegment(Segment):
                 thickness = thicknesses[i]
                 ax_n.plot(
                     [x_values[i], x_values[i + 1]], [y_values[i], y_values[i + 1]],
-                    color=self.color,
+                    color=self.colour,
                     linewidth=thickness,
                     solid_capstyle='butt',
                 )
@@ -239,8 +239,8 @@ class LineSegment(Segment):
 
 class StarSegment(Segment):
     """Line segment with additional properties specific to a line."""
-    def __init__(self, segment_type, start, center, radius, arm_length, num_points,asymmetry,curved, start_mode, end_thickness, relative_angle, end_arm):
-        super().__init__(segment_type, start, start_mode, end_thickness,relative_angle)
+    def __init__(self, segment_type, start, colour, center, radius, arm_length, num_points,asymmetry,curved, start_mode, end_thickness, relative_angle):
+        super().__init__(segment_type, start, start_mode, end_thickness,relative_angle, colour)
         self.center = center
         self.radius = radius
         self.arm_length = arm_length
@@ -249,11 +249,6 @@ class StarSegment(Segment):
         self.curved = curved
         #start_angle = 2 * np.pi * num_points / num_points #angle for last arm
         #bin, end_p = StarGeneration.create_star_arm(center, radius,arm_length, num_points,start_angle,asymmetry,num_points,curved) #armN = last arm so num_points
-        self.end = (0,0)
-        if end_arm > num_points:
-            self.end_arm = num_points //2 #if end_point is bigger then the number of points then end at the opposite point to start (num_points div 2)
-        else:
-            self.end_arm = end_arm #No need for end arm?!??!?!?!?!?!!!
         self.arm_points_array = []
 
 
@@ -269,12 +264,12 @@ class StarSegment(Segment):
 
         self.absolute_angle = prev_angle + self.relative_angle
 
-        star_points, star_arm_points = StarGeneration.create_star(self.num_points, self.center, self.radius, self.arm_length, self.asymmetry, self.curved, self.end_arm, self.absolute_angle)
+        star_points, star_arm_points = StarGeneration.create_star(self.num_points, self.center, self.radius, self.arm_length, self.asymmetry, self.curved, self.absolute_angle)
         start_coord = star_arm_points[-1]
         transformation_vector = (self.center[0] - start_coord[0], self.center[1] - start_coord[1])
         #self.end = (end_coord[0]+transformation_vector[0], end_coord[1]+transformation_vector[1])
         transformed_star_points = np.array([(point[0] + transformation_vector[0], point[1] + transformation_vector[1]) for point in star_points])
-        ax_n.plot(transformed_star_points[:, 0], transformed_star_points[:, 1], 'b', lw=self.end_thickness)  # Plot all points as a single object
+        ax_n.plot(transformed_star_points[:, 0], transformed_star_points[:, 1], self.colour, lw=self.end_thickness)  # Plot all points as a single object
         transformed_arm_points = np.array([(point[0] + transformation_vector[0], point[1] + transformation_vector[1]) for point in star_arm_points])
         self.arm_points_array = transformed_arm_points
         self.points_array = transformed_star_points
@@ -290,7 +285,7 @@ def create_segment(start, start_mode, segment_type, **kwargs):
             relative_angle=kwargs.get('relative_angle', 0),
             start_thickness=kwargs.get('start_thickness', 1),
             end_thickness=kwargs.get('end_thickness', 1),
-            color=kwargs.get('color', 'black'),
+            colour=kwargs.get('colour', 'black'),
             length = kwargs.get('length', 1),
             curviness=kwargs.get('curviness', 0),
             curve_direction=kwargs.get('curve_direction', 90),
@@ -312,7 +307,7 @@ def create_segment(start, start_mode, segment_type, **kwargs):
             curved=kwargs.get('curved', True),
             end_thickness = kwargs.get('end_thickness', 1),
             relative_angle =kwargs.get('relative_angle', 0),
-            end_arm=kwargs.get('end_arm', 0)
+            colour=kwargs.get('colour', 'black')
         )
     else:
         raise ValueError(f"Unsupported segment type: {segment_type}")

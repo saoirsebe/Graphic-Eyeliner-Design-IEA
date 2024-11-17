@@ -74,7 +74,7 @@ def rotate_points(points, theta):
     return np.dot(points, rot_matrix.T)
 """
 
-def create_star(num_points, center, radius, arm_length , asymmetry, curved, end_arm, star_direction):
+def create_star(num_points, center, radius, arm_length , asymmetry, curved, star_direction):
     star_points = []
     end_point = (0,0) #Starts at (0,0) and changed to P2 after each arm creation
     start_point = (0,0)
