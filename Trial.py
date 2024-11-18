@@ -99,9 +99,7 @@ def initialise_gene_pool():
             print("Gene replaced")
             delete_segment = analyze_gene(gene)
 
-    #plt.tight_layout()
-    #plt.show()
-    return fig
+    return fig, axes
 
 def check_overlap(i, segments):
     segment = segments[i].points_array
@@ -155,9 +153,9 @@ def analyze_gene(design):
     else:
         return False
 
-plt = initialise_gene_pool()
-plt.tight_layout()
-plt.show()
+#plt = initialise_gene_pool()
+#plt.tight_layout()
+#plt.show()
 
 """
 num_points=random.randint(*num_points_range)
