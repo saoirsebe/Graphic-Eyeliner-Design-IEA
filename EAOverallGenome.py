@@ -36,7 +36,7 @@ class Segment:
         self.points_array = []
         self.colour = colour
 
-    def render(self, ax_n, prev_end, prev_angle):
+    def render(self, ax_n, prev_array, prev_angle, prev_colour, prev_end_thickness):
         """Base render method to override in subclasses."""
         raise NotImplementedError("Subclasses should implement this!")
 
@@ -97,10 +97,11 @@ class LineSegment(Segment):
         return np.concatenate((left_curve, right_curve, self.points_array), axis=0)
 
 
-    def render(self, ax_n, prev_array, prev_angle):
+    def render(self, ax_n, prev_array, prev_angle, prev_colour, prev_end_thickness):
         new_array=[]
         if self.start_mode == StartMode.CONNECT and len(prev_array)>15 or self.start_mode == StartMode.SPLIT and len(prev_array)>15:
             self.start = (prev_array[-1][0], prev_array[-1][1])
+            self.start_thickness = prev_end_thickness
         elif self.start_mode == StartMode.CONNECT and len(prev_array)<=15 or self.start_mode == StartMode.SPLIT and len(prev_array)<=15:
             end_index = point_in_array(prev_array, 0.5)
             self.start = (prev_array[end_index][0], prev_array[end_index][1])
@@ -179,20 +180,22 @@ class LineSegment(Segment):
         if len(new_array) > 0:
             # Plot the first 40 points as one segment
             for i in range(min(40, len(x_values) - 1)):
+                this_colour = self.colour
                 if self.start_mode == StartMode.CONNECT_MID:
                     thickness = thicknesses[start_array_point_index]
                 elif self.start_mode == StartMode.SPLIT:
-                    thickness = thicknesses[split_point_point_index]
+                    thickness = thicknesses[0]
+                    this_colour = prev_colour
                 else:
                     thickness = thicknesses[i]
                 ax_n.plot(
                     [x_values[i], x_values[i + 1]], [y_values[i], y_values[i + 1]],
-                    color=self.colour,
+                    color=this_colour,
                     linewidth=thickness,
                     solid_capstyle='butt',
                 )
 
-            # Start a new segment for the remaining points
+            # Plot remaining points
             for i in range(40, len(x_values) - 1):
                 if self.start_mode == StartMode.CONNECT_MID or self.start_mode == StartMode.SPLIT:
                     thickness = thicknesses[i - 41]
@@ -205,7 +208,7 @@ class LineSegment(Segment):
                     solid_capstyle='butt',
                 )
         else:
-            # Plot normally if no new_array exists
+            # Plot normally if no new_array exists (Start type is jump or connect so no blend between lines needed)
             for i in range(len(x_values) - 1):
                 thickness = thicknesses[i]
                 ax_n.plot(
@@ -252,7 +255,7 @@ class StarSegment(Segment):
         self.arm_points_array = []
 
 
-    def render(self, ax_n, prev_array, prev_angle):
+    def render(self, ax_n, prev_array, prev_angle, prev_colour, prev_end_thickness):
         if self.start_mode == StartMode.CONNECT and len(prev_array)>15:
             self.start = (prev_array[-1][0], prev_array[-1][1])
             self.center = self.start
@@ -329,13 +332,17 @@ class EyelinerDesign:   #Creates overall design, calculates start points, render
         segment_n = 0
         prev_array = np.array([self.segments[0].start])
         prev_angle = 0
+        prev_colour = self.segments[0].colour
+        prev_end_thickness = self.segments[0].end_thickness
         for segment in self.segments:
-            segment.render(ax_n, prev_array, prev_angle)
+            segment.render(ax_n, prev_array, prev_angle,prev_colour,prev_end_thickness)
             if segment.segment_type == SegmentType.STAR:
                 prev_array = self.segments[segment_n].arm_points_array #if previous segment was a star then pass in the arm points that the next segment should start at
             else:
                 prev_array = self.segments[segment_n].points_array
             prev_angle = self.segments[segment_n].absolute_angle
+            prev_colour = self.segments[segment_n].colour
+            prev_end_thickness = self.segments[segment_n].end_thickness
             segment_n += 1
 
     def get_start_thickness(self):

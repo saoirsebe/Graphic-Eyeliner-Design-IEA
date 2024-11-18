@@ -2,19 +2,13 @@ import cv2
 import numpy as np
 import matplotlib.pyplot as plt
 from math import comb
-
 #from dask_expr.diagnostics import analyze
-
 from EAOverallGenome import *
 import random
-
-
 
 def random_gene(gene_n):
     design = EyelinerDesign()
     n_objects = random.randint(4,15)
-    next_start_thickness = random.uniform(1,5)
-
     #Parameter ranges:
     start_x_range = (-1,7)
     start_y_range = (0,6)
@@ -28,12 +22,11 @@ def random_gene(gene_n):
         "pink", "brown", "gray", "lime", "navy",
         "teal", "maroon", "gold", "olive"
     ]
-
     curviness_range = (0, 10)
     curve_direction_range = (0, 360)
     curve_location_range = (0,1)
-    radius_range = (0,2)
-    arm_length_range = (0,2)
+    radius_range = (0,1.5)
+    arm_length_range = (0,1.5)
     num_points_range = (3,15)
     asymmetry_range = (0,3)
     #curved_range = ["True","False"]
@@ -49,17 +42,13 @@ def random_gene(gene_n):
         new_segment_type = SegmentType.LINE if random.random() < 0.8 else SegmentType.STAR
         if new_segment_type == SegmentType.LINE:
             start_mode = random.choice(list(StartMode))
-            if start_mode == StartMode.JUMP:
-                start_thickness = random.uniform(*thickness_range)
-            else:
-                start_thickness = next_start_thickness
             new_segment = create_segment(
                 segment_type=SegmentType.LINE,
                 start=segment_start,
                 start_mode=start_mode,
                 length=random.uniform(*length_range),
                 relative_angle=random.uniform(*direction_range),
-                start_thickness=start_thickness,
+                start_thickness=random.uniform(*thickness_range),
                 end_thickness=random.uniform(*thickness_range),
                 colour=random.choice(colour_options),
                 curviness = 0 if random.random() < 0.5 else random.uniform(*curviness_range),
@@ -70,10 +59,6 @@ def random_gene(gene_n):
             )
         elif new_segment_type == SegmentType.STAR:
             start_mode = random.choice(list(StartMode))
-            if start_mode == StartMode.JUMP:
-                start_thickness = random.uniform(*thickness_range)
-            else:
-                start_thickness = next_start_thickness
             new_segment = create_segment(
                 segment_type=SegmentType.STAR,
                 start=segment_start,
@@ -83,7 +68,7 @@ def random_gene(gene_n):
                 num_points=random.randint(*num_points_range),
                 asymmetry=random.uniform(*asymmetry_range),
                 curved=random.choice([True, False]),
-                end_thickness=start_thickness,
+                end_thickness=random.uniform(*thickness_range),
                 relative_angle=random.uniform(*direction_range),
                 colour=random.choice(colour_options),
             )
@@ -165,13 +150,14 @@ def analyze_gene(design):
                 if segments[i+1].start_mode == StartMode.CONNECT and 90 <= segments[i+1].relative_angle <= 180:
                     score = score + 1
     print("score: ",score)
-    if score < -3:
+    if score < -4:
         return True
     else:
         return False
 
-#plt = initialise_gene_pool()
-
+plt = initialise_gene_pool()
+plt.tight_layout()
+plt.show()
 
 """
 num_points=random.randint(*num_points_range)
@@ -190,7 +176,7 @@ new_star_segment = create_segment(
             )
 design.add_segment(new_star_segment)
 next_start_thickness = design.get_start_thickness()
-"""
+
 
 design = EyelinerDesign()
 next_start_thickness = random.uniform(1,5)
@@ -220,7 +206,7 @@ ax.set_aspect('equal')
 ax.set_xlim(-5,10)
 ax.set_ylim(-5,10)
 
-"""
+
 for i in range(5):
     new_segment = create_segment(
         segment_type=SegmentType.LINE,
