@@ -106,17 +106,11 @@ def check_overlap(i, segments):
     for j in range (i+1,len(segments)-1):
         overlap_found = False
         segment_j = segments[j].points_array
-        """
-        if len(segment) >= 1200:
-            segment = segment[::3]
-        elif len(segment) >= 800:
-            segment = segment[::2]
 
+        if len(segment) >= 1200:
+            segment = segment[::2]
         if len(segment_j) >= 1200:
-            segment_j = segment_j[::3]
-        elif len(segment_j) >= 800:
             segment_j = segment_j[::2]
-        """
 
         if j == (i + 1) and (segments[j].start_mode == StartMode.CONNECT_MID or segments[j].start_mode == StartMode.CONNECT ):
             segment_j = segment_j[2:]
@@ -131,8 +125,7 @@ def check_overlap(i, segments):
                     overlap_found = True
         if overlap_found :
             overlaps += 1  # Overlap found
-                    #print(segments[i].segment_type)
-                    #print(segments[j].segment_type)
+
     return overlaps
 
 

@@ -196,7 +196,7 @@ class LineSegment(Segment):
                 )
 
             # Plot remaining points
-            for i in range(40, len(x_values) - 1):
+            for i in range(41, len(x_values) - 1):
                 if self.start_mode == StartMode.CONNECT_MID or self.start_mode == StartMode.SPLIT:
                     thickness = thicknesses[i - 41]
                 else:
