@@ -4,9 +4,11 @@ import json
 import os
 import bcrypt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-
+from DesignPage import DesignPage
+from HomePage import HomePage
 # File to store user credentials
 USERS_FILE = "users.json"
+from Page import Page
 
 def load_users():
     """Load users from the JSON file."""
@@ -36,164 +38,145 @@ class App(tk.Tk):
 
         # Container for all pages
         self.container = tk.Frame(self)
-        self.container.pack(fill="both", expand=True)
+        self.container.grid(row=0, column=0, sticky="nsew")  # Use grid here
 
-        # Dictionary to store pages
-        self.pages = {}
+        # Create a canvas for scrolling
+        self.canvas = tk.Canvas(self.container)
+        self.canvas.grid(row=0, column=0, sticky="nsew")  # Use grid here
+
+        # Add a scrollbar to the canvas
+        self.scrollbar = tk.Scrollbar(self.container, orient="vertical", command=self.canvas.yview)
+        self.scrollbar.grid(row=0, column=1, sticky="ns")  # Use grid here
+        self.canvas.configure(yscrollcommand=self.scrollbar.set)
+
+        # Frame inside the canvas to hold page content
+        self.page_frame = tk.Frame(self.canvas)
+        self.page_frame.grid(row=0, column=0, sticky="nsew")  # Use grid for layout
+
+        # Make the page_frame scrollable
+        self.page_frame.bind("<Configure>", lambda e: self.canvas.configure(scrollregion=self.canvas.bbox("all")))
+
+        self.page_classes = {
+            "HomePage": HomePage,
+            "DesignPage": DesignPage,
+            "LoginPage": LoginPage,
+            "SignUpPage": SignUpPage,
+        }
+
+        self.pages = {}  # Dictionary to store pages
+        for PageClass in (HomePage, DesignPage, SignUpPage, LoginPage):
+            page_name = PageClass.__name__
+            page = PageClass(parent=self.page_frame, controller=self)  # Use page_frame instead of container
+            self.pages[page_name] = page
+            page.grid(row=0, column=0, sticky="nsew")
 
         # Initialize pages
-        self.show_page(LoginPage)
+        self.show_page("LoginPage")
 
-    def show_page(self, page_class):
-        """Show a page by class."""
-        if page_class not in self.pages:
-            # Create the page if it doesn't exist
-            page = page_class(parent=self.container, controller=self)
-            self.pages[page_class] = page
-            page.grid(row=0, column=0, sticky="nsew")
-        # Bring the page to the front
-        self.pages[page_class].tkraise()
+    def show_page(self, page_name):
+        """Display a page by name."""
+        print("Switching to", page_name)
 
-class LoginPage(tk.Frame):
+        if page_name not in self.pages:
+            # Instantiate the page if not already created
+            page_class = self.page_classes[page_name]
+            page = page_class(parent=self.page_frame, controller=self)
+            self.pages[page_name] = page
+            page.grid(row=0, column=0, sticky="nsew")  # Use grid for page layout
+
+        # Hide all widgets in the page_frame using grid_forget()
+        for widget in self.page_frame.winfo_children():
+            widget.grid_forget()  # Remove all widgets in the page_frame
+
+        # Show the new page
+        self.pages[page_name].grid(row=0, column=0, sticky="nsew")  # Show the new page
+        print("Page switched to", page_name)
+
+
+
+class LoginPage(Page):
     def __init__(self, parent, controller):
-        super().__init__(parent)
-        self.controller = controller
+        super().__init__(parent, controller)
         self.create_widgets()
         self.users = load_users()
 
     def create_widgets(self):
-        tk.Label(self, text="Login", font=("Arial", 24)).pack(pady=20)
-        tk.Label(self, text="Username").pack()
-        username_entry = tk.Entry(self)
-        username_entry.pack()
-        tk.Label(self, text="Password").pack()
-        password_entry = tk.Entry(self, show="*")
-        password_entry.pack()
+        # Grid configuration for LoginPage layout
+        self.grid_rowconfigure(0, weight=1)
+        self.grid_rowconfigure(1, weight=1)
+        self.grid_rowconfigure(2, weight=1)
+        self.grid_rowconfigure(3, weight=1)
+        self.grid_rowconfigure(4, weight=1)
+        self.grid_columnconfigure(0, weight=1)
+        self.grid_columnconfigure(1, weight=3)
 
+        # Title label
+        tk.Label(self, text="Login", font=("Arial", 24)).grid(row=0, column=0, columnspan=2, pady=20)
+
+        # Username Label and Entry
+        tk.Label(self, text="Username").grid(row=1, column=0, sticky="e", padx=10, pady=5)
+        username_entry = tk.Entry(self)
+        username_entry.grid(row=1, column=1, padx=10, pady=5, sticky="ew")
+
+        # Password Label and Entry
+        tk.Label(self, text="Password").grid(row=2, column=0, sticky="e", padx=10, pady=5)
+        password_entry = tk.Entry(self, show="*")
+        password_entry.grid(row=2, column=1, padx=10, pady=5, sticky="ew")
+
+        # Login function
         def login():
             username = username_entry.get()
             password = password_entry.get()
             if username in self.users and check_password(self.users[username], password):
-                self.controller.show_page(HomePage)
+                self.controller.show_page("HomePage")
             else:
                 messagebox.showerror("Login Failed", "Invalid username or password")
 
-
+        # Go to SignUp page function
         def go_to_signup():
-            self.controller.show_page(SignUpPage)
+            self.controller.show_page("SignUpPage")
 
-        tk.Button(self, text="Login", command=login).pack(pady=10)
-        tk.Button(self, text="Sign Up", command=go_to_signup).pack(pady=5)
+        # Login and Signup buttons
+        tk.Button(self, text="Login", command=login).grid(row=3, column=0, columnspan=2, pady=10)
+        tk.Button(self, text="Sign Up", command=go_to_signup).grid(row=4, column=0, columnspan=2, pady=5)
 
-from Trial import *
-
-class DesignPage(tk.Frame):
+# SignUpPage with grid layout
+class SignUpPage(Page):
     def __init__(self, parent, controller):
-        super().__init__(parent)
-        self.controller = controller
-        self.selected_designs = [False] * 6  # Keep track of selected designs
-        self.create_widgets()
-        self.designing = False
-
-    def create_widgets(self):
-        # Instructions
-        while(self.designing==False):
-            tk.Button(self, text="Start designing", command=lambda: start_designing).pack(pady=10)
-        def start_designing():
-            self.designing = True
-
-        while(self.designing):
-            tk.Label(self, text="Pick your favorite designs", font=("Arial", 18)).pack(pady=20)
-            # Frame for the design canvas
-            canvas_frame = tk.Frame(self)
-            canvas_frame.pack(fill="both", expand=True)
-
-            # Generate the design grid
-            self.fig, self.axes = initialise_gene_pool()
-            self.fig.tight_layout(pad=3)
-
-            # Fill the subplots with dummy data
-            self.buttons = []
-            for i, ax in enumerate(self.axes.flatten()):
-                x = np.linspace(0, 10, 100)
-                y = np.sin(x + i)  # Generate different designs
-                ax.plot(x, y)
-                ax.set_title(f"Design {i + 1}")
-
-                # Add button functionality to each subplot
-                button = tk.Button(
-                    canvas_frame,
-                    text="Select",
-                    bg="red",
-                    fg="white",
-                    command=lambda idx=i: self.toggle_selection(idx),
-                )
-                self.buttons.append(button)
-
-            # Draw the designs on the canvas
-            canvas = FigureCanvasTkAgg(self.fig, canvas_frame)
-            canvas.get_tk_widget().pack(fill="both", expand=True)
-            canvas.draw()
-
-            # Place toggle buttons below each subplot
-            for i, button in enumerate(self.buttons):
-                row, col = divmod(i, 3)  # Convert index into 2D grid positions
-                button.place(
-                    x=col * 200 + 50, y=row * 200 + 350, width=100, height=40
-                )  # Adjust positions as needed
-
-            # Add a submission button
-            tk.Button(self, text="Submit Selection", command=self.submit_selection, bg="blue", fg="white").pack(pady=10)
-        tk.Button(self, text="Back to Home", command=lambda: self.controller.show_page(HomePage)).pack(pady=10)
-
-    def toggle_selection(self, idx):
-        """Toggle the selection state of a design."""
-        self.selected_designs[idx] = not self.selected_designs[idx]
-        # Update button appearance
-        self.buttons[idx].config(bg="green" if self.selected_designs[idx] else "red", text="Selected" if self.selected_designs[idx] else "Select")
-
-    def submit_selection(self):
-        """Process and validate the selected designs."""
-        selected = [i for i, selected in enumerate(self.selected_designs) if selected]
-        if len(selected) != 2:
-            tk.messagebox.showerror("Error", "Please select exactly 2 designs.")
-        else:
-            tk.messagebox.showinfo("Selection Complete", f"You selected designs: {selected}")
-            # Continue with merging or further processing
-
-class HomePage(tk.Frame):
-    def __init__(self, parent, controller):
-        super().__init__(parent)
-        self.controller = controller
-        self.create_widgets()
-
-    def create_widgets(self):
-        tk.Label(self, text="Welcome to the Eyeliner Design App", font=("Arial", 18)).pack(pady=20)
-        tk.Button(self, text="Start Designing", command=lambda: self.controller.show_page(DesignPage)).pack(pady=10)
-
-
-class SignUpPage(tk.Frame):
-    def __init__(self, parent, controller):
-        super().__init__(parent)
-        self.controller = controller
+        super().__init__(parent, controller)
         self.users = load_users()
         self.create_widgets()
 
     def create_widgets(self):
-        tk.Label(self, text="Sign Up", font=("Arial", 24)).pack(pady=20)
+        # Grid configuration for SignUpPage layout
+        self.grid_rowconfigure(0, weight=1)
+        self.grid_rowconfigure(1, weight=1)
+        self.grid_rowconfigure(2, weight=1)
+        self.grid_rowconfigure(3, weight=1)
+        self.grid_rowconfigure(4, weight=1)
+        self.grid_rowconfigure(5, weight=1)
+        self.grid_columnconfigure(0, weight=1)
+        self.grid_columnconfigure(1, weight=3)
 
-        tk.Label(self, text="Username").pack()
+        # Title label
+        tk.Label(self, text="Sign Up", font=("Arial", 24)).grid(row=0, column=0, columnspan=2, pady=20)
+
+        # Username Label and Entry
+        tk.Label(self, text="Username").grid(row=1, column=0, sticky="e", padx=10, pady=5)
         username_entry = tk.Entry(self)
-        username_entry.pack()
+        username_entry.grid(row=1, column=1, padx=10, pady=5, sticky="ew")
 
-        tk.Label(self, text="Password").pack()
+        # Password Label and Entry
+        tk.Label(self, text="Password").grid(row=2, column=0, sticky="e", padx=10, pady=5)
         password_entry = tk.Entry(self, show="*")
-        password_entry.pack()
+        password_entry.grid(row=2, column=1, padx=10, pady=5, sticky="ew")
 
-        tk.Label(self, text="Confirm Password").pack()
+        # Confirm Password Label and Entry
+        tk.Label(self, text="Confirm Password").grid(row=3, column=0, sticky="e", padx=10, pady=5)
         confirm_password_entry = tk.Entry(self, show="*")
-        confirm_password_entry.pack()
+        confirm_password_entry.grid(row=3, column=1, padx=10, pady=5, sticky="ew")
 
+        # SignUp function
         def signup():
             username = username_entry.get()
             password = password_entry.get()
@@ -209,11 +192,11 @@ class SignUpPage(tk.Frame):
                 self.users[username] = hash_password(password)
                 save_users(self.users)
                 messagebox.showinfo("Success", "Account created successfully")
-                self.controller.show_page(LoginPage)
+                self.controller.show_page("LoginPage")
 
-
-        tk.Button(self, text="Sign Up", command=signup).pack(pady=10)
-        tk.Button(self, text="Back to Login", command=lambda: self.controller.show_page(LoginPage)).pack(pady=5)
+        # SignUp and Back to Login buttons
+        tk.Button(self, text="Sign Up", command=signup).grid(row=4, column=0, columnspan=2, pady=10)
+        tk.Button(self, text="Back to Login", command=lambda: self.controller.show_page("LoginPage")).grid(row=5, column=0, columnspan=2, pady=5)
 
 App().mainloop()
 
