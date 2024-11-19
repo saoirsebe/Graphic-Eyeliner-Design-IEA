@@ -12,10 +12,13 @@ class DesignPage(Page):
         super().__init__(parent, controller)
         self.selected_designs = [False] * 6  # Keep track of selected designs
         self.create_widgets()
+        self.current_gene_pool = []
+        self.selected_gene_indices = []
+        self.buttons = []
 
     def create_widgets(self):
         # Create the initial screen with instructions
-        tk.Label(self, text="Start designing your makeup look!", font=("Arial", 18)).grid(row=0, column=0, columnspan=2, pady=20)
+        tk.Label(self, text="Start designing your makeup look!", font=("Arial", 18)).grid(row=0, column=2, columnspan=2, pady=20)
 
         # Back to Home button
         tk.Button(self, text="Back to Home", command=lambda: self.controller.show_page("HomePage")).grid(row=1, column=0, columnspan=2, pady=10)
@@ -25,52 +28,50 @@ class DesignPage(Page):
 
     def start_designing(self):
         self.start_button.grid_forget()
-        tk.Label(self, text="Pick your favorite designs", font=("Arial", 18)).pack(pady=20)
-        # Frame for the design canvas
-        design_frame = tk.Frame(self)
-        design_frame.grid(row=3, column=0, columnspan=2, pady=20)
+        tk.Label(self, text="Pick your favorite designs", font=("Arial", 18)).grid(row=3, column=2, columnspan=2, pady=10)
+        self.current_gene_pool = initialise_gene_pool()
 
-        # Generate the design grid
-        self.fig, self.axes = initialise_gene_pool()
-        self.fig.tight_layout(pad=3)
+        def toggle_gene(index,button):
+            """Toggle the selection of a gene."""
+            if index in self.selected_gene_indices:
+                self.selected_gene_indices.remove(index)  # Deselect the gene
+                print(self.selected_gene_indices)
+                button.config(highlightbackground="black", highlightthickness=0)  # Default border
+            else:
+                self.selected_gene_indices.append(index)  # Select the gene
+                button.config(highlightbackground="green", highlightthickness=2)  # Green border
+                print(self.selected_gene_indices)
 
-        canvas = FigureCanvasTkAgg(self.fig, design_frame)
-        canvas.get_tk_widget().grid(row=0, column=0, columnspan=3)  # Place the canvas
 
-        # Fill the subplots with dummy data
-        self.buttons = []
-        for i, ax in enumerate(self.axes.flatten()):
-            ax.set_title(f"Design {i + 1}")
-            button = tk.Button(
-                design_frame,
-                text="Select",
-                bg="red",
-                fg="white",
-                command=lambda idx=i: self.toggle_selection(idx),
-            )
-            self.buttons.append(button)
+        for i, gene in enumerate(self.current_gene_pool):
+            canvas_frame = tk.Frame( borderwidth=1, relief="solid")
+            canvas_frame.grid(row=(i // 3) + 5, column=i % 3, padx=10, pady=10, sticky="nsew")
 
-            # Place each button in a grid (3 columns, 2 rows)
-            row, col = divmod(i, 3)
-            button.grid(row=row + 1, column=col, padx=10, pady=10, sticky="ew")
+            fig = gene.render()
+            canvas = FigureCanvasTkAgg(fig, master=canvas_frame)
+            canvas.draw()
+            canvas_widget = canvas.get_tk_widget()
+            canvas_widget.grid(row=0, column=0, columnspan=2, padx=5, pady=5)  # Place canvas at the top
 
-            # Add a submit button below the design buttons
-        tk.Button(design_frame, text="Submit Selection", command=self.submit_selection, bg="blue", fg="white").grid(row=3, column=0, columnspan=3, pady=20)
+            button = tk.Button(canvas_frame, text="Toggle Selection")
+            button.config(command=lambda index=i, b=button: toggle_gene(index, button))
+            button.grid(row=1, column=0, columnspan=2, padx=5, pady=5, sticky="ew")  # Place button below canvas
 
-    def toggle_selection(self, idx):
-        """Toggle the selection state of a design."""
-        self.selected_designs[idx] = not self.selected_designs[idx]
-        # Update button appearance
-        self.buttons[idx].config(
-            bg="green" if self.selected_designs[idx] else "red",
-            text="Selected" if self.selected_designs[idx] else "Select",
-        )
+
+            # Submit button
+        submit_button = tk.Button(self, text="Submit", command=self.submit_selection)
+        submit_button.grid(row=9, column=0, pady=20)
+
+
+
+
 
     def submit_selection(self):
-        """Process and validate the selected designs."""
-        selected = [i for i, selected in enumerate(self.selected_designs) if selected]
-        if len(selected) != 2:
-            messagebox.showerror("Error", "Please select exactly 2 designs.")
+        """Submit the selected genes."""
+        selected_indices = self.selected_gene_indices
+        print(self.selected_gene_indices)
+        if selected_indices:
+            selected_genes = [f"Gene {i + 1}" for i in selected_indices]
+            messagebox.showinfo("Selected Genes", f"Genes selected: {', '.join(selected_genes)}")
         else:
-            messagebox.showinfo("Selection Complete", f"You selected designs: {selected}")
-            # Continue with merging or further processing
+            messagebox.showwarning("No Genes Selected", "No genes were selected.")

@@ -3,7 +3,6 @@ from tkinter import messagebox
 import json
 import os
 import bcrypt
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from DesignPage import DesignPage
 from HomePage import HomePage
 # File to store user credentials
@@ -71,12 +70,10 @@ class App(tk.Tk):
             page.grid(row=0, column=0, sticky="nsew")
 
         # Initialize pages
-        self.show_page("LoginPage")
+        self.show_page("DesignPage")
 
     def show_page(self, page_name):
         """Display a page by name."""
-        print("Switching to", page_name)
-
         if page_name not in self.pages:
             # Instantiate the page if not already created
             page_class = self.page_classes[page_name]
@@ -90,7 +87,6 @@ class App(tk.Tk):
 
         # Show the new page
         self.pages[page_name].grid(row=0, column=0, sticky="nsew")  # Show the new page
-        print("Page switched to", page_name)
 
 
 

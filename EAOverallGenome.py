@@ -144,7 +144,7 @@ class LineSegment(Segment):
 
             if len(prev_array) > 20:
                 P2 = np.array(prev_array[-10])
-                if split_point_point_index <= 4:
+                if split_point_point_index <= 5:
                     beep = 0
                 else:
                     beep = split_point_point_index - 5
@@ -162,7 +162,7 @@ class LineSegment(Segment):
         """Add curve from bottom of connect mid line"""
         if self.start_mode == StartMode.CONNECT_MID and len(prev_array)>20:
             P2 = np.array(self.points_array[10])
-            if start_array_point_index <= 4:
+            if start_array_point_index <= 5:
                 beep = 0
             else:
                 beep = start_array_point_index - 5
@@ -326,7 +326,8 @@ class EyelinerDesign:   #Creates overall design, calculates start points, render
     def add_segment(self, segment):
         self.segments.append(segment)
 
-    def render(self,ax_n):
+    def render(self):
+        fig, ax_n = plt.subplots(figsize=(3, 3))
         """Render the eyeliner design using matplotlib."""
         draw_eye_shape(ax_n)
         segment_n = 0
@@ -344,6 +345,7 @@ class EyelinerDesign:   #Creates overall design, calculates start points, render
             prev_colour = self.segments[segment_n].colour
             prev_end_thickness = self.segments[segment_n].end_thickness
             segment_n += 1
+        return fig
 
     def get_start_thickness(self):
         if not self.segments:

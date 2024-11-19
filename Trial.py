@@ -87,7 +87,7 @@ def initialise_gene_pool():
     for idx, gene in enumerate(gene_pool):
         ax = axes[idx]
         ax.set_title(f"Design {idx + 1}")
-        gene.render(ax)  # Render each gene on its specific subplot
+        fig = gene.render()  # Render each gene on its specific subplot
         delete_segment = analyze_gene(gene)
 
         while delete_segment:
@@ -95,11 +95,10 @@ def initialise_gene_pool():
             gene = gene_pool[idx]  # Update the loop variable with the new gene
             ax.clear()  # Clear the previous gene's rendering
             ax.set_title(f"New design {idx + 1}")  # Reset the title
-            gene.render(ax)  # Render the new gene
-            print("Gene replaced")
+            fig = gene.render()  # Render the new gene
             delete_segment = analyze_gene(gene)
 
-    return fig, axes
+    return gene_pool
 
 def check_overlap(i, segments):
     segment = segments[i].points_array
