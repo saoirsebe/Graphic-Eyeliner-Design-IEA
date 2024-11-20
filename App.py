@@ -8,6 +8,8 @@ from HomePage import HomePage
 # File to store user credentials
 USERS_FILE = "users.json"
 from Page import Page
+import ttkbootstrap as ttk
+from ttkbootstrap.constants import *
 
 def load_users():
     """Load users from the JSON file."""
@@ -29,9 +31,10 @@ def check_password(stored_hash, password):
     """Check if the entered password matches the stored hash."""
     return bcrypt.checkpw(password.encode('utf-8'), stored_hash.encode('utf-8'))
 
-class App(tk.Tk):
+class App(ttk.Window):
     def __init__(self):
-        super().__init__()
+        super().__init__(themename="darkly")
+
         self.title("Eyeliner Design App")
         self.geometry("800x600")
 
