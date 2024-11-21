@@ -7,6 +7,8 @@ import EyelinerWingGeneration
 from EyelinerWingGeneration import vector_direction, draw_eye_shape
 import StarGeneration
 from StarGeneration import *
+from Trial import colour_options
+
 
 class SegmentType(Enum):
     LINE = 'LINE'
@@ -14,8 +16,6 @@ class SegmentType(Enum):
     #TAPER = 'TAPER'
     STAR = 'STAR'
     #WING = 'WING'
-    #JOIN_LINE = 'JOIN_LINE'
-
 
 class StartMode(Enum):
     CONNECT = 'CONNECT'
@@ -220,21 +220,44 @@ class LineSegment(Segment):
 
     def mutate(self, mutation_rate=0.1):
         """Randomly mutate properties of the line segment within a mutation rate."""
-        # Randomly mutate length and direction
-        if np.random.uniform(0,1)>0.5:
-            self.length *= 1 + np.random.uniform(-mutation_rate, mutation_rate)
-        self.relative_angle += np.random.uniform(-mutation_rate,
-                                            mutation_rate) * 360  # random angle mutation within ±mutation rate of a full circle
+        if np.random.normal() < mutation_rate:
+            self.start_mode = np.random.choice([StartMode.CONNECT, StartMode.JUMP])
+        if self.start_mode == StartMode.JUMP:
+            self.start *= 1 + np.random.normal(-mutation_rate, mutation_rate)
+        self.end_thickness *= 1 + np.random.normal(-mutation_rate, mutation_rate)
+        self.relative_angle += np.random.normal(-mutation_rate, mutation_rate) * 360  # random angle mutation within ±mutation rate of a full circle
 
-        # Randomly mutate thicknesses
-        #self.start_thickness *= 1 + np.random.uniform(-mutation_rate, mutation_rate)
-        self.end_thickness *= 1 + np.random.uniform(-mutation_rate, mutation_rate)
+        if np.random.normal() < mutation_rate:
+            self.colour = np.random.choice(colour_options)
+
+        self.length *= 1 + np.random.normal(-mutation_rate, mutation_rate)
 
         # Randomly mutate curviness, curve direction, and curve location
         if self.curviness > 0:
-            self.curviness *= 1 + np.random.uniform(-mutation_rate, mutation_rate)
+            self.curviness = min(10.0, max(0.0, self.curviness + np.random.normal(-mutation_rate, mutation_rate)))
             self.curve_direction += np.random.uniform(-mutation_rate, mutation_rate) * 360
-            self.curve_location = min(1, max(0, self.curve_location + np.random.uniform(-mutation_rate, mutation_rate)))  # keeps curve location within [0, 1]
+            self.curve_location = min(1.0, max(0.0, self.curve_location + np.random.normal(-mutation_rate, mutation_rate)))  # keeps curve location within [0, 1]
+
+        self.length *= 1 + np.random.normal(-mutation_rate, mutation_rate)
+        self.start_thickness *= 1 + np.random.normal(-mutation_rate, mutation_rate)
+        self.curviness *= 1 + np.random.normal(-mutation_rate, mutation_rate)
+        if self.curviness > 0:  # If curved line then curve direction else no curve direction
+            self.curve_direction *= 1 + np.random.normal(-mutation_rate, mutation_rate)
+            self.curve_location *= 1 + np.random.normal(-mutation_rate, mutation_rate)
+            self.curve_location *= 1 + np.random.normal(-mutation_rate, mutation_rate)
+        else:
+            self.curve_direction = 0
+            self.curve_location = 0
+            self.curve_location = 0
+        if self.start_mode == StartMode.CONNECT_MID:
+            self.start_location = min(1.0, max(0.0, self.start_location + np.random.normal(-mutation_rate, mutation_rate)))
+            self.split_point = 0
+        elif self.start_mode == StartMode.SPLIT:
+            self.split_point = min(1.0, max(0.0, self.split_point + np.random.normal(-mutation_rate, mutation_rate)))
+            self.start_location = 1
+        else:
+            self.start_location = 1
+            self.split_point = 0
 
         # Recalculate the end point
         self.calculate_end()

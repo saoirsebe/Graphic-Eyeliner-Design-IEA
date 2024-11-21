@@ -66,13 +66,8 @@ class DesignPage(Page):
             button.config(command=lambda index=i, b=button: toggle_gene(index, b))
             button.grid(row=1, column=0, columnspan=2, padx=5, pady=5, sticky="ew")  # Place button below canvas
 
-
-            # Submit button
         submit_button = tk.Button(self, text="Submit", command=self.submit_selection)
         submit_button.grid(row=9, column=0, pady=20)
-
-
-
 
 
     def submit_selection(self):

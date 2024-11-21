@@ -5,31 +5,31 @@ from math import comb
 #from dask_expr.diagnostics import analyze
 from EAOverallGenome import *
 import random
+design = EyelinerDesign()
+
+n_objects = random.randint(4,15)
+#Parameter ranges:
+start_x_range = (-1,7)
+start_y_range = (0,6)
+#start_mode_options = list(StartMode)
+#Segment_type_options = list(SegmentType)
+length_range = (0.5, 5)
+direction_range = (0, 360)
+thickness_range = (1, 5)
+colour_options = [
+    "red", "green", "blue", "cyan", "magenta", "black", "orange", "purple",
+    "pink", "brown", "gray", "lime", "navy",
+    "teal", "maroon", "gold", "olive"
+]
+curviness_range = (0, 10)
+curve_direction_range = (0, 360)
+curve_location_range = (0,1)
+radius_range = (0,1.5)
+arm_length_range = (0,1.5)
+num_points_range = (3,15)
+asymmetry_range = (0,3)
 
 def random_gene(gene_n):
-    design = EyelinerDesign()
-    n_objects = random.randint(4,15)
-    #Parameter ranges:
-    start_x_range = (-1,7)
-    start_y_range = (0,6)
-    #start_mode_options = list(StartMode)
-    #Segment_type_options = list(SegmentType)
-    length_range = (0.5, 5)
-    direction_range = (0, 360)
-    thickness_range = (1, 5)
-    colour_options = [
-        "red", "green", "blue", "cyan", "magenta", "black", "orange", "purple",
-        "pink", "brown", "gray", "lime", "navy",
-        "teal", "maroon", "gold", "olive"
-    ]
-    curviness_range = (0, 10)
-    curve_direction_range = (0, 360)
-    curve_location_range = (0,1)
-    radius_range = (0,1.5)
-    arm_length_range = (0,1.5)
-    num_points_range = (3,15)
-    asymmetry_range = (0,3)
-    #curved_range = ["True","False"]
 
     for i in range(n_objects):
         if i==0:#(gene_n ==0 and i==0) or (gene_n ==1 and i==0):
