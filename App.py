@@ -27,6 +27,7 @@ class App(ttk.Window):
 
         # Add vertical and horizontal scrollbars
         self.makescroll(self, self.canvas)
+        self.bind_mousewheel()
 
         # Create a container frame for all pages
         self.container = tk.Frame(self.canvas)
@@ -62,6 +63,14 @@ class App(ttk.Window):
     def update_scrollregion(self, event):
         """Update canvas scroll region based on the container's size"""
         self.canvas.configure(scrollregion=self.canvas.bbox("all"))
+
+    def bind_mousewheel(self):
+        """Enable mousewheel scrolling for the canvas."""
+        self.canvas.bind_all("<MouseWheel>", self.on_mousewheel)
+
+    def on_mousewheel(self, event):
+        """Scroll the canvas with the mousewheel."""
+        self.canvas.yview_scroll(-1 * (event.delta // 120), "units")
 
     def show_page(self, page_name):
         """Show the given page"""
