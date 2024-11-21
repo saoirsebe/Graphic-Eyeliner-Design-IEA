@@ -10,4 +10,4 @@ class Page(tk.Frame):
 
 
     def show(self):
-        self.grid(row=0, column=0, sticky="nsew")  # Use grid instead of pack
+        self.grid(row=0, column=0, sticky="nsew")

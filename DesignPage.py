@@ -35,16 +35,25 @@ class DesignPage(Page):
             """Toggle the selection of a gene."""
             if index in self.selected_gene_indices:
                 self.selected_gene_indices.remove(index)  # Deselect the gene
-                print(self.selected_gene_indices)
-                button.config(highlightbackground="black", highlightthickness=0)  # Default border
+                button.config(
+                    highlightbackground="black",  # Default border color
+                    highlightthickness=0,  # Default border thickness
+                    bg="SystemButtonFace",  # Default background color
+                    fg="black",  # Default text color
+                    relief="raised"  # Default relief
+                )
             else:
                 self.selected_gene_indices.append(index)  # Select the gene
-                button.config(highlightbackground="green", highlightthickness=2)  # Green border
-                print(self.selected_gene_indices)
-
+                button.config(
+                    highlightbackground="green",  # Green border color
+                    highlightthickness=2,  # Green border thickness
+                    bg="lightgreen",  # Change background to light green (for example)
+                    fg="black",  # Text color stays black
+                    relief="sunken"  # Change the button relief to give a "pressed" feel
+                )
 
         for i, gene in enumerate(self.current_gene_pool):
-            canvas_frame = tk.Frame( borderwidth=1, relief="solid")
+            canvas_frame = tk.Frame(self, borderwidth=1, relief="solid")
             canvas_frame.grid(row=(i // 3) + 5, column=i % 3, padx=10, pady=10, sticky="nsew")
 
             fig = gene.render()
@@ -54,7 +63,7 @@ class DesignPage(Page):
             canvas_widget.grid(row=0, column=0, columnspan=2, padx=5, pady=5)  # Place canvas at the top
 
             button = tk.Button(canvas_frame, text="Toggle Selection")
-            button.config(command=lambda index=i, b=button: toggle_gene(index, button))
+            button.config(command=lambda index=i, b=button: toggle_gene(index, b))
             button.grid(row=1, column=0, columnspan=2, padx=5, pady=5, sticky="ew")  # Place button below canvas
 
 
