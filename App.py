@@ -17,22 +17,21 @@ class App(ttk.Window):
         self.geometry("1350x600")
 
         # Root Canvas and Scrollbars
-        self.root = tk.Tk()
-        self.root.rowconfigure(0, weight=1)
-        self.root.columnconfigure(0, weight=1)
+        self.rowconfigure(0, weight=1)
+        self.columnconfigure(0, weight=1)
 
         # Set canvas size and scrolling region
-        w, h = self.root.winfo_screenwidth(), self.root.winfo_screenheight()
-        self.canvas = tk.Canvas(self.root, scrollregion=f"0 0 {w * 2} {h * 2}")
+        w, h = self.winfo_screenwidth(), self.winfo_screenheight()
+        self.canvas = tk.Canvas(self, scrollregion=f"0 0 {w * 2} {h * 2}")
         self.canvas.grid(row=0, column=0, sticky=tk.NSEW)
 
         # Add vertical and horizontal scrollbars
-        self.makescroll(self.root, self.canvas)
+        self.makescroll(self, self.canvas)
 
         # Create a container frame for all pages
         self.container = tk.Frame(self.canvas)
+        self.container.bind("<Configure>", self.update_scrollregion)  # Dynamically update scroll region
         self.canvas.create_window((0, 0), window=self.container, anchor="nw")
-        self.container.grid(row=0, column=0, sticky="nsew")
 
         self.page_classes = {
             "HomePage": HomePage,
@@ -59,6 +58,10 @@ class App(ttk.Window):
         h = tk.Scrollbar(parent, orient=tk.HORIZONTAL, command=thing.xview)
         h.grid(row=1, column=0, sticky=tk.EW)
         thing.config(xscrollcommand=h.set)
+
+    def update_scrollregion(self, event):
+        """Update canvas scroll region based on the container's size"""
+        self.canvas.configure(scrollregion=self.canvas.bbox("all"))
 
     def show_page(self, page_name):
         """Show the given page"""
