@@ -7,7 +7,12 @@ import EyelinerWingGeneration
 from EyelinerWingGeneration import vector_direction, draw_eye_shape
 import StarGeneration
 from StarGeneration import *
-from Trial import colour_options
+
+colour_options = [
+    "red", "green", "blue", "cyan", "magenta", "black", "orange", "purple",
+    "pink", "brown", "gray", "lime", "navy",
+    "teal", "maroon", "gold", "olive"
+]
 
 
 class SegmentType(Enum):
@@ -89,16 +94,23 @@ class LineSegment(Segment):
         self.end = (end_x, end_y)
 
 
-    def curve_between_lines(self, P0, P1, P2, P3):
+    def curve_between_lines(self, P0, P1, P2, P3, colour):
         t_values = np.linspace(0, 1, 20)
-        left_curve = np.array([bezier_curve(t, P0, P1, P2) for t in t_values])
+        left_curve = np.array([bezier_curve(t, P2, P1, P0) for t in t_values])
         # np.array((prev_array[start_array_point_index+2]) - np.array(self.points_array[2]))/2
-        right_curve = np.array([bezier_curve(t, P2, P1, P3) for t in t_values])
+        right_curve = np.array([bezier_curve(t, P3, P1, P2) for t in t_values])
+        left_x, left_y = left_curve[:, 0], left_curve[:, 1]
+        right_x, right_y = right_curve[:, 0], right_curve[:, 1]
+
+        # Combine the points to form a closed boundary
+        boundary_x = np.concatenate([left_x, right_x[::1]])  # Combine left and reversed right x
+        boundary_y = np.concatenate([left_y, right_y[::1]])  # Combine left and reversed right y
+        plt.fill(boundary_x, boundary_y, color=colour, alpha=0.5)
         return np.concatenate((left_curve, right_curve, self.points_array), axis=0)
 
-
     def render(self, ax_n, prev_array, prev_angle, prev_colour, prev_end_thickness):
-        new_array=[]
+        new_array = []
+        num_steps = 50  # Number of points to create a smooth thickness transition/ curve
         if self.start_mode == StartMode.CONNECT and len(prev_array)>15 or self.start_mode == StartMode.SPLIT and len(prev_array)>15:
             self.start = (prev_array[-1][0], prev_array[-1][1])
             self.start_thickness = prev_end_thickness
@@ -111,7 +123,6 @@ class LineSegment(Segment):
             self.start = (start_array_point[0], start_array_point[1])
 
         self.calculate_end(prev_angle)  # Calculate the endpoint
-        num_steps = 50  # Number of points to create a smooth thickness transition/ curve
 
         if self.curviness>0:
             t_values = np.linspace(0, 1, num_steps)
@@ -133,7 +144,6 @@ class LineSegment(Segment):
             self.points_array = np.column_stack((x_values, y_values))
 
         """Set self.points_array and move line if split type"""
-
         if self.start_mode == StartMode.SPLIT:
             split_point_point_index = point_in_array(self.points_array, self.split_point)
             split_point_point = self.points_array[split_point_point_index]
@@ -142,6 +152,7 @@ class LineSegment(Segment):
             self.points_array = np.array([(point[0] + transformation_vector[0], point[1] + transformation_vector[1]) for point in self.points_array])
             x_values, y_values = self.points_array[:, 0], self.points_array[:, 1]
 
+            """Add curve from prev line to split point"""
             if len(prev_array) > 20:
                 P2 = np.array(prev_array[-10])
                 if split_point_point_index <= 5:
@@ -155,7 +166,7 @@ class LineSegment(Segment):
                     beep = split_point_point_index + 5
                 P3 = np.array(self.points_array[beep])
                 P1 = np.array(self.start)
-                new_array = self.curve_between_lines(P0, P1, P2, P3)
+                new_array = self.curve_between_lines(P0, P1, P2, P3, prev_colour)
                 x_values, y_values = new_array[:, 0], new_array[:, 1]
 
         thicknesses = np.linspace(self.start_thickness, self.end_thickness, num_steps) #Render a line segment with thickness tapering from start to end
@@ -173,13 +184,13 @@ class LineSegment(Segment):
                 beep = start_array_point_index + 5
             P3 = np.array(prev_array[beep])
             P1 = np.array(self.start)
-            new_array = self.curve_between_lines(P0, P1, P2, P3)
+            new_array = self.curve_between_lines(P0, P1, P2, P3,self.colour)
             x_values, y_values = new_array[:, 0], new_array[:, 1]
 
         # Plot each small segment with the varying thickness
         if len(new_array) > 0:
             # Plot the first 40 points as one segment
-            for i in range(min(40, len(x_values) - 1)):
+            for i in range(min(39, len(x_values) - 1)):
                 this_colour = self.colour
                 if self.start_mode == StartMode.CONNECT_MID:
                     thickness = thicknesses[start_array_point_index]
@@ -196,7 +207,7 @@ class LineSegment(Segment):
                 )
 
             # Plot remaining points
-            for i in range(41, len(x_values) - 1):
+            for i in range(40, len(x_values) - 1):
                 if self.start_mode == StartMode.CONNECT_MID or self.start_mode == StartMode.SPLIT:
                     thickness = thicknesses[i - 41]
                 else:

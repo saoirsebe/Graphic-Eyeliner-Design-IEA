@@ -5,7 +5,6 @@ from math import comb
 #from dask_expr.diagnostics import analyze
 from EAOverallGenome import *
 import random
-design = EyelinerDesign()
 
 n_objects = random.randint(4,15)
 #Parameter ranges:
@@ -30,7 +29,7 @@ num_points_range = (3,15)
 asymmetry_range = (0,3)
 
 def random_gene(gene_n):
-
+    design = EyelinerDesign()
     for i in range(n_objects):
         if i==0:#(gene_n ==0 and i==0) or (gene_n ==1 and i==0):
             segment_start = (3, 1.5)
@@ -168,6 +167,29 @@ design.add_segment(new_star_segment)
 next_start_thickness = design.get_start_thickness()
 
 
+
+for i in range(5):
+    new_segment = create_segment(
+        segment_type=SegmentType.LINE,
+        start = (0,0),
+        start_mode=random.choice([StartMode.CONNECT, StartMode.SPLIT, StartMode.CONNECT_MID]),
+        length=random.uniform(*length_range),
+        relative_angle=random.uniform(*direction_range),
+        start_thickness=next_start_thickness,
+        end_thickness=random.uniform(*thickness_range),
+        color=random.choice(colour_options),
+        curviness= 0 if random.random() < 0.5 else random.uniform(*curviness_range),
+        curve_direction=random.uniform(*curve_direction_range),
+        curve_location=random.uniform(*curve_location_range),
+        start_location=random.uniform(*curve_location_range),
+        split_point=random.uniform(*curve_location_range)
+
+    )
+    print("start mode:", new_segment.start_mode)
+    design.add_segment(new_segment)
+    next_start_thickness = design.get_start_thickness()
+"""
+
 design = EyelinerDesign()
 next_start_thickness = random.uniform(1,5)
 
@@ -190,34 +212,6 @@ arm_length_range = (0,2)
 num_points_range = (3,20)
 asymmetry_range = (0,3)
 
-plt.figure(figsize=(6, 6))
-ax = plt.gca()
-ax.set_aspect('equal')
-ax.set_xlim(-5,10)
-ax.set_ylim(-5,10)
-
-
-for i in range(5):
-    new_segment = create_segment(
-        segment_type=SegmentType.LINE,
-        start = (0,0),
-        start_mode=random.choice([StartMode.CONNECT, StartMode.SPLIT, StartMode.CONNECT_MID]),
-        length=random.uniform(*length_range),
-        relative_angle=random.uniform(*direction_range),
-        start_thickness=next_start_thickness,
-        end_thickness=random.uniform(*thickness_range),
-        color=random.choice(colour_options),
-        curviness= 0 if random.random() < 0.5 else random.uniform(*curviness_range),
-        curve_direction=random.uniform(*curve_direction_range),
-        curve_location=random.uniform(*curve_location_range),
-        start_location=random.uniform(*curve_location_range),
-        split_point=random.uniform(*curve_location_range)
-
-    )
-    print("start mode:", new_segment.start_mode)
-    design.add_segment(new_segment)
-    next_start_thickness = design.get_start_thickness()
-
 new_segment = create_segment(
         segment_type=SegmentType.LINE,
         start = (3,1.5),
@@ -226,7 +220,7 @@ new_segment = create_segment(
         relative_angle=random.uniform(*direction_range),
         start_thickness=next_start_thickness,
         end_thickness=random.uniform(*thickness_range),
-        color="red",
+        colour="red",
         curviness= 0 if random.random() < 0.5 else random.uniform(*curviness_range),
         curve_direction=random.uniform(*curve_direction_range),
         curve_location=random.uniform(*curve_location_range),
@@ -245,7 +239,7 @@ new_segment = create_segment(
         relative_angle=random.uniform(*direction_range),
         start_thickness=next_start_thickness,
         end_thickness=random.uniform(*thickness_range),
-        color="green",
+        colour="green",
         curviness= 0 if random.random() < 0.5 else random.uniform(*curviness_range),
         curve_direction=random.uniform(*curve_direction_range),
         curve_location=random.uniform(*curve_location_range),
@@ -264,7 +258,7 @@ new_segment = create_segment(
         relative_angle=random.uniform(*direction_range),
         start_thickness=next_start_thickness,
         end_thickness=random.uniform(*thickness_range),
-        color="blue",
+        colour="blue",
         curviness= 0 if random.random() < 0.5 else random.uniform(*curviness_range),
         curve_direction=random.uniform(*curve_direction_range),
         curve_location=random.uniform(*curve_location_range),
@@ -272,11 +266,6 @@ new_segment = create_segment(
         split_point=random.uniform(*curve_location_range)
 
 )
-print("start mode:", new_segment.start_mode)
 design.add_segment(new_segment)
-next_start_thickness = design.get_start_thickness()
-
-
-design.render(ax)
+design.render()
 plt.show()
-"""
