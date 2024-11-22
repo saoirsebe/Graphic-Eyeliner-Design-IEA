@@ -193,7 +193,7 @@ class LineSegment(Segment):
             for i in range(min(39, len(x_values) - 1)):
                 this_colour = self.colour
                 if self.start_mode == StartMode.CONNECT_MID:
-                    thickness = thicknesses[start_array_point_index]
+                    thickness = thicknesses[10]
                 elif self.start_mode == StartMode.SPLIT:
                     thickness = thicknesses[0]
                     this_colour = prev_colour

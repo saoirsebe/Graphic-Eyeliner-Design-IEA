@@ -6,7 +6,6 @@ from math import comb
 from EAOverallGenome import *
 import random
 
-n_objects = random.randint(4,15)
 #Parameter ranges:
 start_x_range = (-1,7)
 start_y_range = (0,6)
@@ -25,11 +24,12 @@ curve_direction_range = (0, 360)
 curve_location_range = (0,1)
 radius_range = (0,1.5)
 arm_length_range = (0,1.5)
-num_points_range = (3,15)
+num_points_range = (3,8)
 asymmetry_range = (0,3)
 
 def random_gene(gene_n):
     design = EyelinerDesign()
+    n_objects = random.randint(2, 10)
     for i in range(n_objects):
         if i==0:#(gene_n ==0 and i==0) or (gene_n ==1 and i==0):
             segment_start = (3, 1.5)
@@ -37,7 +37,6 @@ def random_gene(gene_n):
             segment_start = (random.uniform(*start_x_range), random.uniform(*start_y_range))
 
         # Adding a new segment to the design
-        #new_segment_type = random.choice(list(SegmentType))
         new_segment_type = SegmentType.LINE if random.random() < 0.8 else SegmentType.STAR
         if new_segment_type == SegmentType.LINE:
             start_mode = random.choice(list(StartMode))
@@ -87,8 +86,8 @@ def initialise_gene_pool():
         ax = axes[idx]
         ax.set_title(f"Design {idx + 1}")
         fig = gene.render()  # Render each gene on its specific subplot
+        plt.close(fig)
         delete_segment = analyze_gene(gene)
-
         while delete_segment:
             gene_pool[idx] = random_gene(idx)
             gene = gene_pool[idx]  # Update the loop variable with the new gene
@@ -96,7 +95,7 @@ def initialise_gene_pool():
             ax.set_title(f"New design {idx + 1}")  # Reset the title
             fig = gene.render()  # Render the new gene
             delete_segment = analyze_gene(gene)
-
+            plt.close(fig)
     return gene_pool
 
 def check_overlap(i, segments):
@@ -120,7 +119,7 @@ def check_overlap(i, segments):
                 # Calculate Euclidean distance between point1 and point2
                 distance = np.linalg.norm(point1 - point2)
                 # Check if distance is within the tolerance
-                if distance <= 0.05:
+                if distance <= 0.075:
                     overlap_found = True
         if overlap_found :
             overlaps += 1  # Overlap found
@@ -139,14 +138,10 @@ def analyze_gene(design):
                 if segments[i+1].start_mode == StartMode.CONNECT and 90 <= segments[i+1].relative_angle <= 180:
                     score = score + 1
     print("score: ",score)
-    if score < -4:
+    if score <= -3:
         return True
     else:
         return False
-
-#plt = initialise_gene_pool()
-#plt.tight_layout()
-#plt.show()
 
 """
 num_points=random.randint(*num_points_range)
@@ -188,7 +183,7 @@ for i in range(5):
     print("start mode:", new_segment.start_mode)
     design.add_segment(new_segment)
     next_start_thickness = design.get_start_thickness()
-"""
+
 
 design = EyelinerDesign()
 next_start_thickness = random.uniform(1,5)
@@ -269,3 +264,4 @@ new_segment = create_segment(
 design.add_segment(new_segment)
 design.render()
 plt.show()
+"""

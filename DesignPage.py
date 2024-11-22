@@ -79,3 +79,4 @@ class DesignPage(Page):
             messagebox.showinfo("Selected Genes", f"Genes selected: {', '.join(selected_genes)}")
         else:
             messagebox.showwarning("No Genes Selected", "No genes were selected.")
+        self.start_designing()

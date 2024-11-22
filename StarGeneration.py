@@ -6,7 +6,10 @@ from scipy.signal.windows import cosine
 
     # Function to create a quadratic Bézier curve with three control points
 def bezier_curve(t, P0, P1, P2):
-    return (1 - t) ** 2 * P0 + 2 * (1 - t) * t * P1 + t ** 2 * P2
+    x = (1 - t) ** 2 * P0[0] + 2 * (1 - t) * t * P1[0] + t ** 2 * P2[0]
+    y = (1 - t) ** 2 * P0[1] + 2 * (1 - t) * t * P1[1] + t ** 2 * P2[1]
+
+    return [round(x, 3), round(y, 3)]
 
 def create_star_arm(center, radius, arm_length, num_points, start_angle, asymmetry, arm_n,curved):
     centerx = center[0]
