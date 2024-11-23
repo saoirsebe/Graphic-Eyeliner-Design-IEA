@@ -6,6 +6,8 @@ from math import comb
 from EAOverallGenome import *
 import random
 
+from EyelinerWingGeneration import get_quadratic_points
+
 #Parameter ranges:
 start_x_range = (-1,7)
 start_y_range = (0,6)
@@ -127,6 +129,26 @@ def check_overlap(i, segments):
 
     return overlaps
 
+def is_in_eye(segment):
+    overlap = 0
+    # Get eye shape boundary points
+    upper_x, upper_y = get_quadratic_points(-0.5, 0, 1, -1, 1)
+    lower_x, lower_y = get_quadratic_points(0.5, 0, 0, -1, 1)
+    upper_x, upper_y = np.array(upper_x) * 3, np.array(upper_y) * 3
+    lower_x, lower_y = np.array(lower_x) * 3, np.array(lower_y) * 3
+
+    segment = segment.points_array
+    upper_y_interp = np.interp(segment[:, 0], upper_x, upper_y)
+    lower_y_interp = np.interp(segment[:, 0], lower_x, lower_y)
+    inside = (lower_y_interp <= segment[:, 1]) & (segment[:, 1] <= upper_y_interp)
+    overlap = np.sum(inside)
+    score = int((overlap / len(segment)) * 10)
+    if score>0:
+        print("In eyee:", score)
+        return max(score, 1)
+    else:
+        return 0
+
 
 def analyze_gene(design):
     segments = design.segments
@@ -138,6 +160,7 @@ def analyze_gene(design):
             if segments[i].segment_type == SegmentType.LINE and segments[i+1].segment_type == SegmentType.LINE:
                 if segments[i+1].start_mode == StartMode.CONNECT and 90 <= segments[i+1].relative_angle <= 180:
                     score = score + 1
+        score = score - is_in_eye(segments[i])
     print("score: ",score)
     if score <= -3:
         return True

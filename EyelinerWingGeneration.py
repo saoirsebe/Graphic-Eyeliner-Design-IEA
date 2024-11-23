@@ -127,6 +127,7 @@ def draw_eye_shape(ax_n):
     ax_n.plot(x_vals, y_vals, label=f"$y = -0.5x^2 + 1$", color="b")
 
 
+
 """
 # Plotting
 plt.figure(figsize=(6, 6))
