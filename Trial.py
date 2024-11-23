@@ -90,7 +90,6 @@ def initialise_gene_pool():
         fig = gene.render()  # Render each gene on its specific subplot
         plt.close(fig)
         delete_segment = analyze_gene(gene)
-        """
         while delete_segment:
             gene_pool[idx] = random_gene(idx)
             gene = gene_pool[idx]  # Update the loop variable with the new gene
@@ -99,7 +98,6 @@ def initialise_gene_pool():
             fig = gene.render()  # Render the new gene
             delete_segment = analyze_gene(gene)
             plt.close(fig)
-        """
     return gene_pool
 
 def check_overlap(i, segments):
@@ -142,13 +140,19 @@ def is_in_eye(segment):
     lower_y_interp = np.interp(segment[:, 0], lower_x, lower_y)
     inside = (lower_y_interp <= segment[:, 1]) & (segment[:, 1] <= upper_y_interp)
     overlap = np.sum(inside)
-    score = int((overlap / len(segment)) * 10)
+    score = int((overlap / len(segment)) * 100)
     if score>0:
         print("In eyee:", score)
         return max(score, 1)
     else:
         return 0
 
+def wing_angle(i, segments):
+    if i + 1 < len(segments):
+        if segments[i].segment_type == SegmentType.LINE and segments[i + 1].segment_type == SegmentType.LINE:
+            if segments[i + 1].start_mode == StartMode.CONNECT and (90 < segments[i + 1].relative_angle < 270):
+                return 5
+    return 0
 
 def analyze_gene(design):
     segments = design.segments
@@ -156,13 +160,10 @@ def analyze_gene(design):
     # Compare each pair of segments for overlap
     for i in range(len(segments)):
         score = score - check_overlap(i , segments)
-        if i+1<len(segments):
-            if segments[i].segment_type == SegmentType.LINE and segments[i+1].segment_type == SegmentType.LINE:
-                if segments[i+1].start_mode == StartMode.CONNECT and 90 <= segments[i+1].relative_angle <= 180:
-                    score = score + 1
+        score = score + wing_angle(i, segments)
         score = score - is_in_eye(segments[i])
     print("score: ",score)
-    if score <= -3:
+    if score <= -20:
         return True
     else:
         return False
