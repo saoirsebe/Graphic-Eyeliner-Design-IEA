@@ -88,6 +88,7 @@ def initialise_gene_pool():
         fig = gene.render()  # Render each gene on its specific subplot
         plt.close(fig)
         delete_segment = analyze_gene(gene)
+        """
         while delete_segment:
             gene_pool[idx] = random_gene(idx)
             gene = gene_pool[idx]  # Update the loop variable with the new gene
@@ -96,6 +97,7 @@ def initialise_gene_pool():
             fig = gene.render()  # Render the new gene
             delete_segment = analyze_gene(gene)
             plt.close(fig)
+        """
     return gene_pool
 
 def check_overlap(i, segments):
@@ -103,17 +105,15 @@ def check_overlap(i, segments):
     overlaps =0
     for j in range (i+1,len(segments)-1):
         overlap_found = False
+        segment_overlaps = 0
         segment_j = segments[j].points_array
 
-        if len(segment) >= 1200:
-            segment = segment[::2]
-        if len(segment_j) >= 1200:
-            segment_j = segment_j[::2]
-
         if j == (i + 1) and (segments[j].start_mode == StartMode.CONNECT_MID or segments[j].start_mode == StartMode.CONNECT ):
-            segment_j = segment_j[2:]
+            first_1=int(len(segment_j)*0.05)
+            segment_j = segment_j[first_1:]
         elif j == (i + 1) and (segments[j].start_mode == StartMode.CONNECT or segments[j].start_mode == StartMode.SPLIT):
-            segment = segment[:-2]
+            first_1 = int(len(segment) * 0.05)
+            segment = segment[:-first_1]
         for point1 in segment:
             for point2 in segment_j:
                 # Calculate Euclidean distance between point1 and point2
@@ -121,8 +121,9 @@ def check_overlap(i, segments):
                 # Check if distance is within the tolerance
                 if distance <= 0.075:
                     overlap_found = True
+                    segment_overlaps += 1
         if overlap_found :
-            overlaps += 1  # Overlap found
+            overlaps += int((segment_overlaps/ (len(segment) + len(segment_j)))*100)
 
     return overlaps
 
