@@ -7,6 +7,8 @@ import EyelinerWingGeneration
 from EyelinerWingGeneration import vector_direction, draw_eye_shape
 import StarGeneration
 from StarGeneration import *
+from Trial import start_x_range, start_y_range, thickness_range, direction_range, length_range, arm_length_range, \
+    num_points_range, asymmetry_range, curviness_range, relative_location_range, radius_range
 
 colour_options = [
     "red", "green", "blue", "cyan", "magenta", "black", "orange", "purple",
@@ -28,6 +30,7 @@ class StartMode(Enum):
     #FORK = 'FORK'
     SPLIT = 'SPLIT' #connect but end of prev is in segment
     CONNECT_MID = 'CONNECT_MID'
+
 
 class Segment:
     """Base class for all segments."""
@@ -51,6 +54,13 @@ class Segment:
             self.start = prev_end
         return self.start
 
+    def mutate(self):
+        """Base mutate method to override in subclasses."""
+        raise NotImplementedError("Subclasses should implement this!")
+
+    def mutate_val(self,value,range,mutation_rate):
+        return min(range[1], max(range[0], value * (1 + np.random.normal(-mutation_rate, mutation_rate))))
+
 def point_in_array(array,location_in_array):
     num_points = len(array)
     target_index = round(location_in_array * (num_points - 1))
@@ -72,7 +82,6 @@ class LineSegment(Segment):
         else:
             self.curve_direction = 0
             self.curve_location = 0
-            self.curve_location =0
         if start_mode == StartMode.CONNECT_MID:
             self.start_location = start_location
             self.split_point = 0
@@ -109,6 +118,7 @@ class LineSegment(Segment):
         return np.concatenate((left_curve, right_curve, self.points_array), axis=0)
 
     def render(self, ax_n, prev_array, prev_angle, prev_colour, prev_end_thickness):
+        self.absolute_angle = prev_angle + self.relative_angle
         new_array = []
         num_steps = 50  # Number of points to create a smooth thickness transition/ curve
         if self.start_mode == StartMode.CONNECT and len(prev_array)>15 or self.start_mode == StartMode.SPLIT and len(prev_array)>15:
@@ -229,49 +239,45 @@ class LineSegment(Segment):
                     solid_capstyle='butt',
                 )
 
+
     def mutate(self, mutation_rate=0.1):
         """Randomly mutate properties of the line segment within a mutation rate."""
+        # mutation rate chance of changing:
         if np.random.normal() < mutation_rate:
-            self.start_mode = np.random.choice([StartMode.CONNECT, StartMode.JUMP])
+            self.start_mode = np.random.choice([StartMode.CONNECT, StartMode.JUMP, StartMode.SPLIT, StartMode.CONNECT_MID])
         if self.start_mode == StartMode.JUMP:
-            self.start *= 1 + np.random.normal(-mutation_rate, mutation_rate)
-        self.end_thickness *= 1 + np.random.normal(-mutation_rate, mutation_rate)
-        self.relative_angle += np.random.normal(-mutation_rate, mutation_rate) * 360  # random angle mutation within ±mutation rate of a full circle
+            self.start = (self.mutate_val(self.start[0],start_x_range,mutation_rate),self.mutate_val(self.start[1],start_y_range, mutation_rate))
 
+        if self.start_mode == StartMode.CONNECT_MID:
+            self.start_location = self.mutate_val(self.start_location,relative_location_range,mutation_rate)
+            self.split_point = 0
+        elif self.start_mode == StartMode.SPLIT:
+            self.split_point = self.mutate_val(self.split_point, relative_location_range, mutation_rate)
+            self.start_location = 1
+        else:
+            self.start_location = 1
+            self.split_point = 0
+
+        self.end_thickness = self.mutate_val(self.end_thickness,thickness_range,mutation_rate)
+        self.relative_angle =  self.mutate_val(self.relative_angle,direction_range,mutation_rate)
+        # mutation rate chance of changing:
         if np.random.normal() < mutation_rate:
             self.colour = np.random.choice(colour_options)
 
-        self.length *= 1 + np.random.normal(-mutation_rate, mutation_rate)
+        self.length = self.mutate_val(self.length,length_range,mutation_rate)
+        self.start_thickness = self.mutate_val(self.start_thickness, thickness_range, mutation_rate)
 
-        # Randomly mutate curviness, curve direction, and curve location
+        if self.curviness ==0:
+            self.curviness = 0 if np.random.normal() > mutation_rate else self.mutate_val(self.curviness,curviness_range,mutation_rate)
+        else:
+            self.curviness = self.mutate_val(self.curviness,curviness_range,mutation_rate)
+
         if self.curviness > 0:
-            self.curviness = min(10.0, max(0.0, self.curviness + np.random.normal(-mutation_rate, mutation_rate)))
-            self.curve_direction += np.random.uniform(-mutation_rate, mutation_rate) * 360
-            self.curve_location = min(1.0, max(0.0, self.curve_location + np.random.normal(-mutation_rate, mutation_rate)))  # keeps curve location within [0, 1]
-
-        self.length *= 1 + np.random.normal(-mutation_rate, mutation_rate)
-        self.start_thickness *= 1 + np.random.normal(-mutation_rate, mutation_rate)
-        self.curviness *= 1 + np.random.normal(-mutation_rate, mutation_rate)
-        if self.curviness > 0:  # If curved line then curve direction else no curve direction
-            self.curve_direction *= 1 + np.random.normal(-mutation_rate, mutation_rate)
-            self.curve_location *= 1 + np.random.normal(-mutation_rate, mutation_rate)
-            self.curve_location *= 1 + np.random.normal(-mutation_rate, mutation_rate)
+            self.curve_direction = self.mutate_val(self.curve_direction,direction_range,mutation_rate)
+            self.curve_location = self.mutate_val(self.curve_location,relative_location_range,mutation_rate)
         else:
             self.curve_direction = 0
             self.curve_location = 0
-            self.curve_location = 0
-        if self.start_mode == StartMode.CONNECT_MID:
-            self.start_location = min(1.0, max(0.0, self.start_location + np.random.normal(-mutation_rate, mutation_rate)))
-            self.split_point = 0
-        elif self.start_mode == StartMode.SPLIT:
-            self.split_point = min(1.0, max(0.0, self.split_point + np.random.normal(-mutation_rate, mutation_rate)))
-            self.start_location = 1
-        else:
-            self.start_location = 1
-            self.split_point = 0
-
-        # Recalculate the end point
-        self.calculate_end()
 
 
 class StarSegment(Segment):
@@ -310,6 +316,31 @@ class StarSegment(Segment):
         transformed_arm_points = np.array([(point[0] + transformation_vector[0], point[1] + transformation_vector[1]) for point in star_arm_points])
         self.arm_points_array = transformed_arm_points
         self.points_array = transformed_star_points
+
+    def mutate(self,mutation_rate=0.1):
+        # mutation rate chance of changing:
+        if np.random.normal() < mutation_rate:
+            self.start_mode = np.random.choice(
+                [StartMode.CONNECT, StartMode.JUMP])
+        if self.start_mode == StartMode.JUMP:
+            self.start = (self.mutate_val(self.start[0], start_x_range, mutation_rate),
+                          self.mutate_val(self.start[1], start_y_range, mutation_rate))
+
+        self.end_thickness = self.mutate_val(self.end_thickness, thickness_range, mutation_rate)
+        self.relative_angle = self.mutate_val(self.relative_angle, direction_range, mutation_rate)
+        # mutation rate chance of changing:
+        if np.random.normal() < mutation_rate:
+            self.colour = np.random.choice(colour_options)
+
+        self.radius = self.mutate_val(self.radius,radius_range, mutation_rate)
+        self.arm_length = self.mutate_val(self.arm_length,arm_length_range, mutation_rate)
+        self.num_points = self.mutate_val(self.num_points,num_points_range, mutation_rate)
+        self.asymmetry = self.mutate_val(self.asymmetry,asymmetry_range, mutation_rate)
+        # mutation rate chance of changing:
+        if self.curved:
+            self.curved = False if np.random.normal() < mutation_rate else True
+        else:
+            self.curved = True if np.random.normal() < mutation_rate else False
 
 
 # Factory function to create a specific segment instance and wrap it in Segment

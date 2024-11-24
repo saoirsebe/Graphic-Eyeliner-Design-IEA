@@ -9,8 +9,8 @@ import random
 from EyelinerWingGeneration import get_quadratic_points
 
 #Parameter ranges:
-start_x_range = (-1,7)
-start_y_range = (0,6)
+start_x_range = (-1, 7)
+start_y_range = (0, 6)
 #start_mode_options = list(StartMode)
 #Segment_type_options = list(SegmentType)
 length_range = (0.5, 5)
@@ -22,18 +22,19 @@ colour_options = [
     "teal", "maroon", "gold", "olive"
 ]
 curviness_range = (0, 10)
-curve_direction_range = (0, 360)
-curve_location_range = (0,1)
-radius_range = (0,1.5)
-arm_length_range = (0,1.5)
-num_points_range = (3,8)
-asymmetry_range = (0,3)
+relative_location_range = (0, 1)
+radius_range = (0, 1.5)
+arm_length_range = (0, 1.5)
+num_points_range = (3, 8)
+asymmetry_range = (0, 3)
+
+
 
 def random_gene(gene_n):
     design = EyelinerDesign()
     n_objects = random.randint(2, 10)
     for i in range(n_objects):
-        if i==0:#(gene_n ==0 and i==0) or (gene_n ==1 and i==0):
+        if i == 0:  #(gene_n ==0 and i==0) or (gene_n ==1 and i==0):
             segment_start = (3, 1.5)
         else:
             segment_start = (random.uniform(*start_x_range), random.uniform(*start_y_range))
@@ -51,11 +52,11 @@ def random_gene(gene_n):
                 start_thickness=random.uniform(*thickness_range),
                 end_thickness=random.uniform(*thickness_range),
                 colour=random.choice(colour_options),
-                curviness = 0 if random.random() < 0.5 else random.uniform(*curviness_range),
-                curve_direction=random.uniform(*curve_direction_range),
-                curve_location=random.uniform(*curve_location_range),
-                start_location=random.uniform(*curve_location_range),
-                split_point = random.uniform(*curve_location_range)
+                curviness=0 if random.random() < 0.5 else random.uniform(*curviness_range),
+                curve_direction=random.uniform(*direction_range),
+                curve_location=random.uniform(*relative_location_range),
+                start_location=random.uniform(*relative_location_range),
+                split_point=random.uniform(*relative_location_range)
             )
         elif new_segment_type == SegmentType.STAR:
             start_mode = random.choice(list(StartMode))
@@ -100,18 +101,21 @@ def initialise_gene_pool():
             plt.close(fig)
     return gene_pool
 
+
 def check_overlap(i, segments):
     segment = segments[i].points_array
-    overlaps =0
-    for j in range (i+1,len(segments)-1):
+    overlaps = 0
+    for j in range(i + 1, len(segments) - 1):
         overlap_found = False
         segment_overlaps = 0
         segment_j = segments[j].points_array
 
-        if j == (i + 1) and (segments[j].start_mode == StartMode.CONNECT_MID or segments[j].start_mode == StartMode.CONNECT ):
-            first_1=int(len(segment_j)*0.05)
+        if j == (i + 1) and (
+                segments[j].start_mode == StartMode.CONNECT_MID or segments[j].start_mode == StartMode.CONNECT):
+            first_1 = int(len(segment_j) * 0.05)
             segment_j = segment_j[first_1:]
-        elif j == (i + 1) and (segments[j].start_mode == StartMode.CONNECT or segments[j].start_mode == StartMode.SPLIT):
+        elif j == (i + 1) and (
+                segments[j].start_mode == StartMode.CONNECT or segments[j].start_mode == StartMode.SPLIT):
             first_1 = int(len(segment) * 0.05)
             segment = segment[:-first_1]
         for point1 in segment:
@@ -122,10 +126,11 @@ def check_overlap(i, segments):
                 if distance <= 0.075:
                     overlap_found = True
                     segment_overlaps += 1
-        if overlap_found :
-            overlaps += int((segment_overlaps/ (len(segment) + len(segment_j)))*100)
+        if overlap_found:
+            overlaps += int((segment_overlaps / (len(segment) + len(segment_j))) * 100)
 
     return overlaps
+
 
 def is_in_eye(segment):
     overlap = 0
@@ -141,11 +146,12 @@ def is_in_eye(segment):
     inside = (lower_y_interp <= segment[:, 1]) & (segment[:, 1] <= upper_y_interp)
     overlap = np.sum(inside)
     score = int((overlap / len(segment)) * 100)
-    if score>0:
+    if score > 0:
         print("In eyee:", score)
         return max(score, 1)
     else:
         return 0
+
 
 def wing_angle(i, segments):
     if i + 1 < len(segments):
@@ -154,19 +160,21 @@ def wing_angle(i, segments):
                 return 5
     return 0
 
+
 def analyze_gene(design):
     segments = design.segments
     score = 0  # Count how many overlaps there are in this gene
     # Compare each pair of segments for overlap
     for i in range(len(segments)):
-        score = score - check_overlap(i , segments)
+        score = score - check_overlap(i, segments)
         score = score + wing_angle(i, segments)
         score = score - is_in_eye(segments[i])
-    print("score: ",score)
+    print("score: ", score)
     if score <= -20:
         return True
     else:
         return False
+
 
 """
 num_points=random.randint(*num_points_range)
