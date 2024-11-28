@@ -11,7 +11,7 @@ def get_quadratic_points(a, b, c, x_start, x_end, num_points=100):
     y = a * x ** 2 + b * x + c  # Calculate corresponding y values
     return x, y
 
-def vector_direction(start,end):
+def un_normalised_vector_direction(start,end):
     direction = end - start
     """
     norm = np.linalg.norm(direction) #length of direction vector
@@ -19,9 +19,15 @@ def vector_direction(start,end):
         direction /= norm  # Normalize the direction vector
     """
     return direction
+def normalised_vector_direction(start,end):
+    direction = end - start
+    norm = np.linalg.norm(direction) #length of direction vector
+    if norm != 0:
+        direction /= norm  # Normalize the direction vector
+    return direction
 
 def perpendicular_direction(start,end):
-    direction = vector_direction(start,end)
+    direction = normalised_vector_direction(start,end)
     return np.array([-direction[1], direction[0]])
 
 def find_tangent_point(a, b, c, x1, y1,P):
@@ -60,10 +66,10 @@ def find_tangent_point(a, b, c, x1, y1,P):
 def line_curve(start, end, curviness,curveStart,isTop, thickness):
     curviness=thickness*curviness
     if isTop:
-        B1 = start + vector_direction(start, end) * ((end - start) * curveStart)
+        B1 = start + normalised_vector_direction(start, end) * ((end - start) * curveStart)
         B1 = B1 - (perpendicular_direction(start, end)) * curviness
     else:
-        B1 = start - vector_direction(start, end) * ((end - start) * curveStart)
+        B1 = start - normalised_vector_direction(start, end) * ((end - start) * curveStart)
         B1 = B1 + (perpendicular_direction(start, end)) * curviness
 
     b_values = np.linspace(0, 1, 100)
@@ -96,9 +102,9 @@ def create_eyeliner_wing(length, angle, liner_corner,topStart ,bottomStart ,thic
         distance = perpendicular_vector * thickness
 
         P0= liner_corner + distance #thickness amount up from the liner_corner
-        P0 = P0 + vector_direction(P1,P0)*(topStart*length) #moves in direction away from linerCorner according to topStart proportional to liner length
+        P0 = P0 + normalised_vector_direction(P1,P0)*(topStart*length) #moves in direction away from linerCorner according to topStart proportional to liner length
         P2= liner_corner - distance #thickness amount down from the liner_corner
-        P2 = P2 + vector_direction(P1,P2)*(bottomStart*length)
+        P2 = P2 + normalised_vector_direction(P1,P2)*(bottomStart*length)
 
     if topCurviness!=0:
         topLine = line_curve(P0, P1, topCurviness, topCurveStart,True, thickness)

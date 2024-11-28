@@ -62,21 +62,6 @@ def create_star_arm(center, radius, arm_length, num_points, start_angle, asymmet
         x, y = P0
     return arm_points, (x,y)
 
-"""
-def rotation_matrix(theta):
-    # Return the 2D rotation matrix for an angle theta in degrees 
-    theta_rad = np.deg2rad(theta)
-    return np.array([
-        [np.cos(theta_rad), -np.sin(theta_rad)],
-        [np.sin(theta_rad), np.cos(theta_rad)]
-    ])
-
-def rotate_points(points, theta):
-    # Rotate a set of 2D points by theta degrees 
-    rot_matrix = rotation_matrix(theta)
-    return np.dot(points, rot_matrix.T)
-"""
-
 def create_star(num_points, center, radius, arm_length , asymmetry, curved, star_direction):
     star_points = []
     end_point = (0,0) #Starts at (0,0) and changed to P2 after each arm creation

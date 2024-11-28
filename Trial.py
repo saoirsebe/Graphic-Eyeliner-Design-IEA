@@ -5,29 +5,8 @@ from math import comb
 #from dask_expr.diagnostics import analyze
 from EAOverallGenome import *
 import random
-
 from EyelinerWingGeneration import get_quadratic_points
-
-#Parameter ranges:
-start_x_range = (-1, 7)
-start_y_range = (0, 6)
-#start_mode_options = list(StartMode)
-#Segment_type_options = list(SegmentType)
-length_range = (0.5, 5)
-direction_range = (0, 360)
-thickness_range = (1, 5)
-colour_options = [
-    "red", "green", "blue", "cyan", "magenta", "black", "orange", "purple",
-    "pink", "brown", "gray", "lime", "navy",
-    "teal", "maroon", "gold", "olive"
-]
-curviness_range = (0, 10)
-relative_location_range = (0, 1)
-radius_range = (0, 1.5)
-arm_length_range = (0, 1.5)
-num_points_range = (3, 8)
-asymmetry_range = (0, 3)
-
+from A import *
 
 
 def random_gene(gene_n):
@@ -156,7 +135,7 @@ def is_in_eye(segment):
 def wing_angle(i, segments):
     if i + 1 < len(segments):
         if segments[i].segment_type == SegmentType.LINE and segments[i + 1].segment_type == SegmentType.LINE:
-            if segments[i + 1].start_mode == StartMode.CONNECT and (90 < segments[i + 1].relative_angle < 270):
+            if segments[i + 1].start_mode == StartMode.CONNECT and (80 < segments[i + 1].relative_angle < 170 or 190 < segments[i + 1].relative_angle < 260):
                 return 5
     return 0
 
@@ -216,29 +195,27 @@ for i in range(5):
     print("start mode:", new_segment.start_mode)
     design.add_segment(new_segment)
     next_start_thickness = design.get_start_thickness()
-
-
+"""
+"""
 design = EyelinerDesign()
-next_start_thickness = random.uniform(1,5)
 
-#Parameter ranges:
-start_x_range = (-1,10)
-start_y_range = (0,10)
-#start_mode_options = list(StartMode)
-#Segment_type_options = list(SegmentType)
-length_range = (2, 5)
-direction_range = (0, 360)
-thickness_range = (1, 5)
-colour_options = ["red", "green", "blue", "cyan", "magenta"]
-curviness_range = (0, 10)
-curve_direction_range = (0, 360)
-curve_location_range = (0,1)
-center_x_range = (-2,2)
-center_y_range = (-2,2)
-radius_range = (0,2)
-arm_length_range = (0,2)
-num_points_range = (3,20)
-asymmetry_range = (0,3)
+new_segment = create_segment(
+        segment_type=SegmentType.LINE,
+        start = (3,1.5),
+        start_mode=StartMode.CONNECT,
+        length=2,
+        relative_angle=20,
+        start_thickness=2.5,
+        end_thickness=1,
+        colour="red",
+        curviness= 0 ,
+        curve_direction=0.2,
+        curve_location=0.5,
+        start_location=0.6,
+        split_point=0.2
+
+)
+design.add_segment(new_segment)
 
 new_segment = create_segment(
         segment_type=SegmentType.LINE,
@@ -295,6 +272,12 @@ new_segment = create_segment(
 
 )
 design.add_segment(new_segment)
-design.render()
-plt.show()
 """
+line_seg = LineSegment(SegmentType.LINE,(0,0),StartMode.JUMP,3,30,5,1,"blue",5,90,0.8,0,0)
+#design.render()
+fig, ax = plt.subplots(figsize=(5, 5))
+ax.set_xlim(0, 5)  # X-axis from 0 to 5
+ax.set_ylim(0, 5)  # Y-axis from 0 to 5
+line_seg.render(ax,[],0,"white",3)
+plt.show()
+
