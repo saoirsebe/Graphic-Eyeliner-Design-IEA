@@ -29,11 +29,11 @@ def create_star_arm(center, radius, arm_length, num_points, start_angle, asymmet
 
     M = (P0 + P2) / 2
     direction = M - center
-    """
+
     norm = np.linalg.norm(direction) #length of direction vector
     if norm != 0:
         direction /= norm  # Normalize the direction vector
-    """
+
     if curved==False:
         P1 = M + direction * arm_length
     else:
@@ -87,20 +87,18 @@ def create_star(num_points, center, radius, arm_length , asymmetry, curved, star
     return star_points, star_arm_points #end_point , start_point
 
 
-"""
+
 # Set up the plot
 plt.figure(figsize=(6, 6))
 ax = plt.gca()
 ax.set_aspect('equal')
-ax.set_xlim(-2, 2)
-ax.set_ylim(-2, 2)
 # Plot a star with 5 arms, curved edges using quadratic Bézier curves
-star_points_plot,p2 = create_star_arm((0,0), 0,0.5,4,math.radians(45),0,0,True)
+star_points_plot,p2 = create_star_arm((0,0), 1,2,4,math.radians(45),0,0,True)
 #star_points_plot ,p2= create_star(4, (0, 0), 0,0.5, 0,True)
 plt.plot(star_points_plot[:, 0], star_points_plot[:, 1], 'b', lw=2) # Plot all points as a single object
 plt.grid(False)
 plt.show()
 plt.plot(p2,color='red')
 print(p2)
-"""
+
 

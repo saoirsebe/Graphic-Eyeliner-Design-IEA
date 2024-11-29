@@ -272,12 +272,17 @@ new_segment = create_segment(
 
 )
 design.add_segment(new_segment)
-"""
+
 line_seg = LineSegment(SegmentType.LINE,(0,0),StartMode.JUMP,3,30,5,1,"blue",5,90,0.8,0,0)
 #design.render()
 fig, ax = plt.subplots(figsize=(5, 5))
-ax.set_xlim(0, 5)  # X-axis from 0 to 5
-ax.set_ylim(0, 5)  # Y-axis from 0 to 5
+ax.set_aspect('equal')
 line_seg.render(ax,[],0,"white",3)
 plt.show()
-
+"""
+star_seg = StarSegment(SegmentType.STAR,(0,0),"pink",0,1,5,0,True,StartMode.JUMP,3,30)
+#radius changes curviness of star FIX!!!!!!!!!
+fig, ax = plt.subplots(figsize=(5, 5))
+ax.set_aspect('equal')
+star_seg.render(ax,[],0,"white",3)
+plt.show()

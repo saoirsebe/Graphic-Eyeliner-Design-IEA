@@ -273,9 +273,9 @@ class LineSegment(Segment):
 
 class StarSegment(Segment):
     """Line segment with additional properties specific to a line."""
-    def __init__(self, segment_type, start, colour, center, radius, arm_length, num_points,asymmetry,curved, start_mode, end_thickness, relative_angle):
+    def __init__(self, segment_type, start, colour, radius, arm_length, num_points,asymmetry,curved, start_mode, end_thickness, relative_angle):
         super().__init__(segment_type, start, start_mode, end_thickness,relative_angle, colour)
-        self.center = center
+        self.center = self.start
         self.radius = radius
         self.arm_length = arm_length
         self.num_points = num_points
@@ -358,7 +358,6 @@ def create_segment(start, start_mode, segment_type, **kwargs):
             segment_type=segment_type,
             start=start,
             start_mode=start_mode,
-            center=start, #center is the end of previous object
             radius=kwargs.get('radius', 0.5),
             arm_length=kwargs.get('arm_length', 1),
             num_points=kwargs.get('num_points', 5),
