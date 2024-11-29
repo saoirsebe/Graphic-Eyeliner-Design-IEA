@@ -83,6 +83,7 @@ class LineSegment(Segment):
         else:
             self.start_location = 1
             self.split_point = 0
+        self.thickness_array = []
 
 
     def calculate_end(self, prev_angle):
@@ -97,9 +98,9 @@ class LineSegment(Segment):
 
     def curve_between_lines(self, P0, P1, P2, P3, colour):
         t_values = np.linspace(0, 1, 20)
-        left_curve = np.array([bezier_curve(t, P2, P1, P0) for t in t_values])
+        left_curve = np.array([bezier_curve(t, P0, P1, P2) for t in t_values])
         # np.array((prev_array[start_array_point_index+2]) - np.array(self.points_array[2]))/2
-        right_curve = np.array([bezier_curve(t, P3, P1, P2) for t in t_values])
+        right_curve = np.array([bezier_curve(t, P2, P1, P3) for t in t_values])
         left_x, left_y = left_curve[:, 0], left_curve[:, 1]
         right_x, right_y = right_curve[:, 0], right_curve[:, 1]
 
@@ -109,12 +110,13 @@ class LineSegment(Segment):
         plt.fill(boundary_x, boundary_y, color=colour, alpha=0.5)
         return np.concatenate((left_curve, right_curve, self.points_array), axis=0)
 
-    def render(self, ax_n, prev_array, prev_angle, prev_colour, prev_end_thickness):
+    def render(self, ax_n, prev_array, prev_angle, prev_colour, prev_thickness_array):
         new_array = []
         num_steps = 50  # Number of points to create a smooth thickness transition/ curve
         if self.start_mode == StartMode.CONNECT and len(prev_array)>15 or self.start_mode == StartMode.SPLIT and len(prev_array)>15:
             self.start = (prev_array[-1][0], prev_array[-1][1])
-            self.start_thickness = prev_end_thickness
+            self.start_thickness = prev_thickness_array[len(prev_array) - 1]
+
         elif self.start_mode == StartMode.CONNECT and len(prev_array)<=15 or self.start_mode == StartMode.SPLIT and len(prev_array)<=15:
             end_index = point_in_array(prev_array, 0.5)
             self.start = (prev_array[end_index][0], prev_array[end_index][1])
@@ -170,7 +172,7 @@ class LineSegment(Segment):
                 new_array = self.curve_between_lines(P0, P1, P2, P3, prev_colour)
                 x_values, y_values = new_array[:, 0], new_array[:, 1]
 
-        thicknesses = np.linspace(self.start_thickness, self.end_thickness, num_steps) #Render a line segment with thickness tapering from start to end
+        self.thickness_array = np.linspace(self.start_thickness, self.end_thickness, num_steps) #Render a line segment with thickness tapering from start to end
         """Add curve from bottom of connect mid line"""
         if self.start_mode == StartMode.CONNECT_MID and len(prev_array)>20:
             P2 = np.array(self.points_array[10])
@@ -191,15 +193,20 @@ class LineSegment(Segment):
         # Plot each small segment with the varying thickness
         if len(new_array) > 0:
             # Plot the first 40 points as one segment
+            if self.start_mode == StartMode.CONNECT_MID:
+                blend_thicknesses = np.linspace(prev_thickness_array[start_array_point_index], self.thickness_array[10], 20)
             for i in range(min(39, len(x_values) - 1)):
                 this_colour = self.colour
                 if self.start_mode == StartMode.CONNECT_MID:
-                    thickness = thicknesses[10]
+                    if i<20:
+                        thickness = blend_thicknesses[i]
+                    else:
+                        thickness = blend_thicknesses[-(i-20)]
                 elif self.start_mode == StartMode.SPLIT:
-                    thickness = thicknesses[0]
+                    thickness = self.thickness_array [0]
                     this_colour = prev_colour
                 else:
-                    thickness = thicknesses[i]
+                    thickness = self.thickness_array [i]
                 ax_n.plot(
                     [x_values[i], x_values[i + 1]], [y_values[i], y_values[i + 1]],
                     color=this_colour,
@@ -210,9 +217,9 @@ class LineSegment(Segment):
             # Plot remaining points
             for i in range(40, len(x_values) - 1):
                 if self.start_mode == StartMode.CONNECT_MID or self.start_mode == StartMode.SPLIT:
-                    thickness = thicknesses[i - 41]
+                    thickness = self.thickness_array[i - 41]
                 else:
-                    thickness = thicknesses[i]
+                    thickness = self.thickness_array[i]
                 ax_n.plot(
                     [x_values[i], x_values[i + 1]], [y_values[i], y_values[i + 1]],
                     color=self.colour,
@@ -222,7 +229,7 @@ class LineSegment(Segment):
         else:
             # Plot normally if no new_array exists (Start type is jump or connect so no blend between lines needed)
             for i in range(len(x_values) - 1):
-                thickness = thicknesses[i]
+                thickness = self.thickness_array[i]
                 ax_n.plot(
                     [x_values[i], x_values[i + 1]], [y_values[i], y_values[i + 1]],
                     color=self.colour,
@@ -389,16 +396,19 @@ class EyelinerDesign:   #Creates overall design, calculates start points, render
         prev_array = np.array([self.segments[0].start])
         prev_angle = 0
         prev_colour = self.segments[0].colour
-        prev_end_thickness = self.segments[0].end_thickness
+        prev_end_thickness_array = self.segments[0].end_thickness
         for segment in self.segments:
-            segment.render(ax_n, prev_array, prev_angle,prev_colour,prev_end_thickness)
+            segment.render(ax_n, prev_array, prev_angle,prev_colour,prev_end_thickness_array)
             if segment.segment_type == SegmentType.STAR:
                 prev_array = self.segments[segment_n].arm_points_array #if previous segment was a star then pass in the arm points that the next segment should start at
             else:
                 prev_array = self.segments[segment_n].points_array
             prev_angle = self.segments[segment_n].absolute_angle
             prev_colour = self.segments[segment_n].colour
-            prev_end_thickness = self.segments[segment_n].end_thickness
+            if segment.segment_type == SegmentType.LINE:
+                prev_end_thickness_array = self.segments[segment_n].thickness_array
+            else:
+                prev_end_thickness_array = np.array(self.segments[segment_n].end_thickness)
             segment_n += 1
         return fig
 

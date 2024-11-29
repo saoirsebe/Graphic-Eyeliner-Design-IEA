@@ -196,18 +196,34 @@ for i in range(5):
     design.add_segment(new_segment)
     next_start_thickness = design.get_start_thickness()
 """
-"""
-design = EyelinerDesign()
 
+design = EyelinerDesign()
 new_segment = create_segment(
         segment_type=SegmentType.LINE,
         start = (3,1.5),
         start_mode=StartMode.CONNECT,
-        length=2,
-        relative_angle=20,
+        length=3,
+        relative_angle=40,
         start_thickness=2.5,
         end_thickness=1,
         colour="red",
+        curviness= 0.2 ,
+        curve_direction=0.2,
+        curve_location=0.5,
+        start_location=0.6,
+        split_point=0.2
+
+)
+design.add_segment(new_segment)
+new_segment = create_segment(
+        segment_type=SegmentType.LINE,
+        start = (3,1.5),
+        start_mode=StartMode.CONNECT_MID,
+        length=1.5,
+        relative_angle=110,
+        start_thickness=6,
+        end_thickness=6,
+        colour="orange",
         curviness= 0 ,
         curve_direction=0.2,
         curve_location=0.5,
@@ -216,7 +232,27 @@ new_segment = create_segment(
 
 )
 design.add_segment(new_segment)
+new_segment = create_segment(
+        segment_type=SegmentType.LINE,
+        start = (3,1.5),
+        start_mode=StartMode.SPLIT,
+        length=7,
+        relative_angle=20,
+        start_thickness=2.5,
+        end_thickness=1,
+        colour="pink",
+        curviness= 0 ,
+        curve_direction=0,
+        curve_location=0.5,
+        start_location=0.6,
+        split_point=0.2
 
+)
+design.add_segment(new_segment)
+fig = design.render()
+fig.show()
+
+"""
 new_segment = create_segment(
         segment_type=SegmentType.LINE,
         start = (3,1.5),
@@ -272,17 +308,20 @@ new_segment = create_segment(
 
 )
 design.add_segment(new_segment)
-
-line_seg = LineSegment(SegmentType.LINE,(0,0),StartMode.JUMP,3,30,5,1,"blue",5,90,0.8,0,0)
+"""
+"""
+line_seg = LineSegment(SegmentType.LINE,(0,0),StartMode.JUMP,5,230,2,4,"purple",0,0,0.8,0,0)
 #design.render()
 fig, ax = plt.subplots(figsize=(5, 5))
 ax.set_aspect('equal')
 line_seg.render(ax,[],0,"white",3)
 plt.show()
-"""
-star_seg = StarSegment(SegmentType.STAR,(0,0),"pink",0,1,5,0,True,StartMode.JUMP,3,30)
+
+
+star_seg = StarSegment(SegmentType.STAR,(0,0),"pink",0.5,2,5,0,True,StartMode.JUMP,3,30)
 #radius changes curviness of star FIX!!!!!!!!!
 fig, ax = plt.subplots(figsize=(5, 5))
 ax.set_aspect('equal')
 star_seg.render(ax,[],0,"white",3)
 plt.show()
+"""
