@@ -13,11 +13,7 @@ def get_quadratic_points(a, b, c, x_start, x_end, num_points=100):
 
 def un_normalised_vector_direction(start,end):
     direction = end - start
-    """
-    norm = np.linalg.norm(direction) #length of direction vector
-    if norm != 0:
-        direction /= norm  # Normalize the direction vector
-    """
+
     return direction
 def normalised_vector_direction(start,end):
     direction = end - start

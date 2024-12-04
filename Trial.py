@@ -47,7 +47,7 @@ def random_gene(gene_n):
                 arm_length=random.uniform(*arm_length_range),
                 num_points=random.randint(*num_points_range),
                 asymmetry=random.uniform(*asymmetry_range),
-                curved=random.choice([True, False]),
+                star_type=random.choice([StarType.STRAIGHT,StarType.CURVED,StarType.FLOWER]),
                 end_thickness=random.uniform(*thickness_range),
                 relative_angle=random.uniform(*direction_range),
                 colour=random.choice(colour_options),
@@ -196,7 +196,7 @@ for i in range(5):
     design.add_segment(new_segment)
     next_start_thickness = design.get_start_thickness()
 """
-
+"""
 design = EyelinerDesign()
 new_segment = create_segment(
         segment_type=SegmentType.LINE,
@@ -222,7 +222,7 @@ new_segment = create_segment(
         length=1.5,
         relative_angle=110,
         start_thickness=6,
-        end_thickness=6,
+        end_thickness=4,
         colour="orange",
         curviness= 0 ,
         curve_direction=0.2,
@@ -252,7 +252,7 @@ design.add_segment(new_segment)
 fig = design.render()
 fig.show()
 
-"""
+
 new_segment = create_segment(
         segment_type=SegmentType.LINE,
         start = (3,1.5),
@@ -317,11 +317,12 @@ ax.set_aspect('equal')
 line_seg.render(ax,[],0,"white",3)
 plt.show()
 
-
-star_seg = StarSegment(SegmentType.STAR,(0,0),"pink",0.5,2,5,0,True,StartMode.JUMP,3,30)
-#radius changes curviness of star FIX!!!!!!!!!
+"""
+star_seg = StarSegment(SegmentType.STAR,(0,0),"pink",StarType.STRAIGHT,0,2,6,0,StartMode.JUMP,3,30)
+# curviness of star FIX!!!!!!!!!
+#Asymetry broken FIX!!!
 fig, ax = plt.subplots(figsize=(5, 5))
 ax.set_aspect('equal')
 star_seg.render(ax,[],0,"white",3)
 plt.show()
-"""
+

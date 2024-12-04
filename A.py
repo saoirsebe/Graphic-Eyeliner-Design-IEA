@@ -1,3 +1,4 @@
+from enum import Enum
 #Parameter ranges:
 start_x_range = (-1, 7)
 start_y_range = (0, 6)
@@ -17,3 +18,22 @@ radius_range = (0, 1.5)
 arm_length_range = (0, 1.5)
 num_points_range = (3, 8)
 asymmetry_range = (0, 3)
+
+class StarType(Enum):
+    STRAIGHT = 'STRAIGHT'
+    CURVED = 'CURVED'
+    FLOWER = 'FLOWER'
+
+class SegmentType(Enum):
+    LINE = 'LINE'
+    #FORK = 'FORK'
+    #TAPER = 'TAPER'
+    STAR = 'STAR'
+    #WING = 'WING'
+
+class StartMode(Enum):
+    CONNECT = 'CONNECT'
+    JUMP = 'JUMP'
+    #FORK = 'FORK'
+    SPLIT = 'SPLIT' #connect but end of prev is in segment
+    CONNECT_MID = 'CONNECT_MID'

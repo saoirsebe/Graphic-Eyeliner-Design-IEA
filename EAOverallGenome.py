@@ -1,4 +1,4 @@
-from enum import Enum
+
 import math
 import matplotlib.pyplot as plt
 import numpy as np
@@ -9,19 +9,7 @@ import StarGeneration
 from StarGeneration import *
 from A import *
 
-class SegmentType(Enum):
-    LINE = 'LINE'
-    #FORK = 'FORK'
-    #TAPER = 'TAPER'
-    STAR = 'STAR'
-    #WING = 'WING'
 
-class StartMode(Enum):
-    CONNECT = 'CONNECT'
-    JUMP = 'JUMP'
-    #FORK = 'FORK'
-    SPLIT = 'SPLIT' #connect but end of prev is in segment
-    CONNECT_MID = 'CONNECT_MID'
 
 
 class Segment:
@@ -280,14 +268,14 @@ class LineSegment(Segment):
 
 class StarSegment(Segment):
     """Line segment with additional properties specific to a line."""
-    def __init__(self, segment_type, start, colour, radius, arm_length, num_points,asymmetry,curved, start_mode, end_thickness, relative_angle):
+    def __init__(self, segment_type, start, colour, star_type, radius, arm_length, num_points, asymmetry, start_mode, end_thickness, relative_angle):
         super().__init__(segment_type, start, start_mode, end_thickness,relative_angle, colour)
         self.center = self.start
         self.radius = radius
         self.arm_length = arm_length
         self.num_points = num_points
         self.asymmetry = asymmetry
-        self.curved = curved
+        self.star_type  = star_type
         #start_angle = 2 * np.pi * num_points / num_points #angle for last arm
         #bin, end_p = StarGeneration.create_star_arm(center, radius,arm_length, num_points,start_angle,asymmetry,num_points,curved) #armN = last arm so num_points
         self.arm_points_array = []
@@ -305,7 +293,7 @@ class StarSegment(Segment):
 
         self.absolute_angle = prev_angle + self.relative_angle
 
-        star_points, star_arm_points = StarGeneration.create_star(self.num_points, self.center, self.radius, self.arm_length, self.asymmetry, self.curved, self.absolute_angle)
+        star_points, star_arm_points = StarGeneration.create_star(self.num_points, self.center, self.radius, self.arm_length, self.asymmetry, self.star_type, self.absolute_angle)
         start_coord = star_arm_points[-1]
         transformation_vector = (self.center[0] - start_coord[0], self.center[1] - start_coord[1])
         #self.end = (end_coord[0]+transformation_vector[0], end_coord[1]+transformation_vector[1])
@@ -369,7 +357,7 @@ def create_segment(start, start_mode, segment_type, **kwargs):
             arm_length=kwargs.get('arm_length', 1),
             num_points=kwargs.get('num_points', 5),
             asymmetry=kwargs.get('asymmetry', 0),
-            curved=kwargs.get('curved', True),
+            star_type=kwargs.get('star_type', StarType.STRAIGHT),
             end_thickness = kwargs.get('end_thickness', 1),
             relative_angle =kwargs.get('relative_angle', 0),
             colour=kwargs.get('colour', 'black')

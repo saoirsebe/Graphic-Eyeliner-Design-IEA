@@ -1,22 +1,25 @@
 import math
-
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.signal.windows import cosine
+from A import *
+from EyelinerWingGeneration import normalised_vector_direction
 
-    # Function to create a quadratic Bézier curve with three control points
+
+# Function to create a quadratic Bézier curve with three control points
 def bezier_curve(t, P0, P1, P2):
     x = (1 - t) ** 2 * P0[0] + 2 * (1 - t) * t * P1[0] + t ** 2 * P2[0]
     y = (1 - t) ** 2 * P0[1] + 2 * (1 - t) * t * P1[1] + t ** 2 * P2[1]
 
     return [round(x, 3), round(y, 3)]
 
-def create_star_arm(center, radius, arm_length, num_points, start_angle, asymmetry, arm_n,curved):
+def create_star_arm(center, radius, arm_length, num_points, start_angle, asymmetry, arm_n,star_type):
     centerx = center[0]
     centery = center[1]
     angle = 2 * np.pi / num_points
 
-    if curved:
+    if star_type == StarType.CURVED or star_type == StarType.FLOWER:
+        print("We curved")
         starSize = arm_length
         if radius>0:
             starSize = starSize + radius
@@ -24,46 +27,47 @@ def create_star_arm(center, radius, arm_length, num_points, start_angle, asymmet
         P0 = np.array([centerx + starSize * np.cos(start_angle), centery + starSize * np.sin(start_angle)])  # Inner tip of the arm
         P2 = np.array([centerx + starSize * np.cos(start_angle + angle),centery + starSize * np.sin(start_angle + angle)])  # Outer tip of the arm (on the positive x-axis)
     else:
-        P0 = np.array([centerx + radius*np.cos(start_angle)  , centery + radius*np.sin(start_angle) ])  # Inner tip of the arm
-        P2 = np.array([centerx + radius*np.cos(start_angle+angle) ,centery + radius*np.sin(start_angle+angle)])  # Outer tip of the arm (on the positive x-axis)
-
+        P0 = np.array([centerx + radius*np.cos(start_angle), centery + radius*np.sin(start_angle) ])  # Inner tip of the arm
+        P2 = np.array([centerx + radius*np.cos(start_angle+angle), centery + radius*np.sin(start_angle+angle)])  # Outer tip of the arm (on the positive x-axis)
+        print(P0,P2)
     M = (P0 + P2) / 2
-    direction = M - center
+    direction = normalised_vector_direction(center,M)
 
-    norm = np.linalg.norm(direction) #length of direction vector
-    if norm != 0:
-        direction /= norm  # Normalize the direction vector
-
-    if curved==False:
+    if star_type == StarType.STRAIGHT:
         P1 = M + direction * arm_length
-    else:
+    elif star_type == StarType.CURVED:
         P1= center + direction * radius
+        #P1 = M - direction * arm_length
         #plt.plot(P1)
 
-    if (asymmetry!=0) and (np.mod(arm_n,2)==0) and (np.mod(num_points,2)==0) and (curved==False):
+    if (asymmetry!=0) and (np.mod(arm_n,2)==0) and (np.mod(num_points,2)==0) and (star_type == StarType.STRAIGHT):
+        print("1")
         P1 = P1 + (direction * asymmetry)
-    elif (asymmetry!=0) and (np.mod(arm_n,2)==0) and (np.mod(num_points,2)==0) and (curved):
-        p_direction = P0-center
+    elif (asymmetry!=0) and (np.mod(arm_n,2)==0) and (np.mod(num_points,2)==0) and (star_type == StarType.CURVED):
+        p_direction = normalised_vector_direction(center,P0)
         P0 = P0 + (p_direction * asymmetry)
-    elif (asymmetry!=0) and (np.mod(arm_n,2)!=0) and (np.mod(num_points,2)==0) and (curved):
-        p_direction = P2 - center
+        print("2")
+    elif (asymmetry!=0) and (np.mod(arm_n,2)!=0) and (np.mod(num_points,2)==0) and (star_type == StarType.CURVED):
+        p_direction = normalised_vector_direction(center,P2)
         P2 = P2 + (p_direction * asymmetry)
+        print("3")
 
-    if curved:
+    if star_type == StarType.CURVED:
         t_values = np.linspace(0, 1, 100)
         arm_points = np.array([bezier_curve(t, P0, P1, P2) for t in t_values])
     else:
         arm_points = np.array([P0, P1, P2])
 
-    if asymmetry==0 and curved:
+    if asymmetry==0 and star_type == StarType.CURVED:
         x, y = P2
-    elif not curved:
+    elif star_type == StarType.STRAIGHT:
         x, y = P1
     else:
         x, y = P0
+    #print(arm_points)
     return arm_points, (x,y)
 
-def create_star(num_points, center, radius, arm_length , asymmetry, curved, star_direction):
+def create_star(num_points, center, radius, arm_length , asymmetry, star_type, star_direction):
     star_points = []
     end_point = (0,0) #Starts at (0,0) and changed to P2 after each arm creation
     start_point = (0,0)
@@ -80,7 +84,7 @@ def create_star(num_points, center, radius, arm_length , asymmetry, curved, star
         else:
             arm_points, bin_point = create_star_arm(center, radius, arm_length, num_points, angle, asymmetry, armN, curved)
         """
-        arm_points, arm_point = create_star_arm(center, radius, arm_length, num_points, angle, asymmetry, armN, curved)
+        arm_points, arm_point = create_star_arm(center, radius, arm_length, num_points, angle, asymmetry, armN, star_type)
         star_points.extend(arm_points)
         star_arm_points.append(arm_point)
 
