@@ -2,7 +2,7 @@
 import math
 import matplotlib.pyplot as plt
 import numpy as np
-
+import copy
 import EyelinerWingGeneration
 from EyelinerWingGeneration import un_normalised_vector_direction, draw_eye_shape
 import StarGeneration
@@ -304,10 +304,10 @@ class StarSegment(Segment):
         self.points_array = transformed_star_points
 
     def mutate(self,mutation_rate=0.1):
+        #(self, segment_type, start, colour, star_type, radius, arm_length, num_points, asymmetry, start_mode, end_thickness, relative_angle)
         # mutation rate chance of changing:
         if np.random.normal() < mutation_rate:
-            self.start_mode = np.random.choice(
-                [StartMode.CONNECT, StartMode.JUMP])
+            self.start_mode = np.random.choice([StartMode.CONNECT, StartMode.JUMP])
         if self.start_mode == StartMode.JUMP:
             self.start = (self.mutate_val(self.start[0], start_x_range, mutation_rate),
                           self.mutate_val(self.start[1], start_y_range, mutation_rate))
@@ -320,13 +320,18 @@ class StarSegment(Segment):
 
         self.radius = self.mutate_val(self.radius,radius_range, mutation_rate)
         self.arm_length = self.mutate_val(self.arm_length,arm_length_range, mutation_rate)
-        self.num_points = self.mutate_val(self.num_points,num_points_range, mutation_rate)
-        self.asymmetry = self.mutate_val(self.asymmetry,asymmetry_range, mutation_rate)
+        if np.random.normal() < mutation_rate:
+            if self.num_points ==num_points_range[0]:
+                self.num_points +=1
+            elif self.num_points ==num_points_range[1]:
+                self.num_points -=1
+            else:
+                self.num_points = self.num_points + np.random.choice([-1, 1])
+        if (self.asymmetry == 0 and np.random.normal() < mutation_rate) or (self.asymmetry != 0):
+            self.asymmetry = self.mutate_val(self.asymmetry, asymmetry_range, mutation_rate)
         # mutation rate chance of changing:
-        if self.curved:
-            self.curved = False if np.random.normal() < mutation_rate else True
-        else:
-            self.curved = True if np.random.normal() < mutation_rate else False
+        if np.random.normal() < mutation_rate:
+            self.star_type = np.random.choice([StarType.STRAIGHT,StarType.FLOWER,StarType.CURVED])
 
 
 # Factory function to create a specific segment instance and wrap it in Segment
@@ -417,6 +422,11 @@ class EyelinerDesign:   #Creates overall design, calculates start points, render
             elif segment.segment_type == SegmentType.STAR:
                 self.n_of_stars += 1
 
+    def mutate(self):
+        new_gene = copy.deepcopy(self)
+        for segment in new_gene.segments:
+            segment.mutate()
+        return new_gene
 """
 # Example usage
 design = EyelinerDesign()

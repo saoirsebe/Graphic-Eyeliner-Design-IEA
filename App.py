@@ -12,7 +12,6 @@ from ttkbootstrap.constants import *
 class App(ttk.Window):
     def __init__(self):
         super().__init__(themename="darkly")
-
         self.title("Eyeliner Design App")
         self.geometry("1350x600")
 

@@ -1,4 +1,5 @@
 import tkinter as tk
+from random import randint
 from tkinter import messagebox
 
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
@@ -10,7 +11,7 @@ from Page import Page
 class DesignPage(Page):
     def __init__(self, parent, controller):
         super().__init__(parent, controller)
-        self.selected_designs = [False] * 6  # Keep track of selected designs
+        #self.selected_designs = [False] * 6  # Keep track of selected designs
         self.create_widgets()
         self.current_gene_pool = []
         self.selected_gene_indices = []
@@ -27,9 +28,11 @@ class DesignPage(Page):
         self.start_button.grid(row=2, column=0, columnspan=2, pady=10)
 
     def start_designing(self):
+        self.selected_gene_indices = []
         self.start_button.grid_forget()
         tk.Label(self, text="Pick your favorite designs", font=("Arial", 18)).grid(row=3, column=2, columnspan=2, pady=10)
-        self.current_gene_pool = initialise_gene_pool()
+        if not self.current_gene_pool:
+            self.current_gene_pool = initialise_gene_pool()
 
         def toggle_gene(index,button):
             """Toggle the selection of a gene."""
@@ -77,6 +80,25 @@ class DesignPage(Page):
         if selected_indices:
             selected_genes = [f"Gene {i + 1}" for i in selected_indices]
             messagebox.showinfo("Selected Genes", f"Genes selected: {', '.join(selected_genes)}")
+            n_selected = len(selected_indices)
+            if n_selected == 1 or 2 or 3 or 6:
+                n_of_each = 6 // len(selected_indices)
+            elif n_selected == 4 or 5:
+                n_of_each = 1
+            else:
+                print("Whatt")
+            new_gene_pool = []
+            for selected in selected_indices:
+                old_gene = self.current_gene_pool[selected]
+                for i in range(n_of_each):
+                    new_design = old_gene.mutate()
+                    new_gene_pool.append(new_design)
+            while len(new_gene_pool) < 6:
+                new_design = self.current_gene_pool[random.randint(0,5)].mutate()
+                new_gene_pool.append(new_design)
+            self.current_gene_pool = new_gene_pool
+            self.start_designing()
         else:
             messagebox.showwarning("No Genes Selected", "No genes were selected.")
-        self.start_designing()
+
+

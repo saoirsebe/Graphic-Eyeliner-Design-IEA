@@ -317,7 +317,7 @@ ax.set_aspect('equal')
 line_seg.render(ax,[],0,"white",3)
 plt.show()
 
-"""
+
 star_seg = StarSegment(SegmentType.STAR,(0,0),"pink",StarType.FLOWER,1,2,5,0,StartMode.JUMP,3,30)
 # curviness of star FIX!!!!!!!!!
 #Asymetry broken FIX!!!
@@ -325,4 +325,4 @@ fig, ax = plt.subplots(figsize=(5, 5))
 ax.set_aspect('equal')
 star_seg.render(ax,[],0,"white",3)
 plt.show()
-
+"""
