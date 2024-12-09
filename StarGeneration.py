@@ -18,7 +18,7 @@ def create_star_arm(center, radius, arm_length, num_points, start_angle, asymmet
     centery = center[1]
     angle = 2 * np.pi / num_points
 
-    if star_type == StarType.CURVED or star_type == StarType.FLOWER:
+    if star_type == StarType.CURVED :
         starSize = arm_length
         if radius>0:
             starSize = starSize + radius
@@ -26,33 +26,29 @@ def create_star_arm(center, radius, arm_length, num_points, start_angle, asymmet
         P0 = np.array([centerx + starSize * np.cos(start_angle), centery + starSize * np.sin(start_angle)])  # Inner tip of the arm
         P2 = np.array([centerx + starSize * np.cos(start_angle + angle),centery + starSize * np.sin(start_angle + angle)])  # Outer tip of the arm (on the positive x-axis)
     else:
-        print(radius)
         P0 = np.array([centerx + radius * np.cos(start_angle), centery + radius * np.sin(start_angle)])  # Inner tip of the arm
         P2 = np.array([centerx + radius * np.cos(start_angle+angle), centery + radius * np.sin(start_angle+angle)])  # Outer tip of the arm (on the positive x-axis)
-        print(P0,P2)
     M = (P0 + P2) / 2
     direction = normalised_vector_direction(center,M)
 
-    if star_type == StarType.STRAIGHT:
+    if star_type == StarType.STRAIGHT or star_type == StarType.FLOWER:
         P1 = M + direction * arm_length
     elif star_type == StarType.CURVED:
         P1= center + direction * radius
         #P1 = M - direction * arm_length
-        #plt.plot(P1)
+
 
     if (asymmetry!=0) and (np.mod(arm_n,2)==0) and (np.mod(num_points,2)==0) and (star_type == StarType.STRAIGHT):
-        print("1")
         P1 = P1 + (direction * asymmetry)
     elif (asymmetry!=0) and (np.mod(arm_n,2)==0) and (np.mod(num_points,2)==0) and (star_type == StarType.CURVED):
         p_direction = normalised_vector_direction(center,P0)
         P0 = P0 + (p_direction * asymmetry)
-        print("2")
     elif (asymmetry!=0) and (np.mod(arm_n,2)!=0) and (np.mod(num_points,2)==0) and (star_type == StarType.CURVED):
         p_direction = normalised_vector_direction(center,P2)
         P2 = P2 + (p_direction * asymmetry)
-        print("3")
 
-    if star_type == StarType.CURVED:
+
+    if star_type == StarType.CURVED or star_type == StarType.FLOWER:
         t_values = np.linspace(0, 1, 100)
         arm_points = np.array([bezier_curve(t, P0, P1, P2) for t in t_values])
     else:
