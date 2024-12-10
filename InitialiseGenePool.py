@@ -1,63 +1,8 @@
-import cv2
 import numpy as np
 import matplotlib.pyplot as plt
-from math import comb
-#from dask_expr.diagnostics import analyze
-from EAOverallGenome import *
-import random
 from EyelinerWingGeneration import get_quadratic_points
 from A import *
-
-
-def random_gene(gene_n):
-    design = EyelinerDesign()
-    n_objects = random.randint(2, 10)
-    for i in range(n_objects):
-        if i == 0:  #(gene_n ==0 and i==0) or (gene_n ==1 and i==0):
-            segment_start = (3, 1.5)
-        else:
-            segment_start = (random.uniform(*start_x_range), random.uniform(*start_y_range))
-
-        # Adding a new segment to the design
-        new_segment_type = SegmentType.LINE if random.random() < 0.8 else SegmentType.STAR
-        if new_segment_type == SegmentType.LINE:
-            start_mode = random.choice(list(StartMode))
-            new_segment = create_segment(
-                segment_type=SegmentType.LINE,
-                start=segment_start,
-                start_mode=start_mode,
-                length=random.uniform(*length_range),
-                relative_angle=random.uniform(*direction_range),
-                start_thickness=random.uniform(*thickness_range),
-                end_thickness=random.uniform(*thickness_range),
-                colour=random.choice(colour_options),
-                curviness=0 if random.random() < 0.5 else random.uniform(*curviness_range),
-                curve_direction=random.uniform(*direction_range),
-                curve_location=random.uniform(*relative_location_range),
-                start_location=random.uniform(*relative_location_range),
-                split_point=random.uniform(*relative_location_range)
-            )
-        elif new_segment_type == SegmentType.STAR:
-            start_mode = random.choice(list(StartMode))
-            new_segment = create_segment(
-                segment_type=SegmentType.STAR,
-                start=segment_start,
-                start_mode=random.choice([StartMode.CONNECT, StartMode.JUMP]),
-                radius=random.uniform(*radius_range),
-                arm_length=random.uniform(*arm_length_range),
-                num_points=random.randint(*num_points_range),
-                asymmetry=random.uniform(*asymmetry_range),
-                star_type=random.choice([StarType.STRAIGHT,StarType.CURVED,StarType.FLOWER]),
-                end_thickness=random.uniform(*thickness_range),
-                relative_angle=random.uniform(*direction_range),
-                colour=random.choice(colour_options),
-            )
-
-        design.add_segment(new_segment)
-        next_start_thickness = design.get_start_thickness()
-    design.update_design_info()
-    return design
-
+from EyelinerDesign import random_gene
 
 def initialise_gene_pool():
     gene_pool = [random_gene(i) for i in range(6)]  # Generate 6 random genes
@@ -126,7 +71,6 @@ def is_in_eye(segment):
     overlap = np.sum(inside)
     score = int((overlap / len(segment)) * 100)
     if score > 0:
-        print("In eyee:", score)
         return max(score, 1)
     else:
         return 0
@@ -148,7 +92,6 @@ def analyze_gene(design):
         score = score - check_overlap(i, segments)
         score = score + wing_angle(i, segments)
         score = score - is_in_eye(segments[i])
-    print("score: ", score)
     if score <= -20:
         return True
     else:

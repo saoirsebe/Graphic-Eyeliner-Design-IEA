@@ -1,12 +1,12 @@
 import tkinter as tk
 from random import randint
 from tkinter import messagebox
-
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import matplotlib.pyplot as plt
 import numpy as np
-from Trial import *
+from InitialiseGenePool import initialise_gene_pool
 from Page import Page
+import random
 
 class DesignPage(Page):
     def __init__(self, parent, controller):
@@ -16,6 +16,7 @@ class DesignPage(Page):
         self.current_gene_pool = []
         self.selected_gene_indices = []
         self.buttons = []
+        self.mutation_rate = 0.05
 
     def create_widgets(self):
         # Create the initial screen with instructions
@@ -33,6 +34,17 @@ class DesignPage(Page):
         tk.Label(self, text="Pick your favorite designs", font=("Arial", 18)).grid(row=3, column=2, columnspan=2, pady=10)
         if not self.current_gene_pool:
             self.current_gene_pool = initialise_gene_pool()
+
+        # Add dropdown menu for mutation rate
+        tk.Label(self, text="Select Mutation Rate:", font=("Arial", 12)).grid(row=2, column=2, pady=10)
+        mutation_rate_values = [round(x, 2) for x in [0.01, 0.02,0.03,0.04,0.05,0.06,0.07,0.08,0.09,0.1]]
+        def set_mutation_rate(value):
+            self.mutation_rate = float(value)  # Update the float value
+        # Create OptionMenu
+        mutation_rate_dropdown = tk.OptionMenu(self, tk.StringVar(value=str(self.mutation_rate)), *mutation_rate_values,  # Dropdown options
+            command=set_mutation_rate  # Update mutation rate on selection
+        )
+        mutation_rate_dropdown.grid(row=3, column=3, pady=10)
 
         def toggle_gene(index,button):
             """Toggle the selection of a gene."""
@@ -72,14 +84,12 @@ class DesignPage(Page):
         submit_button = tk.Button(self, text="Submit", command=self.submit_selection)
         submit_button.grid(row=9, column=0, pady=20)
 
-
     def submit_selection(self):
         """Submit the selected genes."""
         selected_indices = self.selected_gene_indices
         print(self.selected_gene_indices)
         if selected_indices:
             selected_genes = [f"Gene {i + 1}" for i in selected_indices]
-            messagebox.showinfo("Selected Genes", f"Genes selected: {', '.join(selected_genes)}")
             n_selected = len(selected_indices)
             if n_selected == 1 or 2 or 3 or 6:
                 n_of_each = 6 // len(selected_indices)
@@ -91,14 +101,13 @@ class DesignPage(Page):
             for selected in selected_indices:
                 old_gene = self.current_gene_pool[selected]
                 for i in range(n_of_each):
-                    new_design = old_gene.mutate()
+                    new_design = old_gene.mutate(self.mutation_rate)
                     new_gene_pool.append(new_design)
             while len(new_gene_pool) < 6:
-                new_design = self.current_gene_pool[random.randint(0,5)].mutate()
+                new_design_index = random.choice(selected_indices)
+                new_design = self.current_gene_pool[new_design_index].mutate(self.mutation_rate)
                 new_gene_pool.append(new_design)
             self.current_gene_pool = new_gene_pool
             self.start_designing()
         else:
             messagebox.showwarning("No Genes Selected", "No genes were selected.")
-
-

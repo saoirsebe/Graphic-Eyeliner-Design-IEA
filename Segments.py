@@ -1,16 +1,8 @@
-
-import math
-import matplotlib.pyplot as plt
-import numpy as np
-import copy
 import EyelinerWingGeneration
 from EyelinerWingGeneration import un_normalised_vector_direction, draw_eye_shape
 import StarGeneration
 from StarGeneration import *
 from A import *
-
-
-
 
 class Segment:
     """Base class for all segments."""
@@ -371,62 +363,7 @@ def create_segment(start, start_mode, segment_type, **kwargs):
         raise ValueError(f"Unsupported segment type: {segment_type}")
 
 
-class EyelinerDesign:   #Creates overall design, calculates start points, renders each segment by calling their render function
-    def __init__(self):
-        self.segments = []
-        self.n_of_lines= 0
-        self.n_of_stars= 0
-        self.n_of_segments= 0
 
-    def add_segment(self, segment):
-        self.segments.append(segment)
-
-    def render(self):
-        fig, ax_n = plt.subplots(figsize=(3, 3))
-        """Render the eyeliner design using matplotlib."""
-        draw_eye_shape(ax_n)
-        segment_n = 0
-        prev_array = np.array([self.segments[0].start])
-        prev_angle = 0
-        prev_colour = self.segments[0].colour
-        prev_end_thickness_array = self.segments[0].end_thickness
-        for segment in self.segments:
-            segment.render(ax_n, prev_array, prev_angle,prev_colour,prev_end_thickness_array)
-            if segment.segment_type == SegmentType.STAR:
-                prev_array = self.segments[segment_n].arm_points_array #if previous segment was a star then pass in the arm points that the next segment should start at
-            else:
-                prev_array = self.segments[segment_n].points_array
-            prev_angle = self.segments[segment_n].absolute_angle
-            prev_colour = self.segments[segment_n].colour
-            if segment.segment_type == SegmentType.LINE:
-                prev_end_thickness_array = self.segments[segment_n].thickness_array
-            else:
-                prev_end_thickness_array = np.array(self.segments[segment_n].end_thickness)
-            segment_n += 1
-        return fig
-
-    def get_start_thickness(self):
-        if not self.segments:
-            return 1 # Starting thickness for the first segment
-        last_segment = self.segments[-1]
-        return last_segment.end_thickness
-
-    def update_design_info(self):
-        self.n_of_lines = 0
-        self.n_of_stars = 0
-        self.n_of_segments = 0
-        for segment in self.segments:
-            self.n_of_segments += 1
-            if segment.segment_type == SegmentType.LINE:
-                self.n_of_lines += 1
-            elif segment.segment_type == SegmentType.STAR:
-                self.n_of_stars += 1
-
-    def mutate(self):
-        new_gene = copy.deepcopy(self)
-        for segment in new_gene.segments:
-            segment.mutate()
-        return new_gene
 """
 # Example usage
 design = EyelinerDesign()
