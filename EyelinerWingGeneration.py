@@ -127,8 +127,48 @@ def draw_eye_shape(ax_n):
     x_vals = [x * 3 for x in x_vals]
     y_vals = [y * 3 for y in y_vals]  # Scale y-values
     ax_n.plot(x_vals, y_vals, label=f"$y = -0.5x^2 + 1$", color="b")
-    #
 
+def generate_bezier_curve(P0,P1,P2,P3, num_points=100):
+    t = np.linspace(0, 1, num_points)
+
+    x = (1 - t) ** 3 * P0[0] + 3 * (1 - t) ** 2 * t * P1[0] + 3 * (1 - t) * t ** 2 * P2[0] + t ** 3 * P3[0]
+    y = (1 - t) ** 3 * P0[1] + 3 * (1 - t) ** 2 * t * P1[1] + 3 * (1 - t) * t ** 2 * P2[1] + t ** 3 * P3[1]
+    return x, y
+
+def generate_eye_curve_directions():
+    #plt.figure(figsize=(6, 6))
+    #draw_eye_shape(plt)
+
+    upper_x, upper_y = get_quadratic_points(-0.5, 0, 1, -1, 1)
+    lower_x, lower_y = get_quadratic_points(0.5, 0, 0, -1, 1)
+    upper_curve = np.column_stack(([x * 3 for x in upper_x], [y * 3 for y in upper_y]))
+    lower_curve = np.column_stack(([x * 3 for x in lower_x], [y * 3 for y in lower_y]))
+
+    # Control point P1 should be above the quadratic curve at its midpoint (x=0.5)
+    P0 = upper_curve[0]
+    P0[1] += 1
+    P2 = upper_curve[-1]
+    P2[1] += 1
+    P1 = upper_curve[upper_curve.shape[0]//2]
+    P1[1] += 2
+    P3 = (P2[0]+3,P2[1]+1)
+    x, y = generate_bezier_curve(P0,P1,P2,P3)
+    top_eye_curve = np.column_stack((x, y))
+    #plt.plot(top_eye_curve[:,0], top_eye_curve[:,1], label="Upper Bezier")
+
+    P0 = lower_curve[0]
+    P0[1] -= 1
+    P2 = lower_curve[-1]
+    P2[1] -= 1
+    P1 = lower_curve[lower_curve.shape[0]//2]
+    P1[1] -= 2
+    x, y = generate_bezier_curve(P0,P1,P2,P3)
+    bottom_eye_curve = np.column_stack((x, y))
+    #plt.plot(bottom_eye_curve[:,0], bottom_eye_curve[:,1], label="Lower Bezier")
+    #ax = plt.gca()
+    #ax.set_aspect('equal')
+    #plt.show()
+    return top_eye_curve, bottom_eye_curve
 
 """
 # Plotting

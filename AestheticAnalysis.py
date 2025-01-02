@@ -1,14 +1,14 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from A import SegmentType
-from EyelinerWingGeneration import get_quadratic_points
+from EyelinerWingGeneration import get_quadratic_points, generate_eye_curve_directions
 from EyelinerDesign import random_gene
 
 import numpy as np
 from scipy.interpolate import interp1d
 
 
-def compare_curves(bezier_points, eye_points, num_samples=100):
+def compare_curves(bezier_points, eye_points, eye_curve_shape, is_upper,num_samples=100):
     """
     Compare the curvature and direction of a Bezier curve and a quadratic curve.
 
@@ -28,16 +28,45 @@ def compare_curves(bezier_points, eye_points, num_samples=100):
 
     # Resample both curves to have the same number of points
     bezier_resampled = resample_curve(bezier_points, num_samples)
+    eye_curve_resampled = resample_curve(eye_curve_shape, num_samples)
     eye_resampled = resample_curve(eye_points, num_samples)
+
+    def apply_upper_lower_condition(bezier_curve, quadratic_curve, is_upper, threshold=0.9):
+        count_valid = 0
+        total_points = len(bezier_curve)
+
+        for bezier_point, quadratic_point in zip(bezier_curve, quadratic_curve):
+            if is_upper:
+                # Bezier should be above the quadratic curve
+                if bezier_point[1] > quadratic_point[1]:
+                    count_valid += 1
+            else:
+                # Bezier should be below the quadratic curve
+                if bezier_point[1] < quadratic_point[1]:
+                    count_valid += 1
+
+        # If 90% or more of the points are valid (either above or below), return 1, otherwise return 0
+        if count_valid / total_points >= threshold:
+            return 1
+        else:
+            return 0
+
+    position_score = apply_upper_lower_condition(bezier_resampled, eye_resampled, is_upper)
+    if position_score == 0:
+        return{
+            "shape_similarity": 0,
+            "direction_similarity": 0,
+            "overall_similarity": 0
+        }
 
     # Compute tangent vectors and normalize to get directions
     def compute_directions(points):
         tangents = np.diff(points, axis=0)
-        directions = tangents / np.linalg.norm(tangents, axis=1, keepdims=True)
+        # Prevent division by zero when normalizing
+        norms = np.linalg.norm(tangents, axis=1, keepdims=True)
+        norms[norms == 0] = 1e-8  # Prevent zero vectors by setting a small value
+        directions = tangents / norms
         return directions
-
-    bezier_directions = compute_directions(bezier_resampled)
-    quadratic_directions = compute_directions(eye_resampled)
 
     # Compute curvature for both sets of points
     def calculate_curvature(points):
@@ -60,27 +89,34 @@ def compare_curves(bezier_points, eye_points, num_samples=100):
 
         return np.array(overlapping_points_curve1), np.array(overlapping_points_curve2)
 
-    overlapping_points_bezier, overlapping_points_eye = get_overlapping_points(bezier_resampled, eye_resampled)
+    overlapping_points_bezier, overlapping_points_eye_shape = get_overlapping_points(bezier_resampled, eye_curve_resampled)
 
-    # Plot the curves
-    plt.figure(figsize=(8, 6))
-    plt.plot(overlapping_points_bezier[:, 0], overlapping_points_bezier[:, 1], label='Bezier Curve', color='b')
-    plt.plot(overlapping_points_eye[:, 0], overlapping_points_eye[:, 1], label='Quadratic Curve', color='g')
-    plt.legend()
-    plt.grid(True)
-    plt.axis('equal')  # Equal aspect ratio ensures that arrows are displayed proportionally
-    # Show plot
-    plt.show()
+    if overlapping_points_bezier.shape[0]>0 and overlapping_points_eye_shape.shape[0]>0:
+        # Plot the curves
+        plt.figure(figsize=(8, 6))
+        plt.plot(overlapping_points_bezier[:, 0], overlapping_points_bezier[:, 1], label='Bezier Curve', color='b')
+        plt.plot(overlapping_points_eye_shape[:, 0], overlapping_points_eye_shape[:, 1], label='Quadratic Curve',color='g')
+        plt.legend()
+        plt.grid(True)
+        plt.axis('equal')  # Equal aspect ratio ensures that arrows are displayed proportionally
+        # Show plot
+        plt.show()
 
-    bezier_curvature = calculate_curvature(overlapping_points_bezier)
-    eye_curvature = calculate_curvature(overlapping_points_eye)
+        bezier_curvature = calculate_curvature(overlapping_points_bezier)
+        eye_curvature = calculate_curvature(overlapping_points_eye_shape)
 
-    # Compute shape similarity (curvature comparison)
-    shape_similarity = 1 - np.mean(np.abs(bezier_curvature - eye_curvature))
+        # Compute shape similarity (curvature comparison)
+        shape_similarity = 1 - np.mean(np.abs(bezier_curvature - eye_curvature))
 
-    # Compute direction similarity (angle between normalized tangent vectors)
-    dot_products = np.sum(bezier_directions * quadratic_directions, axis=1)
-    direction_similarity = np.mean(dot_products)
+        bezier_directions = compute_directions(overlapping_points_bezier)
+        eye_curve_directions = compute_directions(overlapping_points_eye_shape)
+
+        # Compute direction similarity (angle between normalized tangent vectors)
+        dot_products = np.sum(bezier_directions * eye_curve_directions, axis=1)
+        direction_similarity = np.mean(dot_products)
+    else:
+        shape_similarity = 0
+        direction_similarity = 0
 
     # Combine into overall similarity
     overall_similarity = (shape_similarity + direction_similarity) / 2
@@ -97,29 +133,18 @@ def score_segment(segment, upper_curve, lower_curve, wing_direction, tolerance=0
     Score a single segment based on how well it aligns with the natural curves.
     """
     points = segment.points_array
-
     # Calculate curvature of the segment
-    upper_curve_match= compare_curves(points,upper_curve, num_samples=100)
-    lower_curve_match= compare_curves(points,lower_curve, num_samples=100)
+    top_eye_curve, bottom_eye_curve = generate_eye_curve_directions()
+    upper_curve_match= compare_curves(points,upper_curve,top_eye_curve,True, num_samples=100)
+    lower_curve_match= compare_curves(points,lower_curve,bottom_eye_curve,False, num_samples=100)
     print("upper_curve_match", upper_curve_match)
     print("lower_curve_match", lower_curve_match)
 
-    # Check if it's a wing shape (straight or slightly curved outward)
-    is_wing = False
-    """
-    wing_vector = np.array(wing_direction)
-    segment_vector = end - start
-    dot_product = np.dot(wing_vector, segment_vector) / (np.linalg.norm(wing_vector) * np.linalg.norm(segment_vector))
-    if dot_product > 0.95:  # Angle close to 0 (aligned with wing direction)
-        is_wing = True
-    """
     # Assign scores
     score = 0
     if upper_curve_match or lower_curve_match:
         score += 5  # High score for matching natural curves
-    if is_wing:
-        score += 5  # Bonus for good wing shape
-    if not upper_curve_match and not lower_curve_match and not is_wing:
+    if not upper_curve_match and not lower_curve_match:
         score -= 2  # Penalty for deviating
 
     return score
@@ -131,8 +156,6 @@ def analyze_design(design):
     """
     upper_x, upper_y = get_quadratic_points(-0.5, 0, 1, -1, 1)
     lower_x, lower_y = get_quadratic_points(0.5, 0, 0, -1, 1)
-
-    # Scale curves
     upper_curve = np.column_stack(([x * 3 for x in upper_x], [y * 3 for y in upper_y]))
     lower_curve = np.column_stack(([x * 3 for x in lower_x], [y * 3 for y in lower_y]))
 
