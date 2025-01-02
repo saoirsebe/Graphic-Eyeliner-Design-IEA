@@ -44,7 +44,7 @@ class DesignPage(Page):
         mutation_rate_dropdown = tk.OptionMenu(self, tk.StringVar(value=str(self.mutation_rate)), *mutation_rate_values,  # Dropdown options
             command=set_mutation_rate  # Update mutation rate on selection
         )
-        mutation_rate_dropdown.grid(row=3, column=3, pady=10)
+        mutation_rate_dropdown.grid(row=4, column=6, pady=10)
 
         def toggle_gene(index,button):
             """Toggle the selection of a gene."""
@@ -87,7 +87,6 @@ class DesignPage(Page):
     def submit_selection(self):
         """Submit the selected genes."""
         selected_indices = self.selected_gene_indices
-        print(self.selected_gene_indices)
         if selected_indices:
             selected_genes = [f"Gene {i + 1}" for i in selected_indices]
             n_selected = len(selected_indices)

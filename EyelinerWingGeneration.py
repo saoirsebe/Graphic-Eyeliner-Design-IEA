@@ -127,7 +127,7 @@ def draw_eye_shape(ax_n):
     x_vals = [x * 3 for x in x_vals]
     y_vals = [y * 3 for y in y_vals]  # Scale y-values
     ax_n.plot(x_vals, y_vals, label=f"$y = -0.5x^2 + 1$", color="b")
-
+    #
 
 
 """

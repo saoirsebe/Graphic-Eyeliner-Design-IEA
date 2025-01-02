@@ -79,11 +79,10 @@ class EyelinerDesign:   #Creates overall design, calculates start points, render
 def random_segment(segment_start=(random.uniform(*start_x_range), random.uniform(*start_y_range))):
     new_segment_type = SegmentType.LINE if random.random() < 0.8 else SegmentType.STAR
     if new_segment_type == SegmentType.LINE:
-        start_mode = random.choice(list(StartMode))
         new_segment = create_segment(
             segment_type=SegmentType.LINE,
             start=segment_start,
-            start_mode=start_mode,
+            start_mode=random.choice(list(StartMode)),
             length=random.uniform(*length_range),
             relative_angle=random.uniform(*direction_range),
             start_thickness=random.uniform(*thickness_range),
@@ -96,7 +95,6 @@ def random_segment(segment_start=(random.uniform(*start_x_range), random.uniform
             split_point=random.uniform(*relative_location_range)
         )
     elif new_segment_type == SegmentType.STAR:
-        start_mode = random.choice(list(StartMode))
         new_segment = create_segment(
             segment_type=SegmentType.STAR,
             start=segment_start,
