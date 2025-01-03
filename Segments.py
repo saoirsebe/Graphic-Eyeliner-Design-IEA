@@ -68,7 +68,10 @@ class LineSegment(Segment):
 
     def calculate_end(self, prev_angle):
         """Calculate the end point based on start, length, and direction."""
-        self.absolute_angle = prev_angle + self.relative_angle
+        if self.start_mode == StartMode.JUMP:
+            self.absolute_angle = self.relative_angle
+        else:
+            self.absolute_angle = prev_angle + self.relative_angle
         radians = math.radians(self.absolute_angle) # Convert to radians
 
         end_x = self.start[0] + self.length * math.cos(radians)
@@ -283,7 +286,10 @@ class StarSegment(Segment):
             self.center = self.start
         #elif self.start_mode == StartMode.CONNECT_MID and prev_array:
 
-        self.absolute_angle = prev_angle + self.relative_angle
+        if self.start_mode == StartMode.JUMP:
+            self.absolute_angle = self.relative_angle
+        else:
+            self.absolute_angle = prev_angle + self.relative_angle
 
         star_points, star_arm_points = StarGeneration.create_star(self.num_points, self.center, self.radius, self.arm_length, self.asymmetry, self.star_type, self.absolute_angle)
         start_coord = star_arm_points[-1]

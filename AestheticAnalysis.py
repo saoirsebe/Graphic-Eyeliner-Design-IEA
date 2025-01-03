@@ -1,11 +1,13 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from A import SegmentType
+from A import SegmentType, StartMode
 from EyelinerWingGeneration import get_quadratic_points, generate_eye_curve_directions
-from EyelinerDesign import random_gene
+from EyelinerDesign import random_gene, EyelinerDesign
 
 import numpy as np
 from scipy.interpolate import interp1d
+
+from Segments import create_segment
 
 
 def compare_curves(bezier_points, eye_points, eye_curve_shape, is_upper,num_samples=100):
@@ -95,7 +97,7 @@ def compare_curves(bezier_points, eye_points, eye_curve_shape, is_upper,num_samp
         # Plot the curves
         plt.figure(figsize=(8, 6))
         plt.plot(overlapping_points_bezier[:, 0], overlapping_points_bezier[:, 1], label='Bezier Curve', color='b')
-        plt.plot(overlapping_points_eye_shape[:, 0], overlapping_points_eye_shape[:, 1], label='Quadratic Curve',color='g')
+        plt.plot(overlapping_points_eye_shape[:, 0], overlapping_points_eye_shape[:, 1], label=f'Quadratic Curve {is_upper}',color='g')
         plt.legend()
         plt.grid(True)
         plt.axis('equal')  # Equal aspect ratio ensures that arrows are displayed proportionally
@@ -106,7 +108,9 @@ def compare_curves(bezier_points, eye_points, eye_curve_shape, is_upper,num_samp
         eye_curvature = calculate_curvature(overlapping_points_eye_shape)
 
         # Compute shape similarity (curvature comparison)
-        shape_similarity = 1 - np.mean(np.abs(bezier_curvature - eye_curvature))
+
+        #shape_similarity = 1 - np.mean(np.abs(bezier_curvature - eye_curvature))
+        shape_similarity = 1 - np.sqrt(np.mean((bezier_curvature - eye_curvature) ** 2))
 
         bezier_directions = compute_directions(overlapping_points_bezier)
         eye_curve_directions = compute_directions(overlapping_points_eye_shape)
@@ -135,16 +139,18 @@ def score_segment(segment, upper_curve, lower_curve, wing_direction, tolerance=0
     points = segment.points_array
     # Calculate curvature of the segment
     top_eye_curve, bottom_eye_curve = generate_eye_curve_directions()
-    upper_curve_match= compare_curves(points,upper_curve,top_eye_curve,True, num_samples=100)
-    lower_curve_match= compare_curves(points,lower_curve,bottom_eye_curve,False, num_samples=100)
-    print("upper_curve_match", upper_curve_match)
-    print("lower_curve_match", lower_curve_match)
+    upper_curve_results= compare_curves(points,upper_curve,top_eye_curve,True, num_samples=100)
+    lower_curve_results= compare_curves(points,lower_curve,bottom_eye_curve,False, num_samples=100)
+    print("upper_curve_match", upper_curve_results)
+    print("lower_curve_match", lower_curve_results)
 
     # Assign scores
     score = 0
-    if upper_curve_match or lower_curve_match:
-        score += 5  # High score for matching natural curves
-    if not upper_curve_match and not lower_curve_match:
+    if upper_curve_results["overall_similarity"]>0:
+        score+=upper_curve_results["overall_similarity"]
+    elif lower_curve_results["overall_similarity"]>0:
+        score += lower_curve_results["overall_similarity"]
+    else:
         score -= 2  # Penalty for deviating
 
     return score
@@ -168,7 +174,60 @@ def analyze_design(design):
             total_score += score_segment(segment, upper_curve, lower_curve, wing_direction)
     return total_score
 
-random_design = random_gene(0)
+#random_design = random_gene(0)
+random_design = EyelinerDesign()
+new_segment = create_segment(
+        segment_type=SegmentType.LINE,
+        start = (0,3),
+        start_mode=StartMode.CONNECT,
+        length=3,
+        relative_angle=40,
+        start_thickness=2.5,
+        end_thickness=1,
+        colour="red",
+        curviness= 0 ,
+        curve_direction=0.2,
+        curve_location=0.5,
+        start_location=0.6,
+        split_point=0.2
+
+)
+random_design.add_segment(new_segment)
+new_segment = create_segment(
+        segment_type=SegmentType.LINE,
+        start = (1,-1.5),
+        start_mode=StartMode.JUMP,
+        length=1.5,
+        relative_angle=110,
+        start_thickness=6,
+        end_thickness=4,
+        colour="orange",
+        curviness= 0.5 ,
+        curve_direction=20,
+        curve_location=0.5,
+        start_location=0.6,
+        split_point=0
+
+)
+random_design.add_segment(new_segment)
+new_segment = create_segment(
+        segment_type=SegmentType.LINE,
+        start = (-2,3),
+        start_mode=StartMode.JUMP,
+        length=7,
+        relative_angle=90,
+        start_thickness=2.5,
+        end_thickness=1,
+        colour="pink",
+        curviness= 0 ,
+        curve_direction=90,
+        curve_location=0.5,
+        start_location=0.6,
+        split_point=0
+
+)
+random_design.add_segment(new_segment)
 fig = random_design.render()
 fig.show()
-analyze_design(random_design)
+score = analyze_design(random_design)
+print("Score:", score)
