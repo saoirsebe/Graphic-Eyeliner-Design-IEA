@@ -18,20 +18,36 @@ def compare_curves(bezier_points, eye_points, eye_curve_shape, is_upper,num_samp
         dict: A dictionary containing shape similarity, direction similarity, and overall similarity.
     """
 
-    def resample_curve(points, num_samples):
+    def resample_curve(points, num_resize_val):
         """Resample a curve to have exactly num_samples points."""
         distances = np.sqrt(np.sum(np.diff(points, axis=0) ** 2, axis=1))
         cumulative_distances = np.insert(np.cumsum(distances), 0, 0)
         total_distance = cumulative_distances[-1]
-        uniform_distances = np.linspace(0, total_distance, num_samples)
+        uniform_distances = np.linspace(0, total_distance, num_resize_val)
         interp_x = interp1d(cumulative_distances, points[:, 0], kind='linear')
         interp_y = interp1d(cumulative_distances, points[:, 1], kind='linear')
         return np.vstack((interp_x(uniform_distances), interp_y(uniform_distances))).T
 
-    # Resample both curves to have the same number of points
-    bezier_resampled = resample_curve(bezier_points, num_samples)
-    eye_curve_resampled = resample_curve(eye_curve_shape, num_samples)
-    eye_resampled = resample_curve(eye_points, num_samples)
+    def resample_directions_or_curvatures(values, points, num_resize_val):
+        """Resample directions or curvatures arrays based on the distance between points."""
+        # Compute distances between successive points
+        distances = np.sqrt(np.sum(np.diff(points, axis=0) ** 2, axis=1))
+        cumulative_distances = np.insert(np.cumsum(distances), 0,0)  # Insert a 0 at the start to match the number of 'values'
+
+        # Create uniform distances for resampling
+        total_distance = cumulative_distances[-1]
+        uniform_distances = np.linspace(0, total_distance, num_resize_val)
+
+        # Interpolate values (curvatures or directions) based on cumulative distances
+        if len(values)==len(cumulative_distances) - 2:
+            cumulative_distances = cumulative_distances[1:-1]
+        elif len(values)==len(cumulative_distances) - 1:
+            cumulative_distances=cumulative_distances[1:]
+        else:
+            raise ValueError("The length of 'values' must be one/two less than the length of 'points'")
+        interp_values = interp1d(cumulative_distances, values, kind='linear',axis=0, fill_value="extrapolate")
+
+        return interp_values(uniform_distances)
 
     def apply_upper_lower_condition(bezier_curve, quadratic_curve, is_upper, threshold=0.9):
         count_valid = 0
@@ -53,7 +69,12 @@ def compare_curves(bezier_points, eye_points, eye_curve_shape, is_upper,num_samp
         else:
             return 0
 
-    position_score = apply_upper_lower_condition(bezier_resampled, eye_resampled, is_upper)
+    # Resample both curves to have the same number of points
+    num_resize = max(len(bezier_points) , len(eye_points))
+    bezier_position_resampled = resample_curve(bezier_points, num_resize)
+    eye_position_resampled = resample_curve(eye_points, num_resize)
+
+    position_score = apply_upper_lower_condition(bezier_position_resampled, eye_position_resampled, is_upper)
     if position_score == 0:
         return{
             "shape_similarity": 0,
@@ -91,9 +112,10 @@ def compare_curves(bezier_points, eye_points, eye_curve_shape, is_upper,num_samp
 
         return np.array(overlapping_points_curve1), np.array(overlapping_points_curve2)
 
-    overlapping_points_bezier, overlapping_points_eye_shape = get_overlapping_points(bezier_resampled, eye_curve_resampled)
+    overlapping_points_bezier, overlapping_points_eye_shape = get_overlapping_points(bezier_points, eye_curve_shape)
 
     if overlapping_points_bezier.shape[0]>0 and overlapping_points_eye_shape.shape[0]>0:
+
         # Plot the curves
         plt.figure(figsize=(8, 6))
         plt.plot(overlapping_points_bezier[:, 0], overlapping_points_bezier[:, 1], label='Bezier Curve', color='b')
@@ -106,17 +128,20 @@ def compare_curves(bezier_points, eye_points, eye_curve_shape, is_upper,num_samp
 
         bezier_curvature = calculate_curvature(overlapping_points_bezier)
         eye_curvature = calculate_curvature(overlapping_points_eye_shape)
-
         # Compute shape similarity (curvature comparison)
-
+        num_resize = max(len(bezier_curvature), len(eye_curvature))
+        bezier_curvature_resampled = resample_directions_or_curvatures(bezier_curvature,overlapping_points_bezier, num_resize)
+        eye_curvature_resampled = resample_directions_or_curvatures(eye_curvature, overlapping_points_eye_shape,num_resize)
         #shape_similarity = 1 - np.mean(np.abs(bezier_curvature - eye_curvature))
-        shape_similarity = 1 - np.sqrt(np.mean((bezier_curvature - eye_curvature) ** 2))
+        shape_similarity = 1 - np.sqrt(np.mean((bezier_curvature_resampled - eye_curvature_resampled) ** 2))
 
         bezier_directions = compute_directions(overlapping_points_bezier)
         eye_curve_directions = compute_directions(overlapping_points_eye_shape)
-
+        num_resize = max(len(bezier_directions) , len(eye_curve_directions) )
+        bezier_directions_resampled = resample_directions_or_curvatures(bezier_directions,overlapping_points_bezier, num_resize)
+        eye_directions_resampled = resample_directions_or_curvatures(eye_curve_directions,overlapping_points_eye_shape, num_resize)
         # Compute direction similarity (angle between normalized tangent vectors)
-        dot_products = np.sum(bezier_directions * eye_curve_directions, axis=1)
+        dot_products = np.sum(bezier_directions_resampled * eye_directions_resampled, axis=1)
         direction_similarity = np.mean(dot_products)
     else:
         shape_similarity = 0
@@ -181,12 +206,12 @@ new_segment = create_segment(
         start = (0,3),
         start_mode=StartMode.CONNECT,
         length=3,
-        relative_angle=40,
+        relative_angle=0,
         start_thickness=2.5,
         end_thickness=1,
         colour="red",
-        curviness= 0 ,
-        curve_direction=0.2,
+        curviness= 0.5 ,
+        curve_direction=0.5,
         curve_location=0.5,
         start_location=0.6,
         split_point=0.2
@@ -215,7 +240,7 @@ new_segment = create_segment(
         start = (-2,3),
         start_mode=StartMode.JUMP,
         length=7,
-        relative_angle=90,
+        relative_angle=70,
         start_thickness=2.5,
         end_thickness=1,
         colour="pink",
