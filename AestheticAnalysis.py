@@ -37,7 +37,8 @@ def compare_curves(bezier_points, eye_points, eye_curve_shape, is_upper,num_samp
         # Create uniform distances for resampling
         total_distance = cumulative_distances[-1]
         uniform_distances = np.linspace(0, total_distance, num_resize_val)
-
+        print("Len(cumulative_distances)", len(cumulative_distances))
+        print("Len(values)", len(values))
         # Interpolate values (curvatures or directions) based on cumulative distances
         if len(values)==len(cumulative_distances) - 2:
             cumulative_distances = cumulative_distances[1:-1]
@@ -45,9 +46,13 @@ def compare_curves(bezier_points, eye_points, eye_curve_shape, is_upper,num_samp
             cumulative_distances=cumulative_distances[1:]
         else:
             raise ValueError("The length of 'values' must be one/two less than the length of 'points'")
+
         interp_values = interp1d(cumulative_distances, values, kind='linear',axis=0, fill_value="extrapolate")
 
         return interp_values(uniform_distances)
+
+    def resample_directions(values, points, num_resize_val):
+        return 0
 
     def apply_upper_lower_condition(bezier_curve, quadratic_curve, is_upper, threshold=0.9):
         count_valid = 0
@@ -84,12 +89,31 @@ def compare_curves(bezier_points, eye_points, eye_curve_shape, is_upper,num_samp
 
     # Compute tangent vectors and normalize to get directions
     def compute_directions(points):
-        tangents = np.diff(points, axis=0)
+        unique_points = [points[0]]  # Always keep the first point
+        duplicate_indices = []
+        for i in range(1, len(points)):
+            if not np.array_equal(points[i], points[i - 1]):
+                unique_points.append(points[i])
+            else:
+                duplicate_indices.append(i)
+        unique_points = np.array(unique_points)
+        tangents = np.diff(unique_points, axis=0)
         # Prevent division by zero when normalizing
         norms = np.linalg.norm(tangents, axis=1, keepdims=True)
         norms[norms == 0] = 1e-8  # Prevent zero vectors by setting a small value
         directions = tangents / norms
-        return directions
+
+        directions_with_duplicates = []
+        directions_idx = 0  # Index to track unique direction array
+        for i in range(len(points)-2):
+            if np.array_equal(points[i], points[i + 1]):
+                directions_with_duplicates.append(directions[directions_idx-1])
+            else:
+                # For duplicates, assign the same direction as the last unique point
+                directions_with_duplicates.append(directions[directions_idx])
+                directions_idx += 1
+
+        return np.array(directions_with_duplicates)
 
     # Compute curvature for both sets of points
     def calculate_curvature(points):
@@ -129,7 +153,7 @@ def compare_curves(bezier_points, eye_points, eye_curve_shape, is_upper,num_samp
         bezier_curvature = calculate_curvature(overlapping_points_bezier)
         eye_curvature = calculate_curvature(overlapping_points_eye_shape)
         # Compute shape similarity (curvature comparison)
-        num_resize = max(len(bezier_curvature), len(eye_curvature))
+        num_resize = max(len(overlapping_points_bezier), len(overlapping_points_eye_shape))
         bezier_curvature_resampled = resample_directions_or_curvatures(bezier_curvature,overlapping_points_bezier, num_resize)
         eye_curvature_resampled = resample_directions_or_curvatures(eye_curvature, overlapping_points_eye_shape,num_resize)
         #shape_similarity = 1 - np.mean(np.abs(bezier_curvature - eye_curvature))
@@ -137,9 +161,11 @@ def compare_curves(bezier_points, eye_points, eye_curve_shape, is_upper,num_samp
 
         bezier_directions = compute_directions(overlapping_points_bezier)
         eye_curve_directions = compute_directions(overlapping_points_eye_shape)
-        num_resize = max(len(bezier_directions) , len(eye_curve_directions) )
+        #print("eye_curve_directions",eye_curve_directions)
+        num_resize = max(len(overlapping_points_bezier) , len(overlapping_points_eye_shape))
         bezier_directions_resampled = resample_directions_or_curvatures(bezier_directions,overlapping_points_bezier, num_resize)
         eye_directions_resampled = resample_directions_or_curvatures(eye_curve_directions,overlapping_points_eye_shape, num_resize)
+        #print("eye_directions_resampled",eye_directions_resampled)
         # Compute direction similarity (angle between normalized tangent vectors)
         dot_products = np.sum(bezier_directions_resampled * eye_directions_resampled, axis=1)
         direction_similarity = np.mean(dot_products)
