@@ -68,7 +68,7 @@ class EyelinerDesign:   #Creates overall design, calculates start points, render
         fig = old_gene.render()
         plt.close(fig)
         original_score = analyze_gene(old_gene)
-        score = original_score +1
+        score = original_score -1
         while score<original_score:
             new_gene = copy.deepcopy(old_gene)
             for segment in new_gene.segments:
@@ -86,7 +86,7 @@ class EyelinerDesign:   #Creates overall design, calculates start points, render
                 fig = new_gene.render()
                 plt.close(fig)
             score = analyze_gene(new_gene)
-            print("Score:",score)
+        print("Score:",score)
         return new_gene
 
 def random_segment(segment_start=(random.uniform(*start_x_range), random.uniform(*start_y_range))):
