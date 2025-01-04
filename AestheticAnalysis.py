@@ -34,7 +34,6 @@ def compare_curves(bezier_points, eye_points, eye_curve_shape, is_upper,num_samp
         distances = np.sqrt(np.sum(np.diff(points, axis=0) ** 2, axis=1))
         cumulative_distances = np.insert(np.cumsum(distances), 0,0)  # Insert a 0 at the start to match the number of 'values'
 
-
         # Create uniform distances for resampling
         total_distance = cumulative_distances[-1]
         uniform_distances = np.linspace(0, total_distance, num_resize_val)
@@ -46,13 +45,15 @@ def compare_curves(bezier_points, eye_points, eye_curve_shape, is_upper,num_samp
         else:
             raise ValueError("The length of 'values' must be one/two less than the length of 'points'")
 
-        interp_values = interp1d(cumulative_distances, values, kind='linear',axis=0, bounds_error=False,fill_value=(values[0], values[-1]))
+        cumulative_distances_unique, unique_indices = np.unique(cumulative_distances, return_index=True)
+        values_unique = values[unique_indices]
+
+        interp_values = interp1d(cumulative_distances_unique, values_unique, kind='linear',axis=0, bounds_error=False,fill_value="extrapolate")
         #print("NaN in cumulative_distances:", np.isnan(cumulative_distances).any())
 
         #print("Cumulative Distances Range:", min(cumulative_distances), max(cumulative_distances))
         #print("Uniform Distances Range:", min(uniform_distances), max(uniform_distances))
-        if not np.all(np.diff(cumulative_distances) > 0):
-            print("cumulative_distances",cumulative_distances)
+        print(not np.all(np.diff(cumulative_distances) > 0))
         #extrapolated_values = interp_values([min(cumulative_distances) - 1, max(cumulative_distances) + 1])
         #print(extrapolated_values)
 
