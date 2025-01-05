@@ -1,5 +1,5 @@
 from A import SegmentType, StartMode
-from AestheticAnalysis import analyze_design_shapes
+from AestheticAnalysis import analyse_design_shapes
 import numpy as np
 from EyelinerWingGeneration import get_quadratic_points
 
@@ -63,7 +63,7 @@ def wing_angle(i, segments):
                 return 5
     return 0
 
-def analyze_gene(design):
+def analyse_gene(design):
     segments = design.segments
     score = 0  # Count how many overlaps there are in this gene
     # Compare each pair of segments for overlap
@@ -71,5 +71,5 @@ def analyze_gene(design):
         score = score - check_overlap(i, segments)
         score = score + wing_angle(i, segments)
         score = score - is_in_eye(segments[i])
-    score += analyze_design_shapes(design)
+    score += analyse_design_shapes(design)
     return score

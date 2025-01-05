@@ -1,5 +1,5 @@
 import matplotlib.pyplot as plt
-from AnalyseDesign import analyze_gene
+from AnalyseDesign import analyse_gene
 from EyelinerDesign import random_gene
 
 def initialise_gene_pool():
@@ -12,21 +12,17 @@ def initialise_gene_pool():
         ax.set_title(f"Design {idx + 1}")
         fig = gene.render()  # Render each gene on its specific subplot
         plt.close(fig)
-        score = analyze_gene(gene)
-        delete_segment = False
-        if score <= -20:
-            delete_segment =  True
+        score = analyse_gene(gene)
 
-        while delete_segment:
+        while score <= -20:
             gene_pool[idx] = random_gene(idx)
             gene = gene_pool[idx]  # Update the loop variable with the new gene
             ax.clear()  # Clear the previous gene's rendering
             ax.set_title(f"New design {idx + 1}")  # Reset the title
             fig = gene.render()  # Render the new gene
-            score = analyze_gene(gene)
-            if score > -20:
-                delete_segment = False
             plt.close(fig)
+            score = analyse_gene(gene)
+
     return gene_pool
 
 

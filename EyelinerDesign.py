@@ -1,8 +1,8 @@
 import copy
 import random
 
-from AestheticAnalysis import analyze_design_shapes
-from AnalyseDesign import analyze_gene
+from AestheticAnalysis import analyse_design_shapes
+from AnalyseDesign import analyse_gene
 from Segments import *
 
 class EyelinerDesign:   #Creates overall design, calculates start points, renders each segment by calling their render function
@@ -63,30 +63,33 @@ class EyelinerDesign:   #Creates overall design, calculates start points, render
             elif segment.segment_type == SegmentType.STAR:
                 self.n_of_stars += 1
 
+    def mutate_self(self,mutation_rate=0.1):
+        for segment in self.segments:
+            segment.mutate(mutation_rate)
+        if np.random.normal() < mutation_rate:
+            new_segment = random_segment()
+            self.add_segment_at(new_segment, np.random.randint(0, len(self.segments)))
+        if np.random.normal() < mutation_rate:
+            to_change = np.random.randint(0, len(self.segments) - 1)
+            new_position = np.random.randint(0, len(self.segments) - 1)
+            while new_position == to_change:
+                new_position = np.random.randint(0, len(self.segments))
+            segment = self.segments.pop(to_change)
+            self.segments.insert(new_position, segment)
+        return self
+
     def mutate(self,mutation_rate=0.1):
-        old_gene = copy.deepcopy(self)
-        fig = old_gene.render()
+        new_gene = copy.deepcopy(self)
+        new_gene= new_gene.mutate_self(mutation_rate)
+        fig=new_gene.render()
         plt.close(fig)
-        original_score = analyze_gene(old_gene)
-        score = original_score -1
-        while score<original_score:
-            new_gene = copy.deepcopy(old_gene)
-            for segment in new_gene.segments:
-                segment.mutate(mutation_rate)
-            if np.random.normal()< mutation_rate:
-                new_segment = random_segment()
-                self.add_segment_at(new_segment,np.random.randint(0,len(self.segments)))
-            if np.random.normal()< mutation_rate:
-                to_change = np.random.randint(0,len(self.segments)-1)
-                new_position = np.random.randint(0,len(self.segments)-1)
-                while new_position == to_change:
-                    new_position = np.random.randint(0, len(self.segments))
-                segment = self.segments.pop(to_change)
-                self.segments.insert(new_position, segment)
-                fig = new_gene.render()
-                plt.close(fig)
-            score = analyze_gene(new_gene)
-        print("Score:",score)
+        score = analyse_gene(new_gene)
+        while score<=-20:
+            new_gene = copy.deepcopy(self)
+            new_gene = new_gene.mutate_self(mutation_rate)
+            fig = new_gene.render()
+            plt.close(fig)
+            score = analyse_gene(new_gene)
         return new_gene
 
 def random_segment(segment_start=(random.uniform(*start_x_range), random.uniform(*start_y_range))):
@@ -143,6 +146,6 @@ def random_gene(gene_n):
 random_design = random_gene(0)
 fig = random_design.render()
 fig.show()
-score = analyze_design_shapes(random_design)
+score = analyse_design_shapes(random_design)
 print("Score:", score)
 """

@@ -260,15 +260,15 @@ def score_segment(segment, upper_curve, lower_curve, tolerance=0.1):
         score+= 3*upper_curve_results["overall_similarity"]
     elif lower_curve_results["overall_similarity"]>0.6:
         score += 3* lower_curve_results["overall_similarity"]
-    else:
-        score -= 2  # Penalty for deviating
+    #else:
+    #    score -= 2  # Penalty for deviating
 
     return score
 
 
-def analyze_design_shapes(design):
+def analyse_design_shapes(design):
     """
-    Analyze the entire design and calculate a total score.
+    Analyse the entire design and calculate a total score.
     """
     upper_x, upper_y = get_quadratic_points(-0.5, 0, 1, -1, 1)
     lower_x, lower_y = get_quadratic_points(0.5, 0, 0, -1, 1)
@@ -341,6 +341,6 @@ random_design.add_segment(new_segment)
 
 fig = random_design.render()
 fig.show()
-score = analyze_design_shapes(random_design)
+score = analyse_design_shapes(random_design)
 print("Score:", score)
 """
