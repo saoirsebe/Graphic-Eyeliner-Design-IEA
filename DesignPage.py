@@ -21,6 +21,7 @@ class DesignPage(Page):
         self.saved_genes_indices = []
         self.saved_genes = []
         self.saved_gene_widgets = {}
+        self.current_gene_pool_figures = []
 
     def create_widgets(self):
         # Create the initial screen with instructions
@@ -127,6 +128,7 @@ class DesignPage(Page):
             canvas_frame.grid(row=(i // 3) + 5, column=i % 3, padx=10, pady=10, sticky="nsew")
 
             fig = gene.render()
+            self.current_gene_pool_figures.append(fig)
             canvas = FigureCanvasTkAgg(fig, master=canvas_frame)
             canvas.draw()
             canvas_widget = canvas.get_tk_widget()
@@ -151,6 +153,8 @@ class DesignPage(Page):
 
     def submit_selection(self):
         """Submit the selected genes."""
+        for fig in self.current_gene_pool_figures:
+            plt.close(fig)
         selected_indices = self.selected_gene_indices
         if selected_indices:
             #selected_genes = [f"Gene {i + 1}" for i in selected_indices]
