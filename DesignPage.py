@@ -18,6 +18,9 @@ class DesignPage(Page):
         self.buttons = []
         self.mutation_rate = 0.05
         self.gene_pools_all = []
+        self.saved_genes_indices = []
+        self.saved_genes = []
+        self.saved_gene_widgets = {}
 
     def create_widgets(self):
         # Create the initial screen with instructions
@@ -29,8 +32,27 @@ class DesignPage(Page):
         self.start_button = tk.Button(self, text="Start designing", command=lambda: self.start_designing())
         self.start_button.grid(row=2, column=0, columnspan=2, pady=10)
 
+    def show_saved_genes(self):
+        for widget in self.saved_gene_widgets.values():widget.destroy()
+        self.saved_gene_widgets = {}
+        for i, gene in enumerate(self.saved_genes):
+            # Create a new frame for the gene only if it doesn't already exist
+            canvas_frame = tk.Frame(self, borderwidth=1, relief="solid")
+            canvas_frame.grid(row=i + 3, column=10, padx=10, pady=10, sticky="nsew")
+
+            # Render the figure for the gene
+            fig = gene.render()
+            canvas = FigureCanvasTkAgg(fig, master=canvas_frame)
+            canvas.draw()
+            canvas_widget = canvas.get_tk_widget()
+            canvas_widget.grid(row=0, column=0, columnspan=2, padx=5, pady=5)  # Place canvas at the top
+
+            # Save the frame to the dictionary
+            self.saved_gene_widgets[gene] = canvas_frame
+
     def start_designing(self):
         self.selected_gene_indices = []
+        self.saved_genes_indices = []
         self.start_button.grid_forget()
         tk.Label(self, text="Pick your favorite designs", font=("Arial", 18)).grid(row=3, column=2, columnspan=2, pady=10)
         if not self.current_gene_pool:
@@ -70,6 +92,36 @@ class DesignPage(Page):
                     relief="sunken"  # Change the button relief to give a "pressed" feel
                 )
 
+        def save_gene(index,button):
+            if index in self.saved_genes_indices:
+                self.saved_genes_indices.remove(index)  # Deselect the gene
+                button.config(
+                    highlightbackground="black",  # Default border color
+                    highlightthickness=0,  # Default border thickness
+                    bg="SystemButtonFace",  # Default background color
+                    fg="black",  # Default text color
+                    relief="raised"  # Default relief
+                )
+                gene_to_remove = self.current_gene_pool[index]
+                self.saved_genes.remove(gene_to_remove)
+
+                # Destroy the widget associated with this gene
+                if gene_to_remove in self.saved_gene_widgets:
+                    self.saved_gene_widgets[gene_to_remove].destroy()  # Destroy the frame
+                    del self.saved_gene_widgets[gene_to_remove]
+
+            else:
+                self.saved_genes_indices.append(index)  # Select the gene
+                button.config(
+                    highlightbackground="green",  # Green border color
+                    highlightthickness=2,  # Green border thickness
+                    bg="lightgreen",  # Change background to light green (for example)
+                    fg="black",  # Text color stays black
+                    relief="sunken"  # Change the button relief to give a "pressed" feel
+                )
+                self.saved_genes.append(self.current_gene_pool[index])
+            self.show_saved_genes()
+
         for i, gene in enumerate(self.current_gene_pool):
             canvas_frame = tk.Frame(self, borderwidth=1, relief="solid")
             canvas_frame.grid(row=(i // 3) + 5, column=i % 3, padx=10, pady=10, sticky="nsew")
@@ -80,15 +132,22 @@ class DesignPage(Page):
             canvas_widget = canvas.get_tk_widget()
             canvas_widget.grid(row=0, column=0, columnspan=2, padx=5, pady=5)  # Place canvas at the top
 
-            button = tk.Button(canvas_frame, text="Toggle Selection")
-            button.config(command=lambda index=i, b=button: toggle_gene(index, b))
-            button.grid(row=1, column=0, columnspan=2, padx=5, pady=5, sticky="ew")  # Place button below canvas
+            save_design_button = tk.Button(canvas_frame, text="Save Design")
+            save_design_button.config(command=lambda index=i, b=save_design_button: save_gene(index, b))
+            save_design_button.grid(row=2, column=0, columnspan=2, padx=5, pady=5, sticky="ew")  # Place button below canvas
+
+            toggle_button = tk.Button(canvas_frame, text="Toggle Selection")
+            toggle_button.config(command=lambda index=i, b=toggle_button: toggle_gene(index, b))
+            toggle_button.grid(row=1, column=0, columnspan=2, padx=5, pady=5, sticky="ew")  # Place button below canvas
 
         submit_button = tk.Button(self, text="Submit", command=self.submit_selection)
         submit_button.grid(row=9, column=0, pady=20)
 
         back_designs_button = tk.Button(self, text="Back to previous designs", command=self.back_to_prev_designs)
         back_designs_button.grid(row=10, column=0, pady=20)
+
+        tk.Label(self, text="Saved Genes:", font=("Arial", 18)).grid(row=0, column=10, columnspan=2, pady=10)
+        self.show_saved_genes()
 
     def submit_selection(self):
         """Submit the selected genes."""
@@ -120,8 +179,6 @@ class DesignPage(Page):
     def back_to_prev_designs(self):
         if len(self.gene_pools_all) < 2:
             messagebox.showwarning("Back Error", "Cant go back.")
-            self.start_designing()
         else:
             self.current_gene_pool = self.gene_pools_all[-2]
             self.gene_pools_all = self.gene_pools_all[:-1]
-            self.start_designing()
