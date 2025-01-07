@@ -183,9 +183,9 @@ def compare_curves(bezier_points, eye_points, eye_curve_shape, is_upper,num_samp
 
         return np.array(overlapping_points_curve1), np.array(overlapping_points_curve2)
 
-    overlapping_points_bezier, overlapping_points_eye_shape = get_overlapping_points(bezier_points, eye_curve_shape)
+    overlapping_points_segment, overlapping_points_eye_shape = get_overlapping_points(bezier_points, eye_curve_shape)
 
-    if overlapping_points_bezier.shape[0]>4 and overlapping_points_eye_shape.shape[0]>4:
+    if overlapping_points_segment.shape[0]>4 and overlapping_points_eye_shape.shape[0]>4:
         """
         # Plot the curves
         plt.figure(figsize=(8, 6))
@@ -197,33 +197,33 @@ def compare_curves(bezier_points, eye_points, eye_curve_shape, is_upper,num_samp
         # Show plot
         plt.show()
         """
-        bezier_curvature = calculate_curvature(overlapping_points_bezier)
+        bezier_curvature = calculate_curvature(overlapping_points_segment)
         eye_curvature = calculate_curvature(overlapping_points_eye_shape)
         # Compute shape similarity (curvature comparison)
-        num_resize = max(len(overlapping_points_bezier), len(overlapping_points_eye_shape))
+        num_resize = max(len(overlapping_points_segment), len(overlapping_points_eye_shape))
         if len(bezier_curvature) <=1:
             print("len(bezier_curvature) <=1:")
-            print("overlapping_points_bezier:", overlapping_points_bezier)
+            print("overlapping_points_bezier:", overlapping_points_segment)
             print("bezier_points", bezier_points)
             print("eye_curve_shape",eye_curve_shape)
             shape_similarity = 0
         else:
-            bezier_curvature_resampled = resample_directions_or_curvatures(bezier_curvature,overlapping_points_bezier, num_resize)
+            bezier_curvature_resampled = resample_directions_or_curvatures(bezier_curvature,overlapping_points_segment, num_resize)
             eye_curvature_resampled = resample_directions_or_curvatures(eye_curvature, overlapping_points_eye_shape,num_resize)
             #shape_similarity = 1 - np.mean(np.abs(bezier_curvature - eye_curvature))
             shape_similarity = 1 - np.sqrt(np.mean((bezier_curvature_resampled - eye_curvature_resampled) ** 2))
 
-        bezier_directions = compute_directions_new(overlapping_points_bezier)
+        segment_directions = compute_directions_new(overlapping_points_segment)
         eye_curve_directions = compute_directions_new(overlapping_points_eye_shape)
 
-        if bezier_directions.size == 0:
+        if segment_directions.size == 0:
             print("bezier_directions.size == 0")
-            print("overlapping_points_bezier",overlapping_points_bezier)
+            print("overlapping_points_bezier",overlapping_points_segment)
             direction_similarity = 0
         else:
             #print("eye_curve_directions",eye_curve_directions)
-            num_resize = max(len(overlapping_points_bezier) , len(overlapping_points_eye_shape))
-            bezier_directions_resampled = resample_directions_or_curvatures(bezier_directions,overlapping_points_bezier, num_resize)
+            num_resize = max(len(overlapping_points_segment) , len(overlapping_points_eye_shape))
+            bezier_directions_resampled = resample_directions_or_curvatures(segment_directions,overlapping_points_segment, num_resize)
             eye_directions_resampled = resample_directions_or_curvatures(eye_curve_directions,overlapping_points_eye_shape, num_resize)
             #print("eye_directions_resampled",eye_directions_resampled)
             # Compute direction similarity (angle between normalized tangent vectors)
@@ -257,9 +257,9 @@ def score_segment(segment, upper_curve, lower_curve, tolerance=0.1):
     # Assign scores
     score = 0
     if upper_curve_results["overall_similarity"]>0.6:
-        score+= 3*upper_curve_results["overall_similarity"]
+        score+= 7*upper_curve_results["overall_similarity"]
     elif lower_curve_results["overall_similarity"]>0.6:
-        score += 3* lower_curve_results["overall_similarity"]
+        score += 7* lower_curve_results["overall_similarity"]
     #else:
     #    score -= 2  # Penalty for deviating
 

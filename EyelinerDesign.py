@@ -84,7 +84,7 @@ class EyelinerDesign:   #Creates overall design, calculates start points, render
         fig=new_gene.render()
         plt.close(fig)
         score = analyse_gene(new_gene)
-        while score<=-20:
+        while score<=min_fitness_score:
             new_gene = copy.deepcopy(self)
             new_gene = new_gene.mutate_self(mutation_rate)
             fig = new_gene.render()

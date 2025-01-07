@@ -1,4 +1,5 @@
 from enum import Enum
+min_fitness_score = -10
 #Parameter ranges:
 start_x_range = (-1, 7)
 start_y_range = (0, 6)

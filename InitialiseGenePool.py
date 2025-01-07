@@ -1,4 +1,6 @@
 import matplotlib.pyplot as plt
+
+from A import min_fitness_score
 from AnalyseDesign import analyse_gene
 from EyelinerDesign import random_gene
 
@@ -14,7 +16,7 @@ def initialise_gene_pool():
         plt.close(fig)
         score = analyse_gene(gene)
 
-        while score <= -20:
+        while score <= min_fitness_score:
             gene_pool[idx] = random_gene(idx)
             gene = gene_pool[idx]  # Update the loop variable with the new gene
             ax.clear()  # Clear the previous gene's rendering
