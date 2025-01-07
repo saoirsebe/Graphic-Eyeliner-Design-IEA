@@ -1,5 +1,8 @@
 import copy
 import random
+from logging import raiseExceptions
+
+from conda.common.configuration import raise_errors
 
 from AestheticAnalysis import analyse_design_shapes
 from AnalyseDesign import analyse_gene
@@ -23,6 +26,8 @@ class EyelinerDesign:   #Creates overall design, calculates start points, render
         self.segments.append(segment)
 
     def render(self):
+        #Branch points is a list
+        branch_points = [(self.segments[0])]
         fig, ax_n = plt.subplots(figsize=(3, 3))
         """Render the eyeliner design using matplotlib."""
         draw_eye_shape(ax_n)
@@ -32,17 +37,39 @@ class EyelinerDesign:   #Creates overall design, calculates start points, render
         prev_colour = self.segments[0].colour
         prev_end_thickness_array = self.segments[0].end_thickness
         for segment in self.segments:
-            segment.render(ax_n, prev_array, prev_angle,prev_colour,prev_end_thickness_array)
-            if segment.segment_type == SegmentType.STAR:
-                prev_array = self.segments[segment_n].arm_points_array #if previous segment was a star then pass in the arm points that the next segment should start at
+            if segment.segment_type == SegmentType.END_POINT and len(branch_points) == 0:
+                break
             else:
-                prev_array = self.segments[segment_n].points_array
-            prev_angle = self.segments[segment_n].absolute_angle
-            prev_colour = self.segments[segment_n].colour
-            if segment.segment_type == SegmentType.LINE:
-                prev_end_thickness_array = self.segments[segment_n].thickness_array
+                if segment.segment_type == SegmentType.END_POINT and len(branch_points) > 0:
+                    prev_segment = branch_points[0]
+                else:
+                    if segment.segment_type == SegmentType.BRANCH_POINT:
+                        segment.render(prev_array, prev_angle, prev_colour, prev_end_thickness_array)
+                        branch_points.append(segment)
+                    else:
+                        segment.render(ax_n, prev_array, prev_angle,prev_colour,prev_end_thickness_array)
+
+                    #Set prev_array for next segment (if segment is a branch point go back until segment isn't a branch point):
+                    prev_segment =segment
+                    if prev_segment.segment_type == SegmentType.BRANCH_POINT:
+                        prev_index=segment_n-1
+                        while prev_segment.segment_type == SegmentType.BRANCH_POINT and prev_index>=0:
+                            prev_segment = prev_segment.segments[prev_index]
+                            prev_index-=1
+                        if prev_index == -1 and self.segments[segment_n].segment_type == SegmentType.BRANCH_POINT:
+                            raise ValueError("First segment is a branch point")
+
+            if prev_segment.segment_type == SegmentType.STAR:
+                # if segment is a star then pass in the arm points that the next segment should start at:
+                prev_array = prev_segment.arm_points_array
             else:
-                prev_end_thickness_array = np.array(self.segments[segment_n].end_thickness)
+                 prev_array = prev_segment.points_array
+            prev_angle = prev_segment.absolute_angle
+            prev_colour = prev_segment.colour
+            if prev_segment.segment_type == SegmentType.LINE:
+                prev_end_thickness_array = prev_segment.thickness_array
+            else:
+                prev_end_thickness_array = np.array(prev_segment.end_thickness)
             segment_n += 1
         return fig
 

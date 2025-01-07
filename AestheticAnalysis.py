@@ -257,9 +257,9 @@ def score_segment(segment, upper_curve, lower_curve, tolerance=0.1):
     # Assign scores
     score = 0
     if upper_curve_results["overall_similarity"]>0.6:
-        score+= 7*upper_curve_results["overall_similarity"]
+        score+= 10*upper_curve_results["overall_similarity"]
     elif lower_curve_results["overall_similarity"]>0.6:
-        score += 7* lower_curve_results["overall_similarity"]
+        score += 10* lower_curve_results["overall_similarity"]
     #else:
     #    score -= 2  # Penalty for deviating
 

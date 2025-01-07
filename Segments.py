@@ -331,6 +331,19 @@ class StarSegment(Segment):
         if np.random.normal() < mutation_rate:
             self.star_type = np.random.choice([StarType.STRAIGHT,StarType.FLOWER,StarType.CURVED])
 
+class BranchPointSegment:
+    def __init__(self):
+        self.points_array = []
+        self.prev_angle = 0
+        self.prev_colour = "black"
+        self.prev_end_thickness_array = []
+    def render(self, prev_array, prev_angle,prev_colour,prev_end_thickness_array):
+        self.points_array = prev_array
+        self.prev_angle = prev_angle
+        self.prev_colour = prev_colour
+        self.prev_end_thickness_array = prev_end_thickness_array
+    def mutate(self, mutation_rate=0.1):
+        self.points_array = self.points_array
 
 # Factory function to create a specific segment instance and wrap it in Segment
 def create_segment(start, start_mode, segment_type, **kwargs):

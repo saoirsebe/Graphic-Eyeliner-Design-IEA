@@ -31,10 +31,11 @@ class SegmentType(Enum):
     #TAPER = 'TAPER'
     STAR = 'STAR'
     #WING = 'WING'
+    BRANCH_POINT = 'BRANCH_POINT'
+    END_POINT = 'END_POINT'
 
 class StartMode(Enum):
     CONNECT = 'CONNECT'
     JUMP = 'JUMP'
-    #FORK = 'FORK'
     SPLIT = 'SPLIT' #connect but end of prev is in segment
     CONNECT_MID = 'CONNECT_MID'
