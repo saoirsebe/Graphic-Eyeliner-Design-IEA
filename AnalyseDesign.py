@@ -1,4 +1,4 @@
-from A import SegmentType, StartMode
+from A import SegmentType, StartMode, min_fitness_score
 from AestheticAnalysis import analyse_design_shapes
 import numpy as np
 from EyelinerWingGeneration import get_quadratic_points
@@ -65,19 +65,25 @@ def wing_angle(i, segments):
                  return 5
     return 0
 
-def analyse_gene(design):
+def analyse_negative(design):
     segments = design.segments
     score = 0  # Count how many overlaps there are in this gene
     # Compare each pair of segments for overlap
     for i in range(len(segments)-1):
         if segments[i].segment_type != SegmentType.BRANCH_POINT and segments[i].segment_type != SegmentType.END_POINT:
             score = score - check_overlap(i, segments)
-            if score < -40:
+            if score < min_fitness_score:
                 return score
             score = score - is_in_eye(segments[i])
-            if score < -40:
+            if score < min_fitness_score:
                 return score
+    return score
+
+def analyse_positive(design):
+    segments = design.segments
+    score = 0
     for i in range(len(segments)-1):
         score = score + wing_angle(i, segments)
+        score +=1 #Higher score for designs with more segments
     score += analyse_design_shapes(design)
     return score

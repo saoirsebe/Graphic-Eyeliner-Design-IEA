@@ -1,30 +1,35 @@
 import matplotlib.pyplot as plt
 
 from A import min_fitness_score
-from AnalyseDesign import analyse_gene
+from AnalyseDesign import analyse_negative, analyse_positive
 from EyelinerDesign import random_gene
 
 def initialise_gene_pool():
-    gene_pool = [random_gene(i) for i in range(6)]  # Generate 6 random genes
-    fig, axes = plt.subplots(2, 3, figsize=(12, 8))  # Create a 2x3 grid of subplots
-    axes = axes.flatten()
-    # Render each gene in its corresponding subplot
+    gene_pool = [random_gene(i) for i in range(50)]
+    scored_genes = []
+    # Check the overlap_score of each and re-generate if lower than min_fitness_score:
     for idx, gene in enumerate(gene_pool):
-        ax = axes[idx]
-        ax.set_title(f"Design {idx + 1}")
         fig = gene.render()  # Render each gene on its specific subplot
         plt.close(fig)
-        score = analyse_gene(gene)
-        print("Score: ", score)
-        while score <= min_fitness_score:
+        overlap_score = analyse_negative(gene)
+        print("overlap_score: ", overlap_score)
+        while overlap_score <= min_fitness_score:
             gene_pool[idx] = random_gene(idx)
             gene = gene_pool[idx]  # Update the loop variable with the new gene
-            ax.clear()  # Clear the previous gene's rendering
-            ax.set_title(f"New design {idx + 1}")  # Reset the title
+            #ax.clear()  # Clear the previous gene's rendering
+            #ax.set_title(f"New design {idx + 1}")  # Reset the title
             fig = gene.render()  # Render the new gene
             plt.close(fig)
-            score = analyse_gene(gene)
-            print("Score: ", score)
+            overlap_score = analyse_negative(gene)
+            print("overlap_score: ", overlap_score)
+        scored_genes.append((gene, overlap_score + analyse_positive(gene)))
+
+    scored_genes.sort(key=lambda x: x[1], reverse=True)  # Sort by the gene score
+    print("Gene score: ", scored_genes)
+
+    top_6_genes = [gene for gene, score in scored_genes[:6]]
+
+    gene_pool = top_6_genes
 
     return gene_pool
 

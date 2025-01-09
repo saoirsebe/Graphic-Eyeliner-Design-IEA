@@ -5,7 +5,7 @@ from logging import raiseExceptions
 from conda.common.configuration import raise_errors
 
 from AestheticAnalysis import analyse_design_shapes
-from AnalyseDesign import analyse_gene
+from AnalyseDesign import analyse_negative
 from Segments import *
 
 class EyelinerDesign:   #Creates overall design, calculates start points, renders each segment by calling their render function
@@ -85,7 +85,7 @@ class EyelinerDesign:   #Creates overall design, calculates start points, render
 
     def mutate_self(self,mutation_rate=0.1):
         current_index = 0
-        open_branches = 0
+        open_branches = 1
         for segment in self.segments:
             if segment.segment_type != SegmentType.BRANCH_POINT and segment.segment_type != SegmentType.END_POINT:
                 segment.mutate(mutation_rate)
@@ -93,22 +93,24 @@ class EyelinerDesign:   #Creates overall design, calculates start points, render
                 open_branches += 1
                 #If segment is a branch point, there is a random chance it will be removed along with all the segments in that branch
                 if np.random.normal() < mutation_rate:
-                    end_point_hit = -1 #The index that the next end point corresponds to (0 corresponds to the first open branch...)
+                    end_point_hit = 0 #The branch that the next end point corresponds to (1 corresponds to the first open branch...)
                     self.segments.pop(current_index)
                     next_segment_index = current_index
                     #Finds the index of the corresponding end point using number of open branches:
-                    while self.segments[next_segment_index].segment_type != SegmentType.END_POINT or open_branches != end_point_hit:
+                    while (self.segments[next_segment_index].segment_type != SegmentType.END_POINT or open_branches != end_point_hit) and next_segment_index<len(self.segments)-1:
                         next_segment_index += 1
                         if self.segments[next_segment_index].segment_type == SegmentType.END_POINT:
                             end_point_hit +=1
-
-                    self.segments.pop(next_segment_index)
-                    #Remove all segments that where part of that branch:
-                    next_segment_index -= 1
-                    while self.segments[next_segment_index].segment_type != SegmentType.END_POINT:
+                    if next_segment_index<len(self.segments):
                         self.segments.pop(next_segment_index)
-                        next_segment_index -=1
-
+                        #Remove all segments that where part of that branch:
+                        next_segment_index -= 1
+                        while self.segments[next_segment_index].segment_type != SegmentType.END_POINT:
+                            self.segments.pop(next_segment_index)
+                            next_segment_index -=1
+                    else:
+                        print("Segments",self.segments)
+                        raise ValueError("Branch Point with No corresponding End Point")
             elif segment.segment_type == SegmentType.END_POINT:
                 open_branches -=1
             current_index +=1
@@ -130,21 +132,21 @@ class EyelinerDesign:   #Creates overall design, calculates start points, render
         new_gene= new_gene.mutate_self(mutation_rate)
         fig=new_gene.render()
         plt.close(fig)
-        score = analyse_gene(new_gene)
-        while score<=min_fitness_score:
+        overlap_score = analyse_negative(new_gene)
+        while overlap_score<=min_fitness_score:
             new_gene = copy.deepcopy(self)
             new_gene = new_gene.mutate_self(mutation_rate)
             fig = new_gene.render()
             plt.close(fig)
-            score = analyse_gene(new_gene)
+            overlap_score = analyse_negative(new_gene)
         return new_gene
 
 def random_segment(segment_start=(random.uniform(*start_x_range), random.uniform(*start_y_range)),can_branch = False):
     r = random.random()
     if can_branch:
-        if r < 0.5:
+        if r < 0.6:
             new_segment_type = SegmentType.LINE
-        elif r < 0.8:
+        elif r < 0.85:
             new_segment_type = SegmentType.STAR
         else:
             new_segment_type = SegmentType.BRANCH_POINT
@@ -210,6 +212,7 @@ def random_gene(gene_n):
             can_branch = True
         design.add_segment(EndPointSegment())
         n_objects = int(random.triangular(1, 10, 1))
+    design.add_segment(EndPointSegment())
     #design.update_design_info()
     return design
 
