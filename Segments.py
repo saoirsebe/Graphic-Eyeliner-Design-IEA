@@ -333,17 +333,24 @@ class StarSegment(Segment):
 
 class BranchPointSegment:
     def __init__(self):
+        self.segment_type = SegmentType.BRANCH_POINT
         self.points_array = []
-        self.prev_angle = 0
-        self.prev_colour = "black"
-        self.prev_end_thickness_array = []
+        self.absolute_angle = 0
+        self.colour = "black"
+        self.thickness_array = []
+
     def render(self, prev_array, prev_angle,prev_colour,prev_end_thickness_array):
         self.points_array = prev_array
-        self.prev_angle = prev_angle
-        self.prev_colour = prev_colour
-        self.prev_end_thickness_array = prev_end_thickness_array
+        self.colour = prev_colour
+        self.thickness_array = prev_end_thickness_array
+        self.absolute_angle = prev_angle
+
     def mutate(self, mutation_rate=0.1):
         self.points_array = self.points_array
+
+class EndPointSegment:
+    def __init__(self):
+        self.segment_type = SegmentType.END_POINT
 
 # Factory function to create a specific segment instance and wrap it in Segment
 def create_segment(start, start_mode, segment_type, **kwargs):

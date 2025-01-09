@@ -7,28 +7,27 @@ def check_overlap(i, segments):
     segment = segments[i].points_array
     overlaps = 0
     for j in range(i + 1, len(segments) - 1):
-        overlap_found = False
-        segment_overlaps = 0
-        segment_j = segments[j].points_array
+        if segments[j].segment_type != SegmentType.BRANCH_POINT and segments[j].segment_type != SegmentType.END_POINT:
+            overlap_found = False
+            segment_overlaps = 0
+            segment_j = segments[j].points_array
 
-        if j == (i + 1) and (
-                segments[j].start_mode == StartMode.CONNECT_MID or segments[j].start_mode == StartMode.CONNECT):
-            first_1 = int(len(segment_j) * 0.05)
-            segment_j = segment_j[first_1:]
-        elif j == (i + 1) and (
-                segments[j].start_mode == StartMode.CONNECT or segments[j].start_mode == StartMode.SPLIT):
-            first_1 = int(len(segment) * 0.05)
-            segment = segment[:-first_1]
-        for point1 in segment:
-            for point2 in segment_j:
-                # Calculate Euclidean distance between point1 and point2
-                distance = np.linalg.norm(point1 - point2)
-                # Check if distance is within the tolerance
-                if distance <= 0.075:
-                    overlap_found = True
-                    segment_overlaps += 1
-        if overlap_found:
-            overlaps += int((segment_overlaps / (len(segment) + len(segment_j))) * 100)
+            if j == (i + 1) and (segments[j].start_mode == StartMode.CONNECT_MID or segments[j].start_mode == StartMode.CONNECT):
+                first_1 = int(len(segment_j) * 0.05)
+                segment_j = segment_j[first_1:]
+            elif j == (i + 1) and (segments[j].start_mode == StartMode.CONNECT or segments[j].start_mode == StartMode.SPLIT):
+                first_1 = int(len(segment) * 0.05)
+                segment = segment[:-first_1]
+            for point1 in segment:
+                for point2 in segment_j:
+                    # Calculate Euclidean distance between point1 and point2
+                    distance = np.linalg.norm(point1 - point2)
+                    # Check if distance is within the tolerance
+                    if distance <= 0.075:
+                        overlap_found = True
+                        segment_overlaps += 1
+            if overlap_found:
+                overlaps += int((segment_overlaps / (len(segment) + len(segment_j))) * 100)
 
     return overlaps
 
@@ -57,10 +56,13 @@ def is_in_eye(segment):
         return 0
 
 def wing_angle(i, segments):
-    if i + 1 < len(segments):
-        if segments[i].segment_type == SegmentType.LINE and segments[i + 1].segment_type == SegmentType.LINE:
-            if segments[i + 1].start_mode == StartMode.CONNECT and (80 < segments[i + 1].relative_angle < 170 or 190 < segments[i + 1].relative_angle < 260):
-                return 5
+    if i + 1 < len(segments) and segments[i + 1].segment_type != SegmentType.END_POINT and segments[i].segment_type == SegmentType.LINE:
+        next_int = i + 1
+        while segments[next_int].segment_type == SegmentType.BRANCH_POINT:
+            next_int +=1
+        if segments[next_int].segment_type == SegmentType.LINE:
+            if segments[next_int].start_mode == StartMode.CONNECT and (80 < segments[next_int].relative_angle < 170 or 190 < segments[next_int].relative_angle < 260):
+                 return 5
     return 0
 
 def analyse_gene(design):
@@ -68,8 +70,14 @@ def analyse_gene(design):
     score = 0  # Count how many overlaps there are in this gene
     # Compare each pair of segments for overlap
     for i in range(len(segments)-1):
-        score = score - check_overlap(i, segments)
+        if segments[i].segment_type != SegmentType.BRANCH_POINT and segments[i].segment_type != SegmentType.END_POINT:
+            score = score - check_overlap(i, segments)
+            if score < -40:
+                return score
+            score = score - is_in_eye(segments[i])
+            if score < -40:
+                return score
+    for i in range(len(segments)-1):
         score = score + wing_angle(i, segments)
-        score = score - is_in_eye(segments[i])
     score += analyse_design_shapes(design)
     return score

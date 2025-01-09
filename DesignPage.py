@@ -60,7 +60,6 @@ class DesignPage(Page):
             self.current_gene_pool = initialise_gene_pool()
 
         self.gene_pools_all.append(self.current_gene_pool) #add gene pool to list of gene pools browsed
-        print("self.gene_pools_all",self.gene_pools_all)
 
         # Add dropdown menu for mutation rate
         tk.Label(self, text="Select Mutation Rate:", font=("Arial", 12)).grid(row=2, column=2, pady=10)

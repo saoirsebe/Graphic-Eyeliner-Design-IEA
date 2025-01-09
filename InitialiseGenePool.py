@@ -15,7 +15,7 @@ def initialise_gene_pool():
         fig = gene.render()  # Render each gene on its specific subplot
         plt.close(fig)
         score = analyse_gene(gene)
-
+        print("Score: ", score)
         while score <= min_fitness_score:
             gene_pool[idx] = random_gene(idx)
             gene = gene_pool[idx]  # Update the loop variable with the new gene
@@ -24,6 +24,7 @@ def initialise_gene_pool():
             fig = gene.render()  # Render the new gene
             plt.close(fig)
             score = analyse_gene(gene)
+            print("Score: ", score)
 
     return gene_pool
 
