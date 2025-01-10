@@ -1,36 +1,32 @@
 import matplotlib.pyplot as plt
 
-from A import min_fitness_score
+from A import min_fitness_score, initial_gene_pool_size
 from AnalyseDesign import analyse_negative, analyse_positive
 from EyelinerDesign import random_gene
-initial_gene_size = 6
+
 
 def initialise_gene_pool():
-    gene_pool = [random_gene(i) for i in range(initial_gene_size)]
+    gene_pool = [random_gene(i) for i in range(initial_gene_pool_size)]
     scored_genes = []
     # Check the overlap_score of each and re-generate if lower than min_fitness_score:
     for idx, gene in enumerate(gene_pool):
         fig = gene.render()  # Render each gene on its specific subplot
         plt.close(fig)
         overlap_score = analyse_negative(gene)
-        print("overlap_score: ", overlap_score)
+        print("first overlap_score: ", overlap_score)
         while overlap_score <= min_fitness_score:
             gene_pool[idx] = random_gene(idx)
             gene = gene_pool[idx]  # Update the loop variable with the new gene
-            #ax.clear()  # Clear the previous gene's rendering
-            #ax.set_title(f"New design {idx + 1}")  # Reset the title
             fig = gene.render()  # Render the new gene
             plt.close(fig)
             overlap_score = analyse_negative(gene)
-            print("overlap_score: ", overlap_score)
-        scored_genes.append((gene, overlap_score + analyse_positive(gene)))
+        print("final overlap_score: ", overlap_score)
+        scored_genes.append((gene, analyse_positive(gene))) #overlap_score +
 
     scored_genes.sort(key=lambda x: x[1], reverse=True)  # Sort by the gene score
     print("Gene score: ", scored_genes)
 
-    top_6_genes = [gene for gene, score in scored_genes[:6]]
-
-    gene_pool = top_6_genes
+    gene_pool = [gene for gene, score in scored_genes[:6]]
 
     return gene_pool
 

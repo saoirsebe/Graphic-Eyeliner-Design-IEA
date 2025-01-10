@@ -221,7 +221,7 @@ class LineSegment(Segment):
                 )
 
 
-    def mutate(self, mutation_rate=0.1):
+    def mutate(self, mutation_rate=0.05):
         """Randomly mutate properties of the line segment within a mutation rate."""
         # mutation rate chance of changing:
         if np.random.normal() < mutation_rate:
@@ -275,7 +275,6 @@ class StarSegment(Segment):
         #bin, end_p = StarGeneration.create_star_arm(center, radius,arm_length, num_points,start_angle,asymmetry,num_points,curved) #armN = last arm so num_points
         self.arm_points_array = []
 
-
     def render(self, ax_n, prev_array, prev_angle, prev_colour, prev_end_thickness):
         if self.start_mode == StartMode.CONNECT and len(prev_array)>15:
             self.start = (prev_array[-1][0], prev_array[-1][1])
@@ -289,7 +288,7 @@ class StarSegment(Segment):
         if self.start_mode == StartMode.JUMP:
             self.absolute_angle = self.relative_angle
         else:
-            self.absolute_angle = prev_angle + self.relative_angle
+            self.absolute_angle = (prev_angle + self.relative_angle)%360
 
         star_points, star_arm_points = StarGeneration.create_star(self.num_points, self.center, self.radius, self.arm_length, self.asymmetry, self.star_type, self.absolute_angle)
         start_coord = star_arm_points[-1]
@@ -301,7 +300,7 @@ class StarSegment(Segment):
         self.arm_points_array = transformed_arm_points
         self.points_array = transformed_star_points
 
-    def mutate(self,mutation_rate=0.1):
+    def mutate(self,mutation_rate=0.05):
         #(self, segment_type, start, colour, star_type, radius, arm_length, num_points, asymmetry, start_mode, end_thickness, relative_angle)
         # mutation rate chance of changing:
         if np.random.normal() < mutation_rate:
@@ -345,8 +344,6 @@ class BranchPointSegment:
         self.thickness_array = prev_end_thickness_array
         self.absolute_angle = prev_angle
 
-    def mutate(self, mutation_rate=0.1):
-        self.points_array = self.points_array
 
 class EndPointSegment:
     def __init__(self):

@@ -257,11 +257,11 @@ def score_segment(segment, upper_curve, lower_curve, tolerance=0.1):
     # Assign scores
     score = 0
     if upper_curve_results["overall_similarity"]>0.6:
-        score+= 10*upper_curve_results["overall_similarity"]
+        score+= 2 * upper_curve_results["overall_similarity"]
     elif lower_curve_results["overall_similarity"]>0.6:
-        score += 10* lower_curve_results["overall_similarity"]
+        score += 2 * lower_curve_results["overall_similarity"]
     #else:
-    #    score -= 2  # Penalty for deviating
+    #    score -= 0.5  # Penalty for deviating
 
     return score
 
@@ -275,13 +275,10 @@ def analyse_design_shapes(design):
     upper_curve = np.column_stack(([x * 3 for x in upper_x], [y * 3 for y in upper_y]))
     lower_curve = np.column_stack(([x * 3 for x in lower_x], [y * 3 for y in lower_y]))
 
-    # Define wing direction
-    wing_direction = [1, 0.2]
-
     total_score = 0
     for segment in design.segments:
         if segment.segment_type == SegmentType.LINE:
-            total_score += score_segment(segment, upper_curve, lower_curve)
+            total_score += segment.length * score_segment(segment, upper_curve, lower_curve)
     return total_score
 """
 random_design = random_gene(0)

@@ -29,6 +29,9 @@ def check_overlap(i, segments):
             if overlap_found:
                 overlaps += int((segment_overlaps / (len(segment) + len(segment_j))) * 100)
 
+            if -overlaps < min_fitness_score: #Return if less than min_fitness_score to save processing time
+                return overlaps
+
     return overlaps
 
 def is_in_eye(segment):
@@ -81,9 +84,9 @@ def analyse_negative(design):
 
 def analyse_positive(design):
     segments = design.segments
-    score = 0
-    for i in range(len(segments)-1):
-        score = score + wing_angle(i, segments)
-        score +=1 #Higher score for designs with more segments
+    #score = 0
+    #for i in range(len(segments)-1):
+        #score = score + wing_angle(i, segments)
+    score = len(segments) #Higher score for designs with more segments
     score += analyse_design_shapes(design)
     return score
