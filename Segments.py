@@ -71,7 +71,7 @@ class LineSegment(Segment):
         if self.start_mode == StartMode.JUMP:
             self.absolute_angle = self.relative_angle
         else:
-            self.absolute_angle = prev_angle + self.relative_angle
+            self.absolute_angle = (prev_angle + self.relative_angle) % 360
         radians = math.radians(self.absolute_angle) # Convert to radians
 
         end_x = self.start[0] + self.length * math.cos(radians)

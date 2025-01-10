@@ -39,17 +39,17 @@ def is_in_eye(segment):
     upper_x, upper_y = np.array(upper_x) * 3, np.array(upper_y) * 3
     lower_x, lower_y = np.array(lower_x) * 3, np.array(lower_y) * 3
 
-    segment = segment.points_array
-    if not isinstance(segment, np.ndarray):
+    segment_array = segment.points_array
+    if not isinstance(segment_array, np.ndarray):
         print("segment is NOT a NumPy array")
-        print("Type:", type(segment))
-        print("Contents:", segment)
+        print("Type:", segment.segment_type)
+        print("Contents:", segment_array)
 
-    upper_y_interp = np.interp(segment[:, 0], upper_x, upper_y)
-    lower_y_interp = np.interp(segment[:, 0], lower_x, lower_y)
-    inside = (lower_y_interp <= segment[:, 1]) & (segment[:, 1] <= upper_y_interp)
+    upper_y_interp = np.interp(segment_array[:, 0], upper_x, upper_y)
+    lower_y_interp = np.interp(segment_array[:, 0], lower_x, lower_y)
+    inside = (lower_y_interp <= segment_array[:, 1]) & (segment_array[:, 1] <= upper_y_interp)
     overlap = np.sum(inside)
-    score = int((overlap / len(segment)) * 100)
+    score = int((overlap / len(segment_array)) * 100)
     if score > 0:
         return max(score, 1)
     else:
@@ -61,7 +61,7 @@ def wing_angle(i, segments):
         while segments[next_int].segment_type == SegmentType.BRANCH_POINT:
             next_int +=1
         if segments[next_int].segment_type == SegmentType.LINE:
-            if segments[next_int].start_mode == StartMode.CONNECT and (80 < segments[next_int].relative_angle < 170 or 190 < segments[next_int].relative_angle < 260):
+            if segments[next_int].start_mode == StartMode.CONNECT and (110 < segments[next_int].relative_angle < 160 or 200 < segments[next_int].relative_angle < 250):
                  return 5
     return 0
 

@@ -4,7 +4,6 @@ from logging import raiseExceptions
 
 from conda.common.configuration import raise_errors
 
-from AestheticAnalysis import analyse_design_shapes
 from AnalyseDesign import analyse_negative
 from Segments import *
 
@@ -84,18 +83,23 @@ class EyelinerDesign:   #Creates overall design, calculates start points, render
                 self.n_of_stars += 1
 
     def mutate_self(self,mutation_rate=0.1):
-        current_index = 0
+        #current_index = 0
         open_branches = 1
-        for segment in self.segments:
+        #print("New mutation:")
+        for current_index, segment in enumerate(self.segments):
+            #print("Segment:", segment)
             if segment.segment_type != SegmentType.BRANCH_POINT and segment.segment_type != SegmentType.END_POINT:
                 segment.mutate(mutation_rate)
+                #print("Segment array:", segment.points_array)
+            elif segment.segment_type == SegmentType.END_POINT:
+                open_branches -=1
+
             elif segment.segment_type == SegmentType.BRANCH_POINT:
                 open_branches += 1
                 #If segment is a branch point, there is a random chance it will be removed along with all the segments in that branch
-                if np.random.normal() < mutation_rate:
+                if np.random.normal() < mutation_rate/2:
                     end_point_hit = 0 #The branch that the next end point corresponds to (1 corresponds to the first open branch...)
-                    self.segments.pop(current_index)
-                    next_segment_index = current_index
+                    next_segment_index = current_index +1
                     #Finds the index of the corresponding end point using number of open branches:
                     while (self.segments[next_segment_index].segment_type != SegmentType.END_POINT or open_branches != end_point_hit) and next_segment_index<len(self.segments)-1:
                         next_segment_index += 1
@@ -109,17 +113,22 @@ class EyelinerDesign:   #Creates overall design, calculates start points, render
                             self.segments.pop(next_segment_index)
                             next_segment_index -=1
                     else:
-                        print("Segments",self.segments)
                         raise ValueError("Branch Point with No corresponding End Point")
-            elif segment.segment_type == SegmentType.END_POINT:
-                open_branches -=1
+
+                    self.segments.pop(current_index) #popping one after?!
+
             current_index +=1
 
+        # Random chance of adding in a new segment (Not a branch point or end point):
         if np.random.normal() < mutation_rate:
-            new_segment = random_segment()
+            new_segment = random_segment(False)
             self.add_segment_at(new_segment, np.random.randint(0, len(self.segments)))
+
+        #Random chance of swapping the location of a segment (Not a branch point or end point):
         if np.random.normal() < mutation_rate:
             to_change = np.random.randint(0, len(self.segments) - 1)
+            while self.segments[to_change].segment_type == SegmentType.END_POINT or self.segments[to_change].segment_type == SegmentType.BRANCH_POINT or (self.segments[to_change-1].segment_type == SegmentType.END_POINT and self.segments[to_change+1].segment_type == SegmentType.END_POINT):
+                to_change = np.random.randint(0, len(self.segments) - 1)
             new_position = np.random.randint(0, len(self.segments) - 1)
             while new_position == to_change:
                 new_position = np.random.randint(0, len(self.segments))
@@ -141,7 +150,7 @@ class EyelinerDesign:   #Creates overall design, calculates start points, render
             overlap_score = analyse_negative(new_gene)
         return new_gene
 
-def random_segment(segment_start=(random.uniform(*start_x_range), random.uniform(*start_y_range)),can_branch = False):
+def random_segment(can_branch = False,segment_start=(random.uniform(*start_x_range), random.uniform(*start_y_range))):
     r = random.random()
     if can_branch:
         if r < 0.6:
@@ -156,21 +165,50 @@ def random_segment(segment_start=(random.uniform(*start_x_range), random.uniform
         else:
             new_segment_type = SegmentType.STAR
 
+    def random_normal_within_range(mean, stddev, value_range):
+        while True:
+            # Generate a number using normal distribution
+            value = random.gauss(mean, stddev)
+            # Keep it within the specified range
+            if value_range[0] <= value <= value_range[1]:
+                return value
+
+    def random_from_two_distributions(mean1, stddev1, mean2, stddev2, value_range, prob1=0.5):
+        while True:
+            # Choose which distribution to use
+            if random.random() < prob1:
+                value = random.gauss(mean1, stddev1)
+            else:  # Otherwise, use the second distribution
+                value = random.gauss(mean2, stddev2)
+
+            if value_range[0] <= value <= value_range[1]:
+                return value
+
+
     if new_segment_type == SegmentType.LINE:
+        random_start_mode = random.choice(list(StartMode))
+        if random_start_mode == StartMode.CONNECT:
+            random_relative_angle = random_from_two_distributions(135, 50, 225, 50, direction_range)
+        elif random_start_mode == StartMode.CONNECT_MID:
+            random_relative_angle = random_from_two_distributions(90,35,270,35, direction_range)
+        elif random_start_mode == StartMode.SPLIT:
+            random_relative_angle = random_from_two_distributions(90,35,270,35, direction_range)
+        else:
+            random_relative_angle = random.uniform(*direction_range)
         new_segment = create_segment(
             segment_type=SegmentType.LINE,
             start=segment_start,
-            start_mode=random.choice(list(StartMode)),
+            start_mode=random_start_mode,
             length=random.uniform(*length_range),
-            relative_angle=random.uniform(*direction_range),
+            relative_angle=random_relative_angle,
             start_thickness=random.uniform(*thickness_range),
             end_thickness=random.uniform(*thickness_range),
             colour=random.choice(colour_options),
-            curviness=0 if random.random() < 0.5 else random.uniform(*curviness_range),
-            curve_direction=random.uniform(*direction_range),
-            curve_location=random.uniform(*relative_location_range),
-            start_location=random.uniform(*relative_location_range),
-            split_point=random.uniform(*relative_location_range)
+            curviness=0 if random.random() < 0.5 else random_normal_within_range(0.1,0.5,curviness_range),
+            curve_direction=random_from_two_distributions(90,30,270,30, direction_range),
+            curve_location=random_normal_within_range(0.5,0.25,relative_location_range),
+            start_location=random_normal_within_range(0.5,0.25,relative_location_range),
+            split_point=random_normal_within_range(0.5,0.25,relative_location_range)
         )
     elif new_segment_type == SegmentType.STAR:
         new_segment = create_segment(
@@ -203,16 +241,18 @@ def random_gene(gene_n):
             else:
                 segment_start = (random.uniform(*start_x_range), random.uniform(*start_y_range))
 
-            new_segment = random_segment(segment_start,can_branch)
+            new_segment = random_segment(can_branch,segment_start)
 
             if new_segment.segment_type == SegmentType.BRANCH_POINT:
                 n_of_branches +=1
 
             design.add_segment(new_segment)
             can_branch = True
+
         design.add_segment(EndPointSegment())
         n_objects = int(random.triangular(1, 10, 1))
-    design.add_segment(EndPointSegment())
+
+    #design.add_segment(EndPointSegment())
     #design.update_design_info()
     return design
 

@@ -3,9 +3,10 @@ import matplotlib.pyplot as plt
 from A import min_fitness_score
 from AnalyseDesign import analyse_negative, analyse_positive
 from EyelinerDesign import random_gene
+initial_gene_size = 6
 
 def initialise_gene_pool():
-    gene_pool = [random_gene(i) for i in range(50)]
+    gene_pool = [random_gene(i) for i in range(initial_gene_size)]
     scored_genes = []
     # Check the overlap_score of each and re-generate if lower than min_fitness_score:
     for idx, gene in enumerate(gene_pool):
