@@ -20,8 +20,10 @@ def initialise_gene_pool():
             fig = gene.render()  # Render the new gene
             plt.close(fig)
             overlap_score = analyse_negative(gene)
+            print("New overlap_score: ", overlap_score)
+
         print("final overlap_score: ", overlap_score)
-        scored_genes.append((gene, analyse_positive(gene))) #overlap_score +
+        scored_genes.append((gene,  + analyse_positive(gene))) #overlap_score +
 
     scored_genes.sort(key=lambda x: x[1], reverse=True)  # Sort by the gene score
     print("Gene score: ", scored_genes)

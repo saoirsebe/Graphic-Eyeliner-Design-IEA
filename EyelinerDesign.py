@@ -166,7 +166,7 @@ def random_from_two_distributions(mean1, stddev1, mean2, stddev2, value_range, p
         if value_range[0] <= value <= value_range[1]:
             return value
 
-def random_segment(can_branch = False,segment_start=(random.uniform(*start_x_range), random.uniform(*start_y_range)),eyeliner_wing = False, segment_number = 0):
+def random_segment(prev_colour=None,can_branch = False,segment_start=(random.uniform(*start_x_range), random.uniform(*start_y_range)),eyeliner_wing = False, segment_number = 0):
     r = random.random()
     if eyeliner_wing and (segment_number == 0 or segment_number == 2):
         new_segment_type = SegmentType.LINE
@@ -185,12 +185,20 @@ def random_segment(can_branch = False,segment_start=(random.uniform(*start_x_ran
         else:
             new_segment_type = SegmentType.STAR
 
+    #Pick colour, more likely to be the previous colour:
+    if prev_colour is None:
+        random_colour = random.choice(colour_options)
+    else:
+        #weights = [0.6 if colour == prev_colour else 0.1 for colour in colour_options]
+        #random_colour = random.choices(colour_options, weights=weights, k=1)[0]
+        random_colour = prev_colour if random.random() < 0.5 else random.choice(colour_options)
+
     if new_segment_type == SegmentType.LINE:
         random_start_mode = random.choice(list(StartMode))
         if segment_start == (3, 1.5) and eyeliner_wing: #First segment (line) in eyeliner wing:
-            random_relative_angle = random_normal_within_range(45, 50, direction_range)
+            random_relative_angle = random_normal_within_range(22, 40, direction_range)
         elif eyeliner_wing and segment_number == 2: #Third segment (second line) in eyeliner wing:
-            random_relative_angle = random_normal_within_range(150, 50, direction_range)
+            random_relative_angle = random_normal_within_range(158, 50, direction_range)
             random_start_mode = StartMode.CONNECT
         elif random_start_mode == StartMode.CONNECT:
             random_relative_angle = random_from_two_distributions(135, 60, 225, 60, direction_range)
@@ -200,6 +208,7 @@ def random_segment(can_branch = False,segment_start=(random.uniform(*start_x_ran
             random_relative_angle = random_from_two_distributions(90,50,270,50, direction_range)
         else:
             random_relative_angle = random.uniform(*direction_range)
+
         new_segment = create_segment(
             segment_type=SegmentType.LINE,
             start=segment_start,
@@ -208,7 +217,7 @@ def random_segment(can_branch = False,segment_start=(random.uniform(*start_x_ran
             relative_angle=random_relative_angle,
             start_thickness=random.uniform(*thickness_range),
             end_thickness=random.uniform(*thickness_range),
-            colour=random.choice(colour_options),
+            colour=random_colour,
             curviness=0 if random.random() < 0.5 else random_normal_within_range(0.1,0.5,curviness_range),
             curve_direction=random_from_two_distributions(90,40,270,40, direction_range),
             curve_location=random_normal_within_range(0.5,0.25,relative_location_range),
@@ -227,11 +236,12 @@ def random_segment(can_branch = False,segment_start=(random.uniform(*start_x_ran
             star_type=random.choice([StarType.STRAIGHT, StarType.CURVED, StarType.FLOWER]),
             end_thickness=random_normal_within_range(2,2,thickness_range),
             relative_angle=random.uniform(*direction_range),
-            colour=random.choice(colour_options),
+            colour=random_colour,
         )
     elif new_segment_type == SegmentType.BRANCH_POINT:
         new_segment = BranchPointSegment()
     return new_segment
+
 
 def random_gene(gene_n):
     design = EyelinerDesign()
@@ -242,6 +252,7 @@ def random_gene(gene_n):
     n_of_branches = 1
     first_branch = True
     while n_of_branches >0:
+        prev_colour = None
         n_of_branches -=1
         can_branch = False #Cant branch if first segment in a new branch
         for i in range(n_objects):
@@ -253,14 +264,16 @@ def random_gene(gene_n):
 
             #If eyeliner_wing (second third of the initial population) then the second segment is likely to be a line directed (back to the eye) in the shape of an eyeliner wing:
             if first_branch and initial_gene_pool_size/3 < gene_n <= 2* (initial_gene_pool_size / 3) and i <= 2:
-                new_segment = random_segment(can_branch,segment_start,True,i)
-                print("Design number:", gene_n)
-                print("new_segment", new_segment)
+                new_segment = random_segment(prev_colour,can_branch,segment_start,True,i)
+                #print("Design number:", gene_n)
+                #print("new_segment", new_segment)
             else:
-                new_segment = random_segment(can_branch, segment_start)
+                new_segment = random_segment(prev_colour,can_branch, segment_start)
 
             if new_segment.segment_type == SegmentType.BRANCH_POINT:
                 n_of_branches +=1
+            else:
+                prev_colour = new_segment.colour
 
             design.add_segment(new_segment)
             can_branch = True

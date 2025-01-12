@@ -51,11 +51,15 @@ class DesignPage(Page):
             # Save the frame to the dictionary
             self.saved_gene_widgets[gene] = canvas_frame
 
+    def re_generate(self):
+        self.current_gene_pool = initialise_gene_pool()
+
     def start_designing(self):
         self.selected_gene_indices = []
         self.saved_genes_indices = []
         self.start_button.grid_forget()
         tk.Label(self, text="Pick your favorite designs", font=("Arial", 18)).grid(row=3, column=2, columnspan=2, pady=10)
+
         if not self.current_gene_pool:
             self.current_gene_pool = initialise_gene_pool()
 
@@ -141,6 +145,9 @@ class DesignPage(Page):
             toggle_button = tk.Button(canvas_frame, text="Toggle Selection")
             toggle_button.config(command=lambda index=i, b=toggle_button: toggle_gene(index, b))
             toggle_button.grid(row=1, column=0, columnspan=2, padx=5, pady=5, sticky="ew")  # Place button below canvas
+
+        re_generate_button = tk.Button(self, text="Re-generate designs", command=self.re_generate)
+        re_generate_button.grid(row=10, column=0, pady=20)
 
         submit_button = tk.Button(self, text="Submit", command=self.submit_selection)
         submit_button.grid(row=9, column=0, pady=20)
