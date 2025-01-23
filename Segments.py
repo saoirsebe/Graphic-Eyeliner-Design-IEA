@@ -30,8 +30,18 @@ class Segment:
         """Base mutate method to override in subclasses."""
         raise NotImplementedError("Subclasses should implement this!")
 
-    def mutate_val(self,value,range,mutation_rate):
-        return min(range[1], max(range[0], value * (1 + np.random.normal(-mutation_rate, mutation_rate))))
+    def mutate_val(self,value ,range ,mutation_rate):
+        if np.random.random() < mutation_rate:
+            mutation_magnitude = mutation_rate * (range[1]-range[0])
+            return min(range[1], max(range[0], value * (1 + np.random.normal(-mutation_magnitude, mutation_magnitude))))
+        else:
+            return value
+
+    def mutate_choice(self, value, options, mutation_rate):
+        if np.random.random() < mutation_rate:
+            return np.random.choice(options)
+        else:
+            return value
 
 def point_in_array(array,location_in_array):
     num_points = len(array)
@@ -224,8 +234,8 @@ class LineSegment(Segment):
     def mutate(self, mutation_rate=0.05):
         """Randomly mutate properties of the line segment within a mutation rate."""
         # mutation rate chance of changing:
-        if np.random.normal() < mutation_rate:
-            self.start_mode = np.random.choice([StartMode.CONNECT, StartMode.JUMP, StartMode.SPLIT, StartMode.CONNECT_MID])
+        self.mutate_choice(self.start_mode, [StartMode.CONNECT, StartMode.JUMP, StartMode.SPLIT, StartMode.CONNECT_MID], mutation_rate)
+
         if self.start_mode == StartMode.JUMP:
             self.start = (self.mutate_val(self.start[0],start_x_range,mutation_rate),self.mutate_val(self.start[1],start_y_range, mutation_rate))
 
@@ -241,15 +251,12 @@ class LineSegment(Segment):
 
         self.end_thickness = self.mutate_val(self.end_thickness,thickness_range,mutation_rate)
         self.relative_angle =  self.mutate_val(self.relative_angle,direction_range,mutation_rate)
-        # mutation rate chance of changing:
-        if np.random.normal() < mutation_rate:
-            self.colour = np.random.choice(colour_options)
-
+        self.colour = self.mutate_choice(self.colour, colour_options, mutation_rate)
         self.length = self.mutate_val(self.length,length_range,mutation_rate)
         self.start_thickness = self.mutate_val(self.start_thickness, thickness_range, mutation_rate)
 
         if self.curviness ==0:
-            self.curviness = 0 if np.random.normal() > mutation_rate else self.mutate_val(self.curviness,curviness_range,mutation_rate)
+            self.curviness = 0 if np.random.random() > mutation_rate else self.mutate_val(self.curviness,curviness_range,mutation_rate)
         else:
             self.curviness = self.mutate_val(self.curviness,curviness_range,mutation_rate)
 
@@ -303,32 +310,29 @@ class StarSegment(Segment):
     def mutate(self,mutation_rate=0.05):
         #(self, segment_type, start, colour, star_type, radius, arm_length, num_points, asymmetry, start_mode, end_thickness, relative_angle)
         # mutation rate chance of changing:
-        if np.random.normal() < mutation_rate:
-            self.start_mode = np.random.choice([StartMode.CONNECT, StartMode.JUMP])
+        self.start_mode = self.mutate_choice(self.start_mode, [StartMode.CONNECT, StartMode.JUMP], mutation_rate)
         if self.start_mode == StartMode.JUMP:
             self.start = (self.mutate_val(self.start[0], start_x_range, mutation_rate),
                           self.mutate_val(self.start[1], start_y_range, mutation_rate))
 
         self.end_thickness = self.mutate_val(self.end_thickness, thickness_range, mutation_rate)
         self.relative_angle = self.mutate_val(self.relative_angle, direction_range, mutation_rate)
-        # mutation rate chance of changing:
-        if np.random.normal() < mutation_rate:
-            self.colour = np.random.choice(colour_options)
-
+        self.colour = self.mutate_choice(self.colour, colour_options, mutation_rate)
         self.radius = self.mutate_val(self.radius,radius_range, mutation_rate)
         self.arm_length = self.mutate_val(self.arm_length,arm_length_range, mutation_rate)
-        if np.random.normal() < mutation_rate:
+
+        if np.random.random() < mutation_rate:
             if self.num_points ==num_points_range[0]:
                 self.num_points +=1
             elif self.num_points ==num_points_range[1]:
                 self.num_points -=1
             else:
                 self.num_points = self.num_points + np.random.choice([-1, 1])
-        if (self.asymmetry == 0 and np.random.normal() < mutation_rate) or (self.asymmetry != 0):
+
+        if (self.asymmetry == 0 and np.random.random() < mutation_rate) or (self.asymmetry != 0): #Less likely to mutate from 0
             self.asymmetry = self.mutate_val(self.asymmetry, asymmetry_range, mutation_rate)
-        # mutation rate chance of changing:
-        if np.random.normal() < mutation_rate:
-            self.star_type = np.random.choice([StarType.STRAIGHT,StarType.FLOWER,StarType.CURVED])
+
+        self.star_type = self.mutate_choice(self.star_type, [StarType.STRAIGHT,StarType.FLOWER,StarType.CURVED], mutation_rate)
 
 class BranchPointSegment:
     def __init__(self):
@@ -348,6 +352,7 @@ class BranchPointSegment:
 class EndPointSegment:
     def __init__(self):
         self.segment_type = SegmentType.END_POINT
+
 
 # Factory function to create a specific segment instance and wrap it in Segment
 def create_segment(start, start_mode, segment_type, **kwargs):

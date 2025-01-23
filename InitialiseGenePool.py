@@ -13,16 +13,16 @@ def initialise_gene_pool():
         fig = gene.render()  # Render each gene on its specific subplot
         plt.close(fig)
         overlap_score = analyse_negative(gene)
-        print("first overlap_score: ", overlap_score)
+        #print("first overlap_score: ", overlap_score)
         while overlap_score <= min_fitness_score:
             gene_pool[idx] = random_gene(idx)
             gene = gene_pool[idx]  # Update the loop variable with the new gene
             fig = gene.render()  # Render the new gene
             plt.close(fig)
             overlap_score = analyse_negative(gene)
-            print("New overlap_score: ", overlap_score)
+            #print("New overlap_score: ", overlap_score)
 
-        print("final overlap_score: ", overlap_score)
+        #print("final overlap_score: ", overlap_score)
         scored_genes.append((gene,  + analyse_positive(gene))) #overlap_score +
 
     scored_genes.sort(key=lambda x: x[1], reverse=True)  # Sort by the gene score
