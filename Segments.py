@@ -15,6 +15,7 @@ class Segment:
         self.absolute_angle = 0  # initialise to 0 and re-set after rendered
         self.points_array = []
         self.colour = colour
+        self.children = []
 
     def render(self, ax_n, prev_array, prev_angle, prev_colour, prev_end_thickness):
         """Base render method to override in subclasses."""
@@ -25,6 +26,12 @@ class Segment:
         if self.start_mode == StartMode.CONNECT and prev_end:
             self.start = prev_end
         return self.start
+
+    def add_child_segment(self, child):
+        self.children.append(child)
+
+    def get_children(self):
+        return self.children
 
     def mutate(self):
         """Base mutate method to override in subclasses."""
@@ -333,25 +340,6 @@ class StarSegment(Segment):
             self.asymmetry = self.mutate_val(self.asymmetry, asymmetry_range, mutation_rate)
 
         self.star_type = self.mutate_choice(self.star_type, [StarType.STRAIGHT,StarType.FLOWER,StarType.CURVED], mutation_rate)
-
-class BranchPointSegment:
-    def __init__(self):
-        self.segment_type = SegmentType.BRANCH_POINT
-        self.points_array = []
-        self.absolute_angle = 0
-        self.colour = "black"
-        self.thickness_array = []
-
-    def render(self, prev_array, prev_angle,prev_colour,prev_end_thickness_array):
-        self.points_array = prev_array
-        self.colour = prev_colour
-        self.thickness_array = prev_end_thickness_array
-        self.absolute_angle = prev_angle
-
-
-class EndPointSegment:
-    def __init__(self):
-        self.segment_type = SegmentType.END_POINT
 
 
 # Factory function to create a specific segment instance and wrap it in Segment

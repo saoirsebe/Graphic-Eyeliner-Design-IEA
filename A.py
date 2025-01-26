@@ -21,6 +21,8 @@ arm_length_range = (0, 1.5)
 num_points_range = (3, 8)
 asymmetry_range = (0, 3)
 
+number_of_children_range= (0,5)
+
 class StarType(Enum):
     STRAIGHT = 'STRAIGHT'
     CURVED = 'CURVED'
@@ -32,8 +34,7 @@ class SegmentType(Enum):
     #TAPER = 'TAPER'
     STAR = 'STAR'
     #WING = 'WING'
-    BRANCH_POINT = 'BRANCH_POINT'
-    END_POINT = 'END_POINT'
+
 
 class StartMode(Enum):
     CONNECT = 'CONNECT'

@@ -1,147 +1,197 @@
 import copy
 import random
-from logging import raiseExceptions
-
 from conda.common.configuration import raise_errors
-
 from AnalyseDesign import analyse_negative
 from Segments import *
 
 class EyelinerDesign:   #Creates overall design, calculates start points, renders each segment by calling their render function
-    def __init__(self):
-        self.segments = []
+    def __init__(self, root_node):
+        self.root = root_node
         self.n_of_lines= 0
         self.n_of_stars= 0
-        self.n_of_segments= 0
+        self.tree_size= 0
 
-    def add_segment_at(self,segment,index):
-        if index < 0 or index > len(self.segments):
+    def get_all_nodes(self, node=None, nodes_list=None):
+        """
+        Collects all nodes in the tree in depth-first order.
+
+        Parameters:
+        - node: The current node (default is the root).
+        - nodes_list: The list of nodes being collected.
+
+        Returns:
+        - list: A list of all TreeNode objects in depth-first order.
+        """
+        if nodes_list is None:
+            nodes_list = []
+
+        if node is None:
+            node = self.root
+
+        # Add the current node
+        nodes_list.append(node)
+
+        # Recursively collect nodes from children
+        for child in node.children:
+            self.get_all_nodes(child, nodes_list)
+
+        self.tree_size = len(nodes_list)
+
+        return nodes_list
+
+    def add_segment_at(self,segment,index,is_branch):
+        nodes_list = self.get_all_nodes()
+
+        if index < 0 or index > self.tree_size -1:
             raise IndexError("Index out of range. Cannot add segment at this position.")
 
-            # Insert the segment at the specified index
-        self.segments.insert(index, segment)
+        parent_node = nodes_list[index]
 
-    def add_segment(self, segment):
-        self.segments.append(segment)
+        if is_branch:
+            parent_node.add_child_segment(segment)
+        else:
+            parent_children = parent_node.get_children
+            parent_node.children = [segment]
+            segment.children.append(parent_children)
 
-    def render(self):
+    def is_descendant(self, node, potential_descendant):
+        """
+        Checks if a node is a descendant of another node.
+
+        Parameters:
+        - node: The potential ancestor node.
+        - potential_descendant: The node to check.
+
+        Returns:
+        - bool: True if the node is a descendant, False otherwise.
+        """
+        if potential_descendant in node.children:
+            return True
+        for child in node.children:
+            if self.is_descendant(child, potential_descendant):
+                return True
+        return False
+
+    def find_parent(self, node, target_node):
+        """
+        Finds the parent of a given node in the tree.
+        """
+        for child in node.children:
+            if child == target_node:
+                return node
+            result = self.find_parent(child, target_node)
+            if result:
+                return result
+        return None
+
+    def move_subtree(self, subtree_root, original_parent):
+        """
+        Randomly moves a subtree to a new location in the tree.
+        """
+        # Get all nodes in the tree
+        nodes_list = self.get_all_nodes()
+
+        # Ensure there are at least two nodes (root and another node)
+        if len(nodes_list) < 2:
+            print("Not enough nodes to perform a move.")
+            return
+
+        original_parent.children.remove(subtree_root)
+
+        # Randomly select a new parent node (cannot be the subtree root itself or any of its descendants)
+        valid_nodes = [node for node in nodes_list if
+                       node != subtree_root and not self.is_descendant(node, subtree_root)]
+        if not valid_nodes:
+            print("No valid node to move the subtree to.")
+            return
+
+        new_parent = random.choice(valid_nodes)
+
+        # Attach the subtree to the new parent
+        new_parent.add_child(subtree_root)
+
+    def render_node(self, ax_n, node, prev_array, prev_angle, prev_colour, prev_end_thickness_array):
+        node.render(ax_n, prev_array, prev_angle,prev_colour,prev_end_thickness_array)
+        prev_segment = node
+        if prev_segment.segment_type == SegmentType.STAR:
+            # if segment is a star then pass in the arm points that the next segment should start at:
+            prev_array = prev_segment.arm_points_array
+        else:
+            prev_array = prev_segment.points_array
+        prev_angle = prev_segment.absolute_angle
+        prev_colour = prev_segment.colour
+        if prev_segment.segment_type == SegmentType.LINE:
+            prev_end_thickness_array = prev_segment.thickness_array
+        else:
+            prev_end_thickness_array = np.array(prev_segment.end_thickness)
+
+        for child in node.children:
+            child.render_node(ax_n, prev_array, prev_angle, prev_colour, prev_end_thickness_array)
+
+    def render_design(self):
         """Render the eyeliner design"""
-        #Branch points is a list
-        branch_points = []
+        node = self.root  # Start from the root
+
         fig, ax_n = plt.subplots(figsize=(3, 3))
         draw_eye_shape(ax_n)
-        segment_n = 0
-        prev_array = np.array([self.segments[0].start])
+        prev_array = np.array([node.start])
         prev_angle = 0
-        prev_colour = self.segments[0].colour
-        prev_end_thickness_array = self.segments[0].end_thickness
-        for segment in self.segments:
-            if segment.segment_type == SegmentType.END_POINT and len(branch_points) == 0:
-                break
-            elif segment.segment_type == SegmentType.BRANCH_POINT:
-                segment.render(prev_array, prev_angle, prev_colour, prev_end_thickness_array)
-                branch_points.append(segment)
-            else:
-                if segment.segment_type == SegmentType.END_POINT and len(branch_points) > 0:
-                    prev_segment = branch_points[0]
-                    branch_points = branch_points[1:]
-                else:
-                    segment.render(ax_n, prev_array, prev_angle,prev_colour,prev_end_thickness_array)
+        prev_colour = node.colour
+        prev_end_thickness_array = node.end_thickness
 
-                    #Set prev_array for next segment (if segment is a branch point go back until segment isn't a branch point):
-                    prev_segment =segment
+        node.render_node(ax_n, prev_array, prev_angle, prev_colour, prev_end_thickness_array)
 
-                if prev_segment.segment_type == SegmentType.STAR:
-                    # if segment is a star then pass in the arm points that the next segment should start at:
-                    prev_array = prev_segment.arm_points_array
-                else:
-                     prev_array = prev_segment.points_array
-                prev_angle = prev_segment.absolute_angle
-                prev_colour = prev_segment.colour
-                if prev_segment.segment_type == SegmentType.LINE or prev_segment.segment_type == SegmentType.BRANCH_POINT:
-                    prev_end_thickness_array = prev_segment.thickness_array
-                else:
-                    prev_end_thickness_array = np.array(prev_segment.end_thickness)
-            segment_n += 1
         return fig
 
-    def get_start_thickness(self):
-        if not self.segments:
-            return 1 # Starting thickness for the first segment
-        last_segment = self.segments[-1]
-        return last_segment.end_thickness
+    def mutate_node(self,node,mutation_rate=0.05):
+        if random.random() < mutation_rate:
+            node.mutate(mutation_rate)
 
-    def update_design_info(self):
-        self.n_of_lines = 0
-        self.n_of_stars = 0
-        self.n_of_segments = 0
-        for segment in self.segments:
-            self.n_of_segments += 1
-            if segment.segment_type == SegmentType.LINE:
-                self.n_of_lines += 1
-            elif segment.segment_type == SegmentType.STAR:
-                self.n_of_stars += 1
+        #Random chance of loosing a child
+        if len(node.children) > 1:
+            delete_child_chance = mutation_rate
+        elif len(node.children) == 1:
+            delete_child_chance = mutation_rate //2
+        else:
+            delete_child_chance = 0
 
-    def mutate_self(self,mutation_rate=0.05):
-        open_branches = 1
-        for current_index, segment in enumerate(self.segments):
-            if segment.segment_type != SegmentType.BRANCH_POINT and segment.segment_type != SegmentType.END_POINT:
-                segment.mutate(mutation_rate)
-            elif segment.segment_type == SegmentType.END_POINT:
-                open_branches -=1
-            elif segment.segment_type == SegmentType.BRANCH_POINT:
-                open_branches += 1
-                #If segment is a branch point, there is a random chance it will be removed along with all the segments in that branch
-                if np.random.normal() < mutation_rate/2:
-                    end_point_hit = 0 #The branch that the next end point corresponds to (1 corresponds to the first open branch...)
-                    next_segment_index = current_index +1
-                    #Finds the index of the corresponding end point using number of open branches:
-                    while (self.segments[next_segment_index].segment_type != SegmentType.END_POINT or open_branches != end_point_hit) and next_segment_index<len(self.segments)-1:
-                        next_segment_index += 1
-                        if self.segments[next_segment_index].segment_type == SegmentType.END_POINT:
-                            end_point_hit +=1
-                    if next_segment_index<len(self.segments):
-                        self.segments.pop(next_segment_index)
-                        #Remove all segments that where part of that branch:
-                        next_segment_index -= 1
-                        while self.segments[next_segment_index].segment_type != SegmentType.END_POINT:
-                            self.segments.pop(next_segment_index)
-                            next_segment_index -=1
-                    else:
-                        raise ValueError("Branch Point with No corresponding End Point")
+        if random.random() < delete_child_chance:
+            delete_child_index = random.randint(0,len(node.children)-1)
+            node.children.pop(delete_child_index)
 
-                    self.segments.pop(current_index) #popping one after?!
+        for child in node.children:
+            # Random chance of swapping position:
+            if random.random() < mutation_rate:
+                self.move_subtree(child,node)
 
-            current_index +=1
+            self.mutate_node(child, mutation_rate)
 
-        # Random chance of adding in a new segment (Not a branch point or end point):
-        if np.random.normal() < mutation_rate:
+    def mutate_self(self, mutation_rate=0.05):
+        node = self.root
+        self.mutate_node(node,mutation_rate)
+        for child in node.children:
+            self.mutate_node(child,mutation_rate)
+
+        # Random chance of adding in a new segment:
+        if np.random.random() < mutation_rate:
             new_segment = random_segment(False)
-            self.add_segment_at(new_segment, np.random.randint(0, len(self.segments)))
+            nodes_list = self.get_all_nodes()
+            is_branch = False if random.random() < 0.7 else True #If the new segment branches off a segment or is placed in-between segments
+            self.add_segment_at(new_segment, np.random.randint(0, len(nodes_list)-1),is_branch)
 
-        #Random chance of swapping the location of a segment (Not a branch point or end point):
-        if np.random.normal() < mutation_rate:
-            to_change = np.random.randint(0, len(self.segments) - 1)
-            while self.segments[to_change].segment_type == SegmentType.END_POINT or self.segments[to_change].segment_type == SegmentType.BRANCH_POINT or (self.segments[to_change-1].segment_type == SegmentType.END_POINT and self.segments[to_change+1].segment_type == SegmentType.END_POINT):
-                to_change = np.random.randint(0, len(self.segments) - 1)
-            new_position = np.random.randint(0, len(self.segments) - 1)
-            while new_position == to_change:
-                new_position = np.random.randint(0, len(self.segments))
-            segment = self.segments.pop(to_change)
-            self.segments.insert(new_position, segment)
         return self
 
     def mutate(self,mutation_rate=0.05):
         new_gene = copy.deepcopy(self)
         new_gene= new_gene.mutate_self(mutation_rate)
-        fig=new_gene.render()
+        fig=new_gene.render_design()
         plt.close(fig)
         overlap_score = analyse_negative(new_gene)
         print("overlap_score", overlap_score)
         while overlap_score<=min_fitness_score:
             new_gene = copy.deepcopy(self)
             new_gene = new_gene.mutate_self(mutation_rate)
-            fig = new_gene.render()
+            fig = new_gene.render_design()
             plt.close(fig)
             overlap_score = analyse_negative(new_gene)
             print("overlap_score", overlap_score)
@@ -166,21 +216,13 @@ def random_from_two_distributions(mean1, stddev1, mean2, stddev2, value_range, p
         if value_range[0] <= value <= value_range[1]:
             return value
 
-def random_segment(prev_colour=None,can_branch = False,segment_start=(random.uniform(*start_x_range), random.uniform(*start_y_range)),eyeliner_wing = False, segment_number = 0):
+def random_segment(eyeliner_wing = False, prev_colour=None,segment_number = 0, segment_start=(random.uniform(*start_x_range), random.uniform(*start_y_range))):
     r = random.random()
-    if eyeliner_wing and (segment_number == 0 or segment_number == 2):
+    #If we want to start with an eyeliner wing, the first two segments must be lines:
+    if eyeliner_wing:
         new_segment_type = SegmentType.LINE
-    elif eyeliner_wing and segment_number == 1:
-        new_segment_type = SegmentType.BRANCH_POINT
-    elif can_branch:
-        if r < 0.5:
-            new_segment_type = SegmentType.LINE
-        elif r < 0.7:
-            new_segment_type = SegmentType.STAR
-        else:
-            new_segment_type = SegmentType.BRANCH_POINT
     else:
-        if r < 0.6:
+        if r < 0.65:
             new_segment_type = SegmentType.LINE
         else:
             new_segment_type = SegmentType.STAR
@@ -196,9 +238,9 @@ def random_segment(prev_colour=None,can_branch = False,segment_start=(random.uni
     if new_segment_type == SegmentType.LINE:
         random_start_mode = random.choice(list(StartMode))
         if segment_start == (3, 1.5) and eyeliner_wing: #First segment (line) in eyeliner wing:
-            random_relative_angle = random_normal_within_range(22, 40, direction_range)
-        elif eyeliner_wing and segment_number == 2: #Third segment (second line) in eyeliner wing:
-            random_relative_angle = random_normal_within_range(158, 50, direction_range)
+            random_relative_angle = random_normal_within_range(22.5, 40, direction_range)
+        elif eyeliner_wing and segment_number == 1: #Second segment in eyeliner wing:
+            random_relative_angle = random_normal_within_range(157.5, 40, direction_range)
             random_start_mode = StartMode.CONNECT
         elif random_start_mode == StartMode.CONNECT:
             random_relative_angle = random_from_two_distributions(135, 60, 225, 60, direction_range)
@@ -238,53 +280,36 @@ def random_segment(prev_colour=None,can_branch = False,segment_start=(random.uni
             relative_angle=random.uniform(*direction_range),
             colour=random_colour,
         )
-    elif new_segment_type == SegmentType.BRANCH_POINT:
-        new_segment = BranchPointSegment()
     return new_segment
 
+def random_gene_node(parent,prev_colour,eyeliner_wing=False,segment_number=0):
+    new_node = random_segment(eyeliner_wing=eyeliner_wing,segment_number=segment_number,prev_colour=prev_colour)
+    parent.children.append(new_node)
+    n_of_children = round(random_normal_within_range(1, 0.5, number_of_children_range))
+    prev_colour = new_node.colour
 
-def random_gene(gene_n):
-    design = EyelinerDesign()
-    if (initial_gene_pool_size/3 < gene_n <= 2* (initial_gene_pool_size/3)):
-        n_objects = 3
+    for i in range(n_of_children):
+        random_gene_node(new_node,prev_colour)
+
+def random_gene(gene_n,):
+    ##The first 2 thirds of the initial population start at the corner of the eye, the second third starts as an eyeliner wing, last 1/3 is random
+    if initial_gene_pool_size/3 < gene_n <= 2* (initial_gene_pool_size / 3):
+        design = EyelinerDesign(random_segment(eyeliner_wing=True, segment_number=0,segment_start=(3, 1.5)))
+        n_of_children = 2
+    elif gene_n <= 2 *(initial_gene_pool_size/3):
+        design = EyelinerDesign(random_segment(segment_start=(3, 1.5)))
+        n_of_children = round(random_normal_within_range(1, 0.5, number_of_children_range))
     else:
-        n_objects = round(random_normal_within_range(6,5,(1, 10)))
-    n_of_branches = 1
-    first_branch = True
-    while n_of_branches >0:
-        prev_colour = None
-        n_of_branches -=1
-        can_branch = False #Cant branch if first segment in a new branch
-        for i in range(n_objects):
-            #The first 2 thirds of the initial population start at the corner of the eye:
-            if first_branch and(gene_n <= 2 *(initial_gene_pool_size/3)) and i==0:
-                segment_start = (3, 1.5)
-            else:
-                segment_start = (random.uniform(*start_x_range), random.uniform(*start_y_range))
+        design = EyelinerDesign(random_segment())
+        n_of_children = round(random_normal_within_range(1,0.5,number_of_children_range))
 
-            #If eyeliner_wing (second third of the initial population) then the second segment is likely to be a line directed (back to the eye) in the shape of an eyeliner wing:
-            if first_branch and initial_gene_pool_size/3 < gene_n <= 2* (initial_gene_pool_size / 3) and i <= 2:
-                new_segment = random_segment(prev_colour,can_branch,segment_start,True,i)
-                #print("Design number:", gene_n)
-                #print("new_segment", new_segment)
-            else:
-                new_segment = random_segment(prev_colour,can_branch, segment_start)
+    root_node = design.root
+    prev_colour = root_node.colour
+    segment_number = 0
+    for i in range(n_of_children):
+        segment_number +=1
+        random_gene_node(root_node,prev_colour,eyeliner_wing=True,segment_number=segment_number)
 
-            if new_segment.segment_type == SegmentType.BRANCH_POINT:
-                n_of_branches +=1
-            else:
-                prev_colour = new_segment.colour
-
-            design.add_segment(new_segment)
-            can_branch = True
-
-        first_branch = False
-
-        design.add_segment(EndPointSegment())
-        n_objects = round(random_normal_within_range(2,3,(1, 10)))
-
-    #design.add_segment(EndPointSegment())
-    #design.update_design_info()
     return design
 
 """
