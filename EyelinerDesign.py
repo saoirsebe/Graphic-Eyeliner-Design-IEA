@@ -3,6 +3,7 @@ import random
 from conda.common.configuration import raise_errors
 from AnalyseDesign import analyse_negative
 from Segments import *
+from A import max_segments
 
 class EyelinerDesign:   #Creates overall design, calculates start points, renders each segment by calling their render function
     def __init__(self, root_node):
@@ -126,20 +127,20 @@ class EyelinerDesign:   #Creates overall design, calculates start points, render
             prev_end_thickness_array = np.array(prev_segment.end_thickness)
 
         for child in node.children:
-            child.render_node(ax_n, prev_array, prev_angle, prev_colour, prev_end_thickness_array)
+            self.render_node(ax_n, child, prev_array, prev_angle, prev_colour, prev_end_thickness_array)
 
     def render_design(self):
         """Render the eyeliner design"""
-        node = self.root  # Start from the root
+        root_node = self.root  # Start from the root
 
         fig, ax_n = plt.subplots(figsize=(3, 3))
         draw_eye_shape(ax_n)
-        prev_array = np.array([node.start])
+        prev_array = np.array([root_node.start])
         prev_angle = 0
-        prev_colour = node.colour
-        prev_end_thickness_array = node.end_thickness
+        prev_colour = root_node.colour
+        prev_end_thickness_array = root_node.end_thickness
 
-        node.render_node(ax_n, prev_array, prev_angle, prev_colour, prev_end_thickness_array)
+        self.render_node(ax_n, root_node, prev_array, prev_angle, prev_colour, prev_end_thickness_array)
 
         return fig
 
@@ -282,14 +283,48 @@ def random_segment(eyeliner_wing = False, prev_colour=None,segment_number = 0, s
         )
     return new_segment
 
-def random_gene_node(parent,prev_colour,eyeliner_wing=False,segment_number=0):
+
+def n_of_children_decreasing_likelihood(segment_number, branch_length, max_segments, base_mean, std_dev, value_range):
+    """
+    Determines the number of children for a node based on:
+    - Segment number (global position in tree).
+    - Branch length (local depth within a branch).
+    - A decaying mean to reduce the number of children as branch length increases.
+
+    Parameters:
+    - segment_number: The current segment number (1-based index, global).
+    - branch_length: The current depth in the branch (1-based index, local).
+    - max_segments: The global segment number after which children are unlikely.
+    - base_mean: The initial mean for the random normal distribution.
+    - std_dev: The standard deviation for the random normal distribution.
+    - value_range: A tuple (min_children, max_children).
+
+    Returns:
+    - n_of_children: The calculated number of children.
+    """
+    # Global decay: Reduce likelihood of children based on the segment number
+    global_decay_factor = max(0, 1 - (segment_number / max_segments))  # Reduces from 1 to 0
+
+    # Branch decay: Reduce likelihood of children as branch depth increases
+    branch_decay_factor = max(0, 1 - (branch_length / average_branch_length))  # Target average branch length ~3
+
+    # Combined decay: Both global and branch decay affect the mean
+    decay_factor = global_decay_factor * branch_decay_factor
+    mean = base_mean * decay_factor  # Adjust mean with decay
+
+    # Generate the number of children
+    return round(random_normal_within_range(mean, std_dev, value_range))
+
+def random_gene_node(parent,prev_colour,eyeliner_wing=False,segment_number=1,depth=0):
     new_node = random_segment(eyeliner_wing=eyeliner_wing,segment_number=segment_number,prev_colour=prev_colour)
     parent.children.append(new_node)
-    n_of_children = round(random_normal_within_range(1, 0.5, number_of_children_range))
+    n_of_children = n_of_children_decreasing_likelihood(segment_number, depth, max_segments, 1,0.6, number_of_children_range)
     prev_colour = new_node.colour
-
+    depth+=1
+    print("n_of_children:", n_of_children)
     for i in range(n_of_children):
-        random_gene_node(new_node,prev_colour)
+        segment_number+=1
+        random_gene_node(new_node,prev_colour,segment_number=segment_number,depth=depth)
 
 def random_gene(gene_n,):
     ##The first 2 thirds of the initial population start at the corner of the eye, the second third starts as an eyeliner wing, last 1/3 is random
@@ -308,7 +343,7 @@ def random_gene(gene_n,):
     segment_number = 0
     for i in range(n_of_children):
         segment_number +=1
-        random_gene_node(root_node,prev_colour,eyeliner_wing=True,segment_number=segment_number)
+        random_gene_node(root_node,prev_colour,eyeliner_wing=True,segment_number=segment_number,depth=0)
 
     return design
 

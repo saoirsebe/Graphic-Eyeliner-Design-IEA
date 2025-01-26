@@ -42,7 +42,7 @@ class DesignPage(Page):
             canvas_frame.grid(row=i + 3, column=10, padx=10, pady=10, sticky="nsew")
 
             # Render the figure for the gene
-            fig = gene.render()
+            fig = gene.gene.render()
             canvas = FigureCanvasTkAgg(fig, master=canvas_frame)
             canvas.draw()
             canvas_widget = canvas.get_tk_widget()
@@ -131,7 +131,7 @@ class DesignPage(Page):
             canvas_frame = tk.Frame(self, borderwidth=1, relief="solid")
             canvas_frame.grid(row=(i // 3) + 5, column=i % 3, padx=10, pady=10, sticky="nsew")
 
-            fig = gene.render()
+            fig = gene.gene.render()
             self.current_gene_pool_figures.append(fig)
             canvas = FigureCanvasTkAgg(fig, master=canvas_frame)
             canvas.draw()

@@ -21,7 +21,9 @@ arm_length_range = (0, 1.5)
 num_points_range = (3, 8)
 asymmetry_range = (0, 3)
 
-number_of_children_range= (0,5)
+number_of_children_range= (0,3)
+max_segments = 20
+average_branch_length = 3
 
 class StarType(Enum):
     STRAIGHT = 'STRAIGHT'
