@@ -1,3 +1,4 @@
+import random
 from enum import Enum
 min_fitness_score = -20
 initial_gene_pool_size = 100
@@ -23,7 +24,7 @@ asymmetry_range = (0, 3)
 
 number_of_children_range= (0,3)
 max_segments = 20
-average_branch_length = 3
+average_branch_length = 3.5
 
 class StarType(Enum):
     STRAIGHT = 'STRAIGHT'
@@ -37,9 +38,27 @@ class SegmentType(Enum):
     STAR = 'STAR'
     #WING = 'WING'
 
-
 class StartMode(Enum):
     CONNECT = 'CONNECT'
     JUMP = 'JUMP'
     SPLIT = 'SPLIT' #connect but end of prev is in segment
     CONNECT_MID = 'CONNECT_MID'
+
+def random_normal_within_range(mean, stddev, value_range):
+    while True:
+        # Generate a number using normal distribution
+        value = random.gauss(mean, stddev)
+        # Keep it within the specified range
+        if value_range[0] <= value <= value_range[1]:
+            return value
+
+def random_from_two_distributions(mean1, stddev1, mean2, stddev2, value_range, prob1=0.5):
+    while True:
+        # Choose which distribution to use
+        if random.random() < prob1:
+            value = random.gauss(mean1, stddev1)
+        else:  # Otherwise, use the second distribution
+            value = random.gauss(mean2, stddev2)
+
+        if value_range[0] <= value <= value_range[1]:
+            return value

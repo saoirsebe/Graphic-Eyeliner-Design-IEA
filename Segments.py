@@ -3,6 +3,7 @@ from EyelinerWingGeneration import un_normalised_vector_direction, draw_eye_shap
 import StarGeneration
 from StarGeneration import *
 from A import *
+import random
 
 class Segment:
     """Base class for all segments."""
@@ -379,6 +380,71 @@ def create_segment(start, start_mode, segment_type, **kwargs):
         raise ValueError(f"Unsupported segment type: {segment_type}")
 
 
+def random_segment(eyeliner_wing = False, prev_colour=None,segment_number = 0, segment_start=(random.uniform(*start_x_range), random.uniform(*start_y_range))):
+    r = random.random()
+    #If we want to start with an eyeliner wing, the first two segments must be lines:
+    if eyeliner_wing:
+        new_segment_type = SegmentType.LINE
+    else:
+        if r < 0.65:
+            new_segment_type = SegmentType.LINE
+        else:
+            new_segment_type = SegmentType.STAR
+
+    #Pick colour, more likely to be the previous colour:
+    if prev_colour is None:
+        random_colour = random.choice(colour_options)
+    else:
+        #weights = [0.6 if colour == prev_colour else 0.1 for colour in colour_options]
+        #random_colour = random.choices(colour_options, weights=weights, k=1)[0]
+        random_colour = prev_colour if random.random() < 0.5 else random.choice(colour_options)
+
+    if new_segment_type == SegmentType.LINE:
+        random_start_mode = random.choice(list(StartMode))
+        if segment_start == (3, 1.5) and eyeliner_wing: #First segment (line) in eyeliner wing:
+            random_relative_angle = random_normal_within_range(22.5, 40, direction_range)
+        elif eyeliner_wing and segment_number == 1: #Second segment in eyeliner wing:
+            random_relative_angle = random_normal_within_range(157.5, 40, direction_range)
+            random_start_mode = StartMode.CONNECT
+        elif random_start_mode == StartMode.CONNECT:
+            random_relative_angle = random_from_two_distributions(135, 60, 225, 60, direction_range)
+        elif random_start_mode == StartMode.CONNECT_MID:
+            random_relative_angle = random_from_two_distributions(90,50,270,50, direction_range)
+        elif random_start_mode == StartMode.SPLIT:
+            random_relative_angle = random_from_two_distributions(90,50,270,50, direction_range)
+        else:
+            random_relative_angle = random.uniform(*direction_range)
+
+        new_segment = create_segment(
+            segment_type=SegmentType.LINE,
+            start=segment_start,
+            start_mode=random_start_mode,
+            length=random.uniform(*length_range),
+            relative_angle=random_relative_angle,
+            start_thickness=random.uniform(*thickness_range),
+            end_thickness=random.uniform(*thickness_range),
+            colour=random_colour,
+            curviness=0 if random.random() < 0.5 else random_normal_within_range(0.1,0.5,curviness_range),
+            curve_direction=random_from_two_distributions(90,40,270,40, direction_range),
+            curve_location=random_normal_within_range(0.5,0.25,relative_location_range),
+            start_location=random_normal_within_range(0.5,0.25,relative_location_range),
+            split_point=random_normal_within_range(0.5,0.25,relative_location_range)
+        )
+    elif new_segment_type == SegmentType.STAR:
+        new_segment = create_segment(
+            segment_type=SegmentType.STAR,
+            start=segment_start,
+            start_mode=random.choice([StartMode.CONNECT, StartMode.JUMP]),
+            radius=random_normal_within_range(0.5,0.5,radius_range),
+            arm_length=random_normal_within_range(0.75,0.5,arm_length_range),
+            num_points=round(random_normal_within_range(5,2, num_points_range)),
+            asymmetry=0 if random.random() < 0.6 else random_normal_within_range(2,2,asymmetry_range),
+            star_type=random.choice([StarType.STRAIGHT, StarType.CURVED, StarType.FLOWER]),
+            end_thickness=random_normal_within_range(2,2,thickness_range),
+            relative_angle=random.uniform(*direction_range),
+            colour=random_colour,
+        )
+    return new_segment
 
 """
 # Example usage

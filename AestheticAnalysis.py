@@ -276,7 +276,8 @@ def analyse_design_shapes(design):
     lower_curve = np.column_stack(([x * 3 for x in lower_x], [y * 3 for y in lower_y]))
 
     total_score = 0
-    for segment in design.segments:
+    segments = design.get_all_nodes()
+    for segment in segments:
         if segment.segment_type == SegmentType.LINE:
             total_score += segment.length * score_segment(segment, upper_curve, lower_curve)
     return total_score

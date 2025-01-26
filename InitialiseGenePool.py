@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 
 from A import min_fitness_score, initial_gene_pool_size
 from AnalyseDesign import analyse_negative, analyse_positive
-from EyelinerDesign import random_gene
+from RandomGene import random_gene
 
 
 def initialise_gene_pool():
