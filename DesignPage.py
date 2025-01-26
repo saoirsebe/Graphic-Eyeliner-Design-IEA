@@ -4,6 +4,8 @@ from tkinter import messagebox
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import matplotlib.pyplot as plt
 import numpy as np
+
+from BreedingMechanism import breed_new_designs
 from InitialiseGenePool import initialise_gene_pool
 from Page import Page
 import random
@@ -53,6 +55,7 @@ class DesignPage(Page):
 
     def re_generate(self):
         self.current_gene_pool = initialise_gene_pool()
+        self.start_designing()
 
     def start_designing(self):
         self.selected_gene_indices = []
@@ -147,7 +150,7 @@ class DesignPage(Page):
             toggle_button.grid(row=1, column=0, columnspan=2, padx=5, pady=5, sticky="ew")  # Place button below canvas
 
         re_generate_button = tk.Button(self, text="Re-generate designs", command=self.re_generate)
-        re_generate_button.grid(row=10, column=0, pady=20)
+        re_generate_button.grid(row=9, column=5, pady=20)
 
         submit_button = tk.Button(self, text="Submit", command=self.submit_selection)
         submit_button.grid(row=9, column=0, pady=20)
@@ -164,6 +167,10 @@ class DesignPage(Page):
             plt.close(fig)
         selected_indices = self.selected_gene_indices
         if selected_indices:
+            selected_genes = [self.current_gene_pool[i] for i in selected_indices]
+            self.current_gene_pool = breed_new_designs(selected_genes,self.mutation_rate)
+            self.start_designing()
+            """
             #selected_genes = [f"Gene {i + 1}" for i in selected_indices]
             n_selected = len(selected_indices)
             if n_selected == 1 or 2 or 3 or 6:
@@ -184,6 +191,7 @@ class DesignPage(Page):
                 new_gene_pool.append(new_design)
             self.current_gene_pool = new_gene_pool
             self.start_designing()
+        """
         else:
             messagebox.showwarning("No Genes Selected", "No genes were selected.")
 
@@ -192,5 +200,5 @@ class DesignPage(Page):
             messagebox.showwarning("Back Error", "Cant go back.")
         else:
             self.current_gene_pool = self.gene_pools_all[-2]
-            self.gene_pools_all = self.gene_pools_all[:-1]
+            self.gene_pools_all = self.gene_pools_all[:-2]
             self.start_designing()

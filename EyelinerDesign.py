@@ -84,18 +84,18 @@ class EyelinerDesign:   #Creates overall design, calculates start points, render
                 return result
         return None
 
-    def move_subtree(self, subtree_root, original_parent):
+    def move_subtree(self, subtree_root):
         """
         Randomly moves a subtree to a new location in the tree.
         """
         # Get all nodes in the tree
         nodes_list = self.get_all_nodes()
-
         # Ensure there are at least two nodes (root and another node)
         if len(nodes_list) < 2:
             print("Not enough nodes to perform a move.")
             return
 
+        original_parent = find_parent(self.root, subtree_root)
         original_parent.children.remove(subtree_root)
 
         # Randomly select a new parent node (cannot be the subtree root itself or any of its descendants)
@@ -108,7 +108,7 @@ class EyelinerDesign:   #Creates overall design, calculates start points, render
         new_parent = random.choice(valid_nodes)
 
         # Attach the subtree to the new parent
-        new_parent.add_child(subtree_root)
+        new_parent.add_child_segment(subtree_root)
 
     def render_node(self, ax_n, node, prev_array, prev_angle, prev_colour, prev_end_thickness_array):
         node.render(ax_n, prev_array, prev_angle,prev_colour,prev_end_thickness_array)
@@ -160,10 +160,6 @@ class EyelinerDesign:   #Creates overall design, calculates start points, render
             node.children.pop(delete_child_index)
 
         for child in node.children:
-            # Random chance of swapping position:
-            if random.random() < mutation_rate:
-                self.move_subtree(child,node)
-
             self.mutate_node(child, mutation_rate)
 
     def mutate_self(self, mutation_rate=0.05):
@@ -179,6 +175,10 @@ class EyelinerDesign:   #Creates overall design, calculates start points, render
             is_branch = False if random.random() < 0.7 else True #If the new segment branches off a segment or is placed in-between segments
             self.add_segment_at(new_segment, np.random.randint(0, len(nodes_list)-1),is_branch)
 
+        #Random chance of swapping a subtree position:
+        if np.random.random() < mutation_rate and len(self.get_all_nodes()>2):
+            nodes_list = self.get_all_nodes()
+            self.move_subtree(random.choice(nodes_list[1:]))
         return self
 
     def mutate(self,mutation_rate=0.05):

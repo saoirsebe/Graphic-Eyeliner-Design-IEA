@@ -34,6 +34,9 @@ class Segment:
     def get_children(self):
         return self.children
 
+    def remove_child_segment(self, child):
+        self.children.remove(child)
+
     def mutate(self):
         """Base mutate method to override in subclasses."""
         raise NotImplementedError("Subclasses should implement this!")
