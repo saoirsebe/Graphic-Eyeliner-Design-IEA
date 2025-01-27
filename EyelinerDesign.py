@@ -110,8 +110,8 @@ class EyelinerDesign:   #Creates overall design, calculates start points, render
         # Attach the subtree to the new parent
         new_parent.add_child_segment(subtree_root)
 
-    def render_node(self, ax_n, node, prev_array, prev_angle, prev_colour, prev_end_thickness_array):
-        node.render(ax_n, prev_array, prev_angle,prev_colour,prev_end_thickness_array)
+    def render_node(self, node, prev_array, prev_angle, prev_colour, prev_end_thickness_array, ax_n=None):
+        node.render(prev_array, prev_angle,prev_colour,prev_end_thickness_array,ax_n)
         prev_segment = node
         if prev_segment.segment_type == SegmentType.STAR:
             # if segment is a star then pass in the arm points that the next segment should start at:
@@ -126,22 +126,24 @@ class EyelinerDesign:   #Creates overall design, calculates start points, render
             prev_end_thickness_array = np.array(prev_segment.end_thickness)
 
         for child in node.children:
-            self.render_node(ax_n, child, prev_array, prev_angle, prev_colour, prev_end_thickness_array)
+            self.render_node( child, prev_array, prev_angle, prev_colour, prev_end_thickness_array,ax_n)
 
-    def render_design(self):
+    def render_design(self,show = True):
         """Render the eyeliner design"""
         root_node = self.root  # Start from the root
-
-        fig, ax_n = plt.subplots(figsize=(3, 3))
-        draw_eye_shape(ax_n)
         prev_array = np.array([root_node.start])
         prev_angle = 0
         prev_colour = root_node.colour
         prev_end_thickness_array = root_node.end_thickness
 
-        self.render_node(ax_n, root_node, prev_array, prev_angle, prev_colour, prev_end_thickness_array)
-
-        return fig#, ax_n
+        if show:
+            fig, ax_n = plt.subplots(figsize=(3, 3))
+            draw_eye_shape(ax_n)
+            self.render_node(root_node, prev_array, prev_angle, prev_colour, prev_end_thickness_array,ax_n)
+            return fig
+        else:
+            self.render_node(root_node, prev_array, prev_angle, prev_colour, prev_end_thickness_array)
+            return
 
     def mutate_node(self,node,mutation_rate=0.05):
         if random.random() < mutation_rate:
@@ -184,15 +186,13 @@ class EyelinerDesign:   #Creates overall design, calculates start points, render
     def mutate(self,mutation_rate=0.05):
         new_gene = copy.deepcopy(self)
         new_gene= new_gene.mutate_self(mutation_rate)
-        fig=new_gene.render_design()
-        plt.close(fig)
+        new_gene.render_design(show=False)
         overlap_score = analyse_negative(new_gene)
         print("overlap_score", overlap_score)
         while overlap_score<=min_fitness_score:
             new_gene = copy.deepcopy(self)
             new_gene = new_gene.mutate_self(mutation_rate)
-            fig = new_gene.render_design()
-            plt.close(fig)
+            new_gene.render_design(show=False)
             overlap_score = analyse_negative(new_gene)
             print("overlap_score", overlap_score)
         return new_gene

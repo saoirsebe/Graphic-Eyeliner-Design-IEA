@@ -1,10 +1,30 @@
 import random
+
+import numpy as np
+
 from A import *
 from AestheticAnalysis import analyse_design_shapes
+from AnalyseDesign import is_in_eye, check_design_overlaps, check_overlaps
 from EyelinerDesign import EyelinerDesign
 from EyelinerWingGeneration import generate_eye_curve_directions
-from Segments import create_segment, random_segment
+from Segments import create_segment, random_segment, set_prev_end_thickness_array
 
+
+def check_new_segments_overlaps(design,new_segment):
+    segments = design.get_all_nodes()
+    eye_overlaps = is_in_eye(new_segment)
+    if eye_overlaps > 5:
+        return min_fitness_score * 2
+    else:
+        score = -eye_overlaps
+
+    new_segment_array = new_segment.points_array
+    for segment in segments:
+        score -= check_overlaps(segment.points_array,new_segment_array)
+        if score<min_fitness_score:
+            return score
+
+    return score
 
 def n_of_children_decreasing_likelihood(segment_number, branch_length, max_segments, base_mean, std_dev, value_range):
     """
@@ -37,37 +57,64 @@ def n_of_children_decreasing_likelihood(segment_number, branch_length, max_segme
     # Generate the number of children
     return round(random_normal_within_range(mean, std_dev, value_range))
 
-def random_gene_node(parent,prev_colour,eyeliner_wing=False,segment_number=1,depth=0):
+def random_gene_node( design, parent, prev_colour, eyeliner_wing=False, segment_number=1, depth=0):
+    #Create new node, render, check overlaps with the other segments in design, if new_node overlaps more than min_fitness_score then re-generate random new_node
     new_node = random_segment(eyeliner_wing=eyeliner_wing,segment_number=segment_number,prev_colour=prev_colour)
+    prev_end_thickness_array = set_prev_end_thickness_array(parent)
+    if parent.segment_type == SegmentType.STAR:
+        # if segment is a star then pass in the arm points that the next segment should start at:
+        prev_array = parent.arm_points_array
+    else:
+        prev_array = parent.points_array
+    new_node.render(prev_array, parent.absolute_angle, prev_colour, prev_end_thickness_array)
+    regen_count = 0
+    while check_new_segments_overlaps(design,new_node) < min_fitness_score and regen_count < 10:
+        new_node = random_segment(eyeliner_wing=eyeliner_wing, segment_number=segment_number, prev_colour=prev_colour)
+        new_node.render(prev_array, parent.absolute_angle, prev_colour, prev_end_thickness_array)
+        regen_count+=1
+    if regen_count ==10:
+        print("regen_count ==10")
+        return False
+
     parent.children.append(new_node)
     n_of_children = n_of_children_decreasing_likelihood(segment_number, depth, max_segments, 1,0.6, number_of_children_range)
     prev_colour = new_node.colour
     depth+=1
 
     for i in range(n_of_children):
-        segment_number+=1
-        random_gene_node(new_node,prev_colour,segment_number=segment_number,depth=depth)
+        segment_number += 1
+        if not random_gene_node(design, new_node, prev_colour, segment_number=segment_number, depth=depth):
+            return False  # Propagate failure if child generation fails.
+
+    return True
 
 def random_gene(gene_n):
-    ##The first 2 thirds of the initial population start at the corner of the eye, the second third starts as an eyeliner wing, last 1/3 is random
-    if initial_gene_pool_size/3 < gene_n <= 2* (initial_gene_pool_size / 3):
-        design = EyelinerDesign(random_segment(eyeliner_wing=True, segment_number=0,segment_start=eye_corner_start))
-        n_of_children = 2
-    elif gene_n <= 2 *(initial_gene_pool_size/3):
-        design = EyelinerDesign(random_segment(segment_start=eye_corner_start))
-        n_of_children = round(random_normal_within_range(1, 0.5, number_of_children_range))
-    else:
-        design = EyelinerDesign(random_segment())
-        n_of_children = round(random_normal_within_range(1,0.5,number_of_children_range))
+    success = False
+    while not success:
+        success = True
+        #The first 2 thirds of the initial population start at the corner of the eye, the second third starts as an eyeliner wing, last 1/3 is random
+        if initial_gene_pool_size/3 < gene_n <= 2* (initial_gene_pool_size / 3):
+            design = EyelinerDesign(random_segment(eyeliner_wing=True, segment_number=0,segment_start=eye_corner_start))
+            n_of_children = 2
+        elif gene_n <= 2 *(initial_gene_pool_size/3):
+            design = EyelinerDesign(random_segment(segment_start=eye_corner_start))
+            n_of_children = round(random_normal_within_range(1, 0.5, number_of_children_range))
+        else:
+            design = EyelinerDesign(random_segment())
+            n_of_children = round(random_normal_within_range(1,0.5,number_of_children_range))
 
-    root_node = design.root
-    prev_colour = root_node.colour
-    segment_number = 0
-    for i in range(n_of_children):
-        segment_number +=1
-        random_gene_node(root_node,prev_colour,eyeliner_wing=True,segment_number=segment_number,depth=0)
-
-    return design
+        root_node = design.root
+        prev_colour = root_node.colour
+        segment_number = 0
+        prev_end_thickness_array = root_node.end_thickness
+        root_node.render(np.array([root_node.start]), 0, prev_colour, prev_end_thickness_array)
+        for i in range(n_of_children):
+            segment_number +=1
+            if not random_gene_node(design, root_node, prev_colour, eyeliner_wing=True, segment_number=segment_number,depth=0):
+                success = False
+        if success:
+            return design
+            print("success")
 
 """
 random_design = random_gene(0)

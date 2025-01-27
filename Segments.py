@@ -18,7 +18,7 @@ class Segment:
         self.colour = colour
         self.children = []
 
-    def render(self, ax_n, prev_array, prev_angle, prev_colour, prev_end_thickness):
+    def render(self, prev_array, prev_angle, prev_colour, prev_end_thickness, ax_n=None):
         """Base render method to override in subclasses."""
         raise NotImplementedError("Subclasses should implement this!")
 
@@ -113,16 +113,20 @@ class LineSegment(Segment):
         plt.fill(boundary_x, boundary_y, color=colour, alpha=0.5)
         return np.concatenate((left_curve, right_curve, self.points_array), axis=0)
 
-    def render(self, ax_n, prev_array, prev_angle, prev_colour, prev_thickness_array):
+    def render(self, prev_array, prev_angle, prev_colour, prev_thickness_array, ax_n=None):
         new_array = []
         num_steps = 50  # Number of points to create a smooth thickness transition/ curve
         if self.start_mode == StartMode.CONNECT and len(prev_array)>15 or self.start_mode == StartMode.SPLIT and len(prev_array)>15:
             self.start = (prev_array[-1][0], prev_array[-1][1])
+            if prev_thickness_array.size == 1:
+                print("prev_thickness_array:",prev_thickness_array)
+                print("prev_array:",prev_array)
             self.start_thickness = prev_thickness_array[len(prev_array) - 1]
-
         elif self.start_mode == StartMode.CONNECT and len(prev_array)<=15 or self.start_mode == StartMode.SPLIT and len(prev_array)<=15:
             end_index = point_in_array(prev_array, 0.5)
             self.start = (prev_array[end_index][0], prev_array[end_index][1])
+        elif len(prev_array)<=0:
+            raise ValueError("len(prev_array)<=0....")
         elif self.start_mode == StartMode.CONNECT_MID and len(prev_array)>0:
             start_array_point_index = point_in_array(prev_array, self.start_location)
             start_array_point = prev_array[start_array_point_index]
@@ -210,12 +214,14 @@ class LineSegment(Segment):
                     this_colour = prev_colour
                 else:
                     thickness = self.thickness_array [i]
-                ax_n.plot(
-                    [x_values[i], x_values[i + 1]], [y_values[i], y_values[i + 1]],
-                    color=this_colour,
-                    linewidth=thickness,
-                    solid_capstyle='butt',
-                )
+
+                if ax_n:
+                    ax_n.plot(
+                        [x_values[i], x_values[i + 1]], [y_values[i], y_values[i + 1]],
+                        color=this_colour,
+                        linewidth=thickness,
+                        solid_capstyle='butt',
+                    )
 
             # Plot remaining points
             for i in range(40, len(x_values) - 1):
@@ -223,22 +229,25 @@ class LineSegment(Segment):
                     thickness = self.thickness_array[i - 41]
                 else:
                     thickness = self.thickness_array[i]
-                ax_n.plot(
-                    [x_values[i], x_values[i + 1]], [y_values[i], y_values[i + 1]],
-                    color=self.colour,
-                    linewidth=thickness,
-                    solid_capstyle='butt',
-                )
+
+                if ax_n:
+                    ax_n.plot(
+                        [x_values[i], x_values[i + 1]], [y_values[i], y_values[i + 1]],
+                        color=self.colour,
+                        linewidth=thickness,
+                        solid_capstyle='butt',
+                    )
         else:
             # Plot normally if no new_array exists (Start type is jump or connect so no blend between lines needed)
             for i in range(len(x_values) - 1):
                 thickness = self.thickness_array[i]
-                ax_n.plot(
-                    [x_values[i], x_values[i + 1]], [y_values[i], y_values[i + 1]],
-                    color=self.colour,
-                    linewidth=thickness,
-                    solid_capstyle='butt',
-                )
+                if ax_n:
+                    ax_n.plot(
+                        [x_values[i], x_values[i + 1]], [y_values[i], y_values[i + 1]],
+                        color=self.colour,
+                        linewidth=thickness,
+                        solid_capstyle='butt',
+                    )
 
 
     def mutate(self, mutation_rate=0.05):
@@ -292,7 +301,7 @@ class StarSegment(Segment):
         #bin, end_p = StarGeneration.create_star_arm(center, radius,arm_length, num_points,start_angle,asymmetry,num_points,curved) #armN = last arm so num_points
         self.arm_points_array = []
 
-    def render(self, ax_n, prev_array, prev_angle, prev_colour, prev_end_thickness):
+    def render(self, prev_array, prev_angle, prev_colour, prev_end_thickness, ax_n=None):
         if self.start_mode == StartMode.CONNECT and len(prev_array)>15:
             self.start = (prev_array[-1][0], prev_array[-1][1])
             self.center = self.start
@@ -312,7 +321,8 @@ class StarSegment(Segment):
         transformation_vector = (self.center[0] - start_coord[0], self.center[1] - start_coord[1])
         #self.end = (end_coord[0]+transformation_vector[0], end_coord[1]+transformation_vector[1])
         transformed_star_points = np.array([(point[0] + transformation_vector[0], point[1] + transformation_vector[1]) for point in star_points])
-        ax_n.plot(transformed_star_points[:, 0], transformed_star_points[:, 1], self.colour, lw=self.end_thickness)  # Plot all points as a single object
+        if ax_n:
+            ax_n.plot(transformed_star_points[:, 0], transformed_star_points[:, 1], self.colour, lw=self.end_thickness)  # Plot all points as a single object
         transformed_arm_points = np.array([(point[0] + transformation_vector[0], point[1] + transformation_vector[1]) for point in star_arm_points])
         self.arm_points_array = transformed_arm_points
         self.points_array = transformed_star_points
@@ -447,6 +457,28 @@ def random_segment(eyeliner_wing = False, prev_colour=None,segment_number = 0, s
             colour=random_colour,
         )
     return new_segment
+
+
+def set_prev_end_thickness_array(parent):
+    if parent.segment_type == SegmentType.LINE:
+        prev_end_thickness_array = parent.thickness_array
+    else:
+        prev_end_thickness_array = np.array(parent.end_thickness)
+
+    # Check if prev_end_thickness_array is a numpy array and ensure it's iterable
+    if isinstance(prev_end_thickness_array, np.ndarray):
+        if prev_end_thickness_array.ndim == 0:
+            # If it is a scalar (i.e., 0-dimensional), reshape it to a 1D array
+            prev_end_thickness_array = prev_end_thickness_array.reshape(1)
+        if prev_end_thickness_array.size == 0:
+            raise ValueError("prev_end_thickness_array is empty")
+    else:
+        # Handle the case where it's not an array (if needed)
+        print("prev_end_thickness_array:",prev_end_thickness_array)
+        print("parent:",parent)
+        raise ValueError("prev_end_thickness_array is not a numpy array")
+
+    return prev_end_thickness_array
 
 """
 # Example usage

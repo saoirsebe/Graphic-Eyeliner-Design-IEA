@@ -3,12 +3,27 @@ from AestheticAnalysis import analyse_design_shapes
 import numpy as np
 from EyelinerWingGeneration import get_quadratic_points
 
-def check_overlap(i, segments):
+def check_overlaps(segment1,segment2):
+    overlap_found = False
+    segment_overlaps = 0
+    overlaps = 0
+    for point1 in segment1:
+        for point2 in segment2:
+            # Calculate Euclidean distance between point1 and point2
+            distance = np.linalg.norm(point1 - point2)
+            # Check if distance is within the tolerance
+            if distance <= 0.075:
+                overlap_found = True
+                segment_overlaps += 1
+    if overlap_found:
+        overlaps += int((segment_overlaps / (len(segment1) + len(segment2))) * 100)
+
+    return overlaps
+
+def check_design_overlaps(i, segments):
     segment = segments[i].points_array
     overlaps = 0
     for j in range(i + 1, len(segments) - 1):
-        overlap_found = False
-        segment_overlaps = 0
         segment_j = segments[j].points_array
 
         if j == (i + 1) and (segments[j].start_mode == StartMode.CONNECT_MID or segments[j].start_mode == StartMode.CONNECT):
@@ -17,16 +32,7 @@ def check_overlap(i, segments):
         elif j == (i + 1) and (segments[j].start_mode == StartMode.CONNECT or segments[j].start_mode == StartMode.SPLIT):
             first_1 = int(len(segment) * 0.05)
             segment = segment[:-first_1]
-        for point1 in segment:
-            for point2 in segment_j:
-                # Calculate Euclidean distance between point1 and point2
-                distance = np.linalg.norm(point1 - point2)
-                # Check if distance is within the tolerance
-                if distance <= 0.075:
-                    overlap_found = True
-                    segment_overlaps += 1
-        if overlap_found:
-            overlaps += int((segment_overlaps / (len(segment) + len(segment_j))) * 100)
+        overlaps = check_overlaps(segment, segment_j)
 
         if -overlaps < min_fitness_score: #Return if less than min_fitness_score to save processing time
             return overlaps
@@ -70,7 +76,7 @@ def analyse_negative(design):
     for i in range(len(segments)-1):
         if is_in_eye(segments[i]) > 5:
             return min_fitness_score *2
-        score = score - check_overlap(i, segments)
+        score = score - check_design_overlaps(i, segments)
         if score < min_fitness_score:
             return score
     return score
