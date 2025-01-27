@@ -86,7 +86,6 @@ class LineSegment(Segment):
             self.split_point = 0
         self.thickness_array = []
 
-
     def calculate_end(self, prev_angle):
         """Calculate the end point based on start, length, and direction."""
         if self.start_mode == StartMode.JUMP:
@@ -404,7 +403,7 @@ def random_segment(eyeliner_wing = False, prev_colour=None,segment_number = 0, s
 
     if new_segment_type == SegmentType.LINE:
         random_start_mode = random.choice(list(StartMode))
-        if segment_start == (3, 1.5) and eyeliner_wing: #First segment (line) in eyeliner wing:
+        if segment_start == eye_corner_start and eyeliner_wing: #First segment (line) in eyeliner wing:
             random_relative_angle = random_normal_within_range(22.5, 40, direction_range)
         elif eyeliner_wing and segment_number == 1: #Second segment in eyeliner wing:
             random_relative_angle = random_normal_within_range(157.5, 40, direction_range)

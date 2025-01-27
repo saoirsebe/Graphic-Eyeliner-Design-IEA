@@ -59,7 +59,7 @@ def is_in_eye(segment):
 
 def wing_angle(node1,node2):
     if node1.segment_type == SegmentType.LINE and node2.segment_type == SegmentType.LINE:
-        if node2.start_mode == StartMode.CONNECT and (0 < node1.absolute_angle < 50) and (142.5 < node2.relative_angle < 172.5 or 187.5 < node2.relative_angle < 217.5):
+        if node2.start_mode == StartMode.CONNECT and (0 < node1.absolute_angle < 70) and (142.5 < node2.relative_angle < 172.5 or 187.5 < node2.relative_angle < 217.5):
              return 3
     return 0
 
@@ -68,10 +68,9 @@ def analyse_negative(design):
     score = 0  # Count how many overlaps there are in this gene
     # Compare each pair of segments for overlap
     for i in range(len(segments)-1):
+        if is_in_eye(segments[i]) > 5:
+            return min_fitness_score *2
         score = score - check_overlap(i, segments)
-        if score < min_fitness_score:
-            return score
-        score = score - is_in_eye(segments[i])
         if score < min_fitness_score:
             return score
     return score

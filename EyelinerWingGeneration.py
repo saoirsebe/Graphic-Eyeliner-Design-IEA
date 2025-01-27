@@ -3,7 +3,11 @@ import matplotlib.pyplot as plt
 import sympy as sp
 import random
 
-def bezier_curve(t, P0, P1, P2):
+from A import eye_corner_start
+
+
+def bezier_curve(P0, P1, P2):
+    t = np.linspace(0, 1, 100).reshape(-1, 1)
     return (1 - t) ** 2 * P0 + 2 * (1 - t) * t * P1 + t ** 2 * P2
 
 def get_quadratic_points(a, b, c, x_start, x_end, num_points=100):
@@ -135,36 +139,29 @@ def generate_bezier_curve(P0,P1,P2,P3, num_points=100):
     y = (1 - t) ** 3 * P0[1] + 3 * (1 - t) ** 2 * t * P1[1] + 3 * (1 - t) * t ** 2 * P2[1] + t ** 3 * P3[1]
     return x, y
 
-def generate_eye_curve_directions():
+def generate_eye_curve_directions(ax_n=None):
     #plt.figure(figsize=(6, 6))
     #draw_eye_shape(plt)
 
-    upper_x, upper_y = get_quadratic_points(-0.5, 0, 1, -1, 1)
-    lower_x, lower_y = get_quadratic_points(0.5, 0, 0, -1, 1)
-    upper_curve = np.column_stack(([x * 3 for x in upper_x], [y * 3 for y in upper_y]))
-    lower_curve = np.column_stack(([x * 3 for x in lower_x], [y * 3 for y in lower_y]))
+    x_values = np.linspace(eye_corner_start[0], 10, 100)
+    y_values = np.linspace(eye_corner_start[1], 4.5, 100)
+    top_eye_curve = np.column_stack((x_values, y_values))
+    top_eye_curve -= 0.5
 
-    # Control point P1 should be above the quadratic curve at its midpoint (x=0.5)
-    P0 = upper_curve[0]
-    P0[1] += 1
-    P2 = upper_curve[-1]
-    P2[1] += 1
-    P1 = upper_curve[upper_curve.shape[0]//2]
-    P1[1] += 2
-    P3 = (P2[0]+3,P2[1]+1)
-    x, y = generate_bezier_curve(P0,P1,P2,P3)
-    top_eye_curve = np.column_stack((x, y))
-    #plt.plot(top_eye_curve[:,0], top_eye_curve[:,1], label="Upper Bezier")
+    #top_eye_curve = bezier_curve(P0,P1,P2)
+    if ax_n:
+        ax_n.plot(top_eye_curve[:,0], top_eye_curve[:,1], label="Upper Bezier")
 
-    P0 = lower_curve[0]
-    P0[1] -= 1
-    P2 = lower_curve[-1]
-    P2[1] -= 1
-    P1 = lower_curve[lower_curve.shape[0]//2]
-    P1[1] -= 2
-    x, y = generate_bezier_curve(P0,P1,P2,P3)
-    bottom_eye_curve = np.column_stack((x, y))
-    #plt.plot(bottom_eye_curve[:,0], bottom_eye_curve[:,1], label="Lower Bezier")
+    P0 = np.array(eye_corner_start)
+    P2 = np.array([8, 3])
+    P1 = (P0 + P2) // 2
+    P1[1] -= 0.75
+    P1[0] -= 0.25
+
+    bottom_eye_curve = bezier_curve(P0,P1,P2)
+    #bottom_eye_curve = np.column_stack((x, y))
+    if ax_n:
+        ax_n.plot(bottom_eye_curve[:,0], bottom_eye_curve[:,1], label="Lower Bezier")
     #ax = plt.gca()
     #ax.set_aspect('equal')
     #plt.show()

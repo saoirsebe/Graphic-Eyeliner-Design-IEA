@@ -23,10 +23,11 @@ def initialise_gene_pool():
             #print("New overlap_score: ", overlap_score)
 
         #print("final overlap_score: ", overlap_score)
-        scored_genes.append((gene,  + analyse_positive(gene))) #overlap_score +
+        scored_genes.append((gene, analyse_positive(gene))) #overlap_score +
 
     scored_genes.sort(key=lambda x: x[1], reverse=True)  # Sort by the gene score
-    print("Gene score: ", scored_genes)
+    for gene, score in scored_genes:
+        print(f" Score: {score}")
 
     gene_pool = [gene for gene, score in scored_genes[:6]]
 

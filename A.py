@@ -1,7 +1,7 @@
 import random
 from enum import Enum
 min_fitness_score = -20
-initial_gene_pool_size = 6
+initial_gene_pool_size = 50
 #Parameter ranges:
 start_x_range = (-1, 7)
 start_y_range = (0, 6)
@@ -25,6 +25,7 @@ asymmetry_range = (0, 3)
 number_of_children_range= (0,3)
 max_segments = 20
 average_branch_length = 3.5
+eye_corner_start = (3,1.5)
 
 class StarType(Enum):
     STRAIGHT = 'STRAIGHT'

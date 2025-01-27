@@ -1,6 +1,8 @@
 import random
 from A import *
+from AestheticAnalysis import analyse_design_shapes
 from EyelinerDesign import EyelinerDesign
+from EyelinerWingGeneration import generate_eye_curve_directions
 from Segments import create_segment, random_segment
 
 
@@ -46,13 +48,13 @@ def random_gene_node(parent,prev_colour,eyeliner_wing=False,segment_number=1,dep
         segment_number+=1
         random_gene_node(new_node,prev_colour,segment_number=segment_number,depth=depth)
 
-def random_gene(gene_n,):
+def random_gene(gene_n):
     ##The first 2 thirds of the initial population start at the corner of the eye, the second third starts as an eyeliner wing, last 1/3 is random
     if initial_gene_pool_size/3 < gene_n <= 2* (initial_gene_pool_size / 3):
-        design = EyelinerDesign(random_segment(eyeliner_wing=True, segment_number=0,segment_start=(3, 1.5)))
+        design = EyelinerDesign(random_segment(eyeliner_wing=True, segment_number=0,segment_start=eye_corner_start))
         n_of_children = 2
     elif gene_n <= 2 *(initial_gene_pool_size/3):
-        design = EyelinerDesign(random_segment(segment_start=(3, 1.5)))
+        design = EyelinerDesign(random_segment(segment_start=eye_corner_start))
         n_of_children = round(random_normal_within_range(1, 0.5, number_of_children_range))
     else:
         design = EyelinerDesign(random_segment())
@@ -66,3 +68,12 @@ def random_gene(gene_n,):
         random_gene_node(root_node,prev_colour,eyeliner_wing=True,segment_number=segment_number,depth=0)
 
     return design
+
+"""
+random_design = random_gene(0)
+fig, ax_n= random_design.render_design()
+a,b = generate_eye_curve_directions(ax_n)
+fig.show()
+score = analyse_design_shapes(random_design)
+print("Score:", score)
+"""

@@ -141,7 +141,7 @@ class EyelinerDesign:   #Creates overall design, calculates start points, render
 
         self.render_node(ax_n, root_node, prev_array, prev_angle, prev_colour, prev_end_thickness_array)
 
-        return fig
+        return fig#, ax_n
 
     def mutate_node(self,node,mutation_rate=0.05):
         if random.random() < mutation_rate:
@@ -176,7 +176,7 @@ class EyelinerDesign:   #Creates overall design, calculates start points, render
             self.add_segment_at(new_segment, np.random.randint(0, len(nodes_list)-1),is_branch)
 
         #Random chance of swapping a subtree position:
-        if np.random.random() < mutation_rate and len(self.get_all_nodes()>2):
+        if np.random.random() < mutation_rate and len(self.get_all_nodes())>2:
             nodes_list = self.get_all_nodes()
             self.move_subtree(random.choice(nodes_list[1:]))
         return self
