@@ -170,28 +170,6 @@ class DesignPage(Page):
             selected_genes = [self.current_gene_pool[i] for i in selected_indices]
             self.current_gene_pool = breed_new_designs(selected_genes,self.mutation_rate)
             self.start_designing()
-            """
-            #selected_genes = [f"Gene {i + 1}" for i in selected_indices]
-            n_selected = len(selected_indices)
-            if n_selected == 1 or 2 or 3 or 6:
-                n_of_each = 6 // len(selected_indices)
-            elif n_selected == 4 or 5:
-                n_of_each = 1
-            else:
-                print("Whatt")
-            new_gene_pool = []
-            for selected in selected_indices:
-                old_gene = self.current_gene_pool[selected]
-                for i in range(n_of_each):
-                    new_design = old_gene.mutate(self.mutation_rate)
-                    new_gene_pool.append(new_design)
-            while len(new_gene_pool) < 6:
-                new_design_index = random.choice(selected_indices)
-                new_design = self.current_gene_pool[new_design_index].mutate(self.mutation_rate)
-                new_gene_pool.append(new_design)
-            self.current_gene_pool = new_gene_pool
-            self.start_designing()
-        """
         else:
             messagebox.showwarning("No Genes Selected", "No genes were selected.")
 

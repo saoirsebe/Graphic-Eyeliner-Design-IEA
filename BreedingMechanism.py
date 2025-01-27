@@ -1,6 +1,10 @@
 import copy
 import random
 
+from A import min_fitness_score
+from AnalyseDesign import analyse_negative
+
+
 def crossover_designs(designs):
     """
        Performs a crossover between trees by swapping a subtree with each design it is breeding with.
@@ -40,7 +44,11 @@ def breed_new_designs(selected_genes, mutation_rate):
         old_gene = selected_genes[0]
         for i in range(6):
             new_design = old_gene.mutate(mutation_rate)
+            # print("first overlap_score: ", overlap_score)
+            while analyse_negative(new_design) <= min_fitness_score:
+                new_design = old_gene.mutate(mutation_rate)
             new_gene_pool.append(new_design)
+
     else:
         for i in range(6):
             #Randomly pick some genes to breed
