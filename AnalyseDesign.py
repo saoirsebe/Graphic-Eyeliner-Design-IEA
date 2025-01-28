@@ -74,8 +74,13 @@ def analyse_negative(design):
     score = 0  # Count how many overlaps there are in this gene
     # Compare each pair of segments for overlap
     for i in range(len(segments)-1):
-        if is_in_eye(segments[i]) > 5:
+        eye_overlaps = is_in_eye(segments[i])
+        if eye_overlaps > 5:
             return min_fitness_score *2
+        else:
+            score-=eye_overlaps
+        if score < min_fitness_score:
+            return score
         score = score - check_design_overlaps(i, segments)
         if score < min_fitness_score:
             return score

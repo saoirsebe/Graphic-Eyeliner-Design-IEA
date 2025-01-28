@@ -9,18 +9,21 @@ def initialise_gene_pool():
     gene_pool = [random_gene(i) for i in range(initial_gene_pool_size)]
     scored_genes = []
     # Check the overlap_score of each and re-generate if lower than min_fitness_score:
+
     for idx, gene in enumerate(gene_pool):
-        gene.render_design(show=False)  # Render gene without plotting
+        """
+        #gene.render_design(show=False)  # Render gene without plotting
         overlap_score = analyse_negative(gene)
         #print("first overlap_score: ", overlap_score)
         while overlap_score <= min_fitness_score:
             gene_pool[idx] = random_gene(idx)
             gene = gene_pool[idx]  # Update the loop variable with the new gene
-            gene.render_design(gene.render_design(show=False))  # Render the new gene
+            #gene.render_design(gene.render_design(show=False))  # Render the new gene
             overlap_score = analyse_negative(gene)
             #print("New overlap_score: ", overlap_score)
 
         #print("final overlap_score: ", overlap_score)
+        """
         scored_genes.append((gene, analyse_positive(gene))) #overlap_score +
 
     scored_genes.sort(key=lambda x: x[1], reverse=True)  # Sort by the gene score

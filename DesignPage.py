@@ -54,6 +54,8 @@ class DesignPage(Page):
             self.saved_gene_widgets[gene] = canvas_frame
 
     def re_generate(self):
+        for fig in self.current_gene_pool_figures:
+            plt.close(fig)
         self.current_gene_pool = initialise_gene_pool()
         self.start_designing()
 
@@ -61,6 +63,7 @@ class DesignPage(Page):
         self.selected_gene_indices = []
         self.saved_genes_indices = []
         self.start_button.grid_forget()
+        self.current_gene_pool_figures = []
         tk.Label(self, text="Pick your favorite designs", font=("Arial", 18)).grid(row=3, column=2, columnspan=2, pady=10)
 
         if not self.current_gene_pool:
