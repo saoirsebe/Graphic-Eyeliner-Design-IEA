@@ -2,6 +2,7 @@ import random
 from enum import Enum
 min_fitness_score = -20
 initial_gene_pool_size = 50
+node_re_gen_max = 12
 #Parameter ranges:
 start_x_range = (-1, 7)
 start_y_range = (0, 6)
@@ -38,6 +39,7 @@ class SegmentType(Enum):
     #TAPER = 'TAPER'
     STAR = 'STAR'
     #WING = 'WING'
+    RANDOM_SHAPE = 'RANDOM_SHAPE'
 
 class StartMode(Enum):
     CONNECT = 'CONNECT'

@@ -64,6 +64,7 @@ class LineSegment(Segment):
     """Line segment with additional properties specific to a line."""
     def __init__(self, segment_type, start, start_mode, length, relative_angle, start_thickness, end_thickness, colour, curviness, curve_direction, curve_location, start_location, split_point):
         super().__init__(segment_type, start, start_mode, end_thickness, relative_angle, colour)
+        self.segment_type = SegmentType.LINE
         self.end = None  # Calculated in render
         self.length = length
         self.start_thickness = start_thickness
@@ -112,6 +113,7 @@ class LineSegment(Segment):
         boundary_y = np.concatenate([left_y, right_y[::1]])  # Combine left and reversed right y
         plt.fill(boundary_x, boundary_y, color=colour, alpha=0.5)
         return np.concatenate((left_curve, right_curve, self.points_array), axis=0)
+
 
     def render(self, prev_array, prev_angle, prev_colour, prev_thickness_array, ax_n=None):
         new_array = []
@@ -291,6 +293,7 @@ class StarSegment(Segment):
     """Line segment with additional properties specific to a line."""
     def __init__(self, segment_type, start, colour, star_type, radius, arm_length, num_points, asymmetry, start_mode, end_thickness, relative_angle):
         super().__init__(segment_type, start, start_mode, end_thickness,relative_angle, colour)
+        self.segment_type = SegmentType.STAR
         self.center = self.start
         self.radius = radius
         self.arm_length = arm_length
