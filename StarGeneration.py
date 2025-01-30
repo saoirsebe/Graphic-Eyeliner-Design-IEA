@@ -7,7 +7,7 @@ from EyelinerWingGeneration import normalised_vector_direction
 
 
 # Function to create a quadratic Bézier curve with three control points
-def bezier_curve(t, P0, P1, P2):
+def bezier_curve_t(t, P0, P1, P2):
     x = (1 - t) ** 2 * P0[0] + 2 * (1 - t) * t * P1[0] + t ** 2 * P2[0]
     y = (1 - t) ** 2 * P0[1] + 2 * (1 - t) * t * P1[1] + t ** 2 * P2[1]
 
@@ -50,7 +50,7 @@ def create_star_arm(center, radius, arm_length, num_points, start_angle, asymmet
 
     if star_type == StarType.CURVED or star_type == StarType.FLOWER:
         t_values = np.linspace(0, 1, 100)
-        arm_points = np.array([bezier_curve(t, P0, P1, P2) for t in t_values])
+        arm_points = np.array([bezier_curve_t(t, P0, P1, P2) for t in t_values])
     else:
         arm_points = np.array([P0, P1, P2])
 

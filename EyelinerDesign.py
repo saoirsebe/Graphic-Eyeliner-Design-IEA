@@ -113,11 +113,15 @@ class EyelinerDesign:   #Creates overall design, calculates start points, render
     def render_node(self, node, prev_array, prev_angle, prev_colour, prev_end_thickness_array, ax_n=None):
         node.render(prev_array, prev_angle,prev_colour,prev_end_thickness_array,ax_n)
         prev_segment = node
-        if prev_segment.segment_type == SegmentType.STAR:
+
+        if prev_segment.segment_type == SegmentType.LINE:
+            prev_array = prev_segment.points_array
+        elif prev_segment.segment_type == SegmentType.STAR:
             # if segment is a star then pass in the arm points that the next segment should start at:
             prev_array = prev_segment.arm_points_array
-        else:
-            prev_array = prev_segment.points_array
+        elif prev_segment.segment_type == SegmentType.RANDOM_SHAPE:
+            prev_array = prev_segment.edges
+
         prev_angle = prev_segment.absolute_angle
         prev_colour = prev_segment.colour
         if prev_segment.segment_type == SegmentType.LINE:
@@ -128,7 +132,7 @@ class EyelinerDesign:   #Creates overall design, calculates start points, render
         for child in node.children:
             self.render_node( child, prev_array, prev_angle, prev_colour, prev_end_thickness_array,ax_n)
 
-    def render_design(self,show = True):
+    def render_design(self, show = True):
         """Render the eyeliner design"""
         root_node = self.root  # Start from the root
         prev_array = np.array([root_node.start])
@@ -205,3 +209,39 @@ fig.show()
 score = analyse_design_shapes(random_design)
 print("Score:", score)
 """
+def random_curviness():
+    return random_normal_within_range(0.3, 0.5, curviness_range)
+def random_curve_direction():
+    return random_from_two_distributions(90, 40, 270, 40, direction_range)
+def random_curve_location():
+    return random_normal_within_range(0.5, 0.25, relative_location_range)
+
+def random_random_shape():
+    random_colour = random.choice(colour_options)
+    segment_start=(random.uniform(*start_x_range), random.uniform(*start_y_range))
+    n_of_edges = round(random_normal_within_range(5,3, num_points_range))
+    new_segment = create_segment(
+        segment_type=SegmentType.RANDOM_SHAPE,
+        start=segment_start,
+        start_mode=random.choice([StartMode.CONNECT, StartMode.JUMP]),
+        end_thickness=random_normal_within_range(2, 2, thickness_range),
+        relative_angle=random.uniform(*direction_range),
+        colour=random_colour,
+        bounding_size=(random.uniform(*random_shape_size_range), random.uniform(*random_shape_size_range)),
+        edges=np.array([
+            (random.uniform(*edge_initialisation_range), random.uniform(*edge_initialisation_range))
+            for i in range(n_of_edges)
+        ]),
+        lines_list= [(RandomShapeLineSegment(random_curviness(), random_curve_direction(), random_curve_location())) for i in range(n_of_edges)],
+    )
+    return new_segment
+#design = EyelinerDesign(random_random_shape())
+#design.render_design()
+fig, ax_n = plt.subplots(figsize=(3, 3))
+shape = random_random_shape()
+prev_array = np.array([shape.start])
+prev_angle = 0
+prev_colour = shape.colour
+prev_end_thickness= shape.end_thickness
+shape.render(prev_array, prev_angle, prev_colour, prev_end_thickness, ax_n)
+fig.show()

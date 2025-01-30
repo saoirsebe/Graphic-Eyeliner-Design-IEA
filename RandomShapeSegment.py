@@ -1,51 +1,51 @@
 import math
-
 import numpy as np
-
 import EyelinerWingGeneration
 from A import StartMode, SegmentType
-from Segments import Segment, point_in_array
-from StarGeneration import bezier_curve
+from ParentSegment import Segment, point_in_array
+from EyelinerWingGeneration import bezier_curve
+from StarGeneration import bezier_curve_t
+
 
 class RandomShapeLineSegment:
     def __init__(self, curviness, curve_direction, curve_location):
-        self.points_array = []
         self.curviness = curviness
         self.curve_direction = curve_direction
         self.curve_location = curve_location
+        self.points_array = []
 
     def render(self, start_point, end_point, colour, thickness, ax_n=None):
         num_steps = 50  # Number of points to create a smooth thickness transition/ curve
 
         if self.curviness>0:
             t_values = np.linspace(0, 1, num_steps)
-            P0 = np.array(start_point)
-            P2 = np.array(end_point)
-            direction = EyelinerWingGeneration.un_normalised_vector_direction(P0, P2)
+            P0 = start_point
+            P2 = end_point
+            direction = EyelinerWingGeneration.normalised_vector_direction(P0, P2)
             P1 = P0 + (self.curve_location * direction) #moves curve_location away from P0 towards P2 relative to length of curve segment
-            relative_curve_direction = direction + self.curve_direction
-            curve_dir_radians = np.radians(relative_curve_direction)
+            direction_angle = np.degrees(np.arctan2(direction[1], direction[0]))
+            relative_curve_direction_degrees = direction_angle + self.curve_direction
+            curve_dir_radians = np.radians(relative_curve_direction_degrees)
             # Calculate x and y offsets
             dx = self.curviness * np.cos(curve_dir_radians)
             dy = self.curviness * np.sin(curve_dir_radians)
             P1 = P1 + np.array([dx, dy])
-
-            self.points_array = np.array([bezier_curve(t, P0, P1, P2) for t in t_values])
+            self.points_array = np.array([bezier_curve_t(t, P0, P1, P2) for t in t_values])
             x_values, y_values = self.points_array[:, 0], self.points_array[:, 1]
         else:
             x_values = np.linspace(start_point[0], end_point[0], num_steps)
             y_values = np.linspace(start_point[1], end_point[1], num_steps)
             self.points_array = np.column_stack((x_values, y_values))
 
-        for i in range(len(x_values) - 1):
-            if ax_n:
+        if ax_n:
+            for i in range(len(x_values) - 1):
                 ax_n.plot(
                     [x_values[i], x_values[i + 1]], [y_values[i], y_values[i + 1]],
                     color=colour,
                     linewidth=thickness,
                     solid_capstyle='butt',
                 )
-
+        return self.points_array
 
 class RandomShapeSegment(Segment):
     """Line segment with additional properties specific to a line."""
@@ -55,11 +55,11 @@ class RandomShapeSegment(Segment):
         self.start = start
         self.segment_type = SegmentType.RANDOM_SHAPE
         self.bounding_size = bounding_size
-        self.edges = [(edge[0] * self.bounding_size[0], edge[1] * self.bounding_size[1]) for edge in edges]
+        self.edges = np.array([(edge[0] * self.bounding_size[0], edge[1] * self.bounding_size[1]) for edge in edges])
         #self.lines_segments = [(RandomShapeLineSegment(curviness, curve_direction, curve_location))for line in lines_list]
         self.lines_list = lines_list
+        self.points_array = np.array([])  # Initialize as an empty array
 
-        self.arm_points_array = []
 
     def rotate_edges(self):
         """Rotates edges around the start by """
@@ -68,11 +68,9 @@ class RandomShapeSegment(Segment):
         ox, oy = self.start  # Origin coordinates (start of shape)
         for edge in self.edges:
             x, y = edge
-
             # Shift point back to the origin (subtract origin from edge)
             x -= ox
             y -= oy
-
             # Apply the rotation matrix
             new_x = x * math.cos(angle_rad) - y * math.sin(angle_rad)
             new_y = x * math.sin(angle_rad) + y * math.cos(angle_rad)
@@ -93,7 +91,6 @@ class RandomShapeSegment(Segment):
             edge[1] += movement[1]
 
     def render(self, prev_array, prev_angle, prev_colour, prev_end_thickness, ax_n=None):
-        self.arm_points_array = []
         if self.start_mode == StartMode.CONNECT and len(prev_array) > 15:
             self.start = (prev_array[-1][0], prev_array[-1][1])
         elif self.start_mode == StartMode.CONNECT and len(prev_array) <= 15:
@@ -108,14 +105,20 @@ class RandomShapeSegment(Segment):
         self.rotate_edges()
         self.move_edges()
 
-        start_point = self.edges[0]
+        start_point = np.array(self.edges[0])
+        #ax_n.scatter(start_point[0], start_point[1], color='red',linewidth=8, zorder=5)
         for i, edge in enumerate(self.edges):
-            if i+1 == len(self.edges):
-                end_point = self.edges[i + 1]
+            if i+1 < len(self.edges):
+                end_point = np.array(self.edges[i + 1])
+                #ax_n.scatter(end_point[0], end_point[1], color='orange', linewidth=3,  zorder=6)
             else:
-                end_point = self.edges[0]
-            self.lines_list[i].render(self, start_point, end_point, self.colour, self.end_thickness, ax_n)
-            start_point = self.edges[i]
+                end_point = np.array(self.edges[0])
+                #ax_n.scatter(end_point[0], end_point[1], color='blue',linewidth=3,  zorder=6)
+
+            section_points_array = self.lines_list[i].render(start_point, end_point, self.colour, self.end_thickness, ax_n)
+            self.points_array = np.append(self.points_array,section_points_array)
+            start_point = end_point
+
 
         #STILL NEED TO PICK ORDR OF EDGES SO THEY JOIN NICELY
-        #NEED TO RANDOMISE CREATION TO MAKE LINES_LIST A LIST OF RandomShapeLineSegment OBJECTS
+        #NEED TO ADD POINTS To points_array

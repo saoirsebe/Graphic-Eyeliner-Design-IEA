@@ -1,64 +1,11 @@
 import EyelinerWingGeneration
 from EyelinerWingGeneration import un_normalised_vector_direction, draw_eye_shape
 import StarGeneration
+from ParentSegment import Segment, point_in_array
+from RandomShapeSegment import RandomShapeSegment, RandomShapeLineSegment
 from StarGeneration import *
 from A import *
 import random
-
-class Segment:
-    """Base class for all segments."""
-    def __init__(self, segment_type, start, start_mode, end_thickness, relative_angle, colour):
-        self.segment_type = segment_type
-        self.start = start  # Tuple (x, y)
-        self.start_mode = start_mode
-        self.end_thickness = end_thickness
-        self.relative_angle = relative_angle
-        self.absolute_angle = 0  # initialise to 0 and re-set after rendered
-        self.points_array = []
-        self.colour = colour
-        self.children = []
-
-    def render(self, prev_array, prev_angle, prev_colour, prev_end_thickness, ax_n=None):
-        """Base render method to override in subclasses."""
-        raise NotImplementedError("Subclasses should implement this!")
-
-    def generate_start(self, prev_end=None):
-        """Base method to be overridden by subclasses if needed."""
-        if self.start_mode == StartMode.CONNECT and prev_end:
-            self.start = prev_end
-        return self.start
-
-    def add_child_segment(self, child):
-        self.children.append(child)
-
-    def get_children(self):
-        return self.children
-
-    def remove_child_segment(self, child):
-        self.children.remove(child)
-
-    def mutate(self):
-        """Base mutate method to override in subclasses."""
-        raise NotImplementedError("Subclasses should implement this!")
-
-    def mutate_val(self,value ,range ,mutation_rate):
-        if np.random.random() < mutation_rate:
-            mutation_magnitude = mutation_rate * (range[1]-range[0])
-            return min(range[1], max(range[0], value * (1 + np.random.normal(-mutation_magnitude, mutation_magnitude))))
-        else:
-            return value
-
-    def mutate_choice(self, value, options, mutation_rate):
-        if np.random.random() < mutation_rate:
-            return np.random.choice(options)
-        else:
-            return value
-
-def point_in_array(array,location_in_array):
-    num_points = len(array)
-    target_index = round(location_in_array * (num_points - 1))
-    point = array[target_index]
-    return target_index
 
 class LineSegment(Segment):
     """Line segment with additional properties specific to a line."""
@@ -102,9 +49,9 @@ class LineSegment(Segment):
 
     def curve_between_lines(self, P0, P1, P2, P3, colour):
         t_values = np.linspace(0, 1, 20)
-        left_curve = np.array([bezier_curve(t, P0, P1, P2) for t in t_values])
+        left_curve = np.array([bezier_curve_t(t, P0, P1, P2) for t in t_values])
         # np.array((prev_array[start_array_point_index+2]) - np.array(self.points_array[2]))/2
-        right_curve = np.array([bezier_curve(t, P2, P1, P3) for t in t_values])
+        right_curve = np.array([bezier_curve_t(t, P2, P1, P3) for t in t_values])
         left_x, left_y = left_curve[:, 0], left_curve[:, 1]
         right_x, right_y = right_curve[:, 0], right_curve[:, 1]
 
@@ -147,8 +94,7 @@ class LineSegment(Segment):
             dx = self.curviness * np.cos(curve_dir_radians)
             dy = self.curviness * np.sin(curve_dir_radians)
             P1 = P1 + np.array([dx, dy])
-
-            self.points_array = np.array([bezier_curve(t, P0, P1, P2) for t in t_values])
+            self.points_array = np.array([bezier_curve_t(t, P0, P1, P2) for t in t_values])
             x_values, y_values = self.points_array[:, 0], self.points_array[:, 1]
         else:
             x_values = np.linspace(self.start[0], self.end[0], num_steps)
@@ -204,10 +150,10 @@ class LineSegment(Segment):
             # Plot the first 40 points as one segment
             if self.start_mode == StartMode.CONNECT_MID:
                 blend_thicknesses = np.linspace(prev_thickness_array[start_array_point_index], self.thickness_array[10], 20)
-            for i in range(min(39, len(x_values) - 1)):
+            for i in range(min(40, len(x_values) - 1)):
                 this_colour = self.colour
                 if self.start_mode == StartMode.CONNECT_MID:
-                    if i<20:
+                    if i<=20:
                         thickness = blend_thicknesses[i]
                     else:
                         thickness = blend_thicknesses[-(i-20)]
@@ -226,7 +172,7 @@ class LineSegment(Segment):
                     )
 
             # Plot remaining points
-            for i in range(40, len(x_values) - 1):
+            for i in range(41, len(x_values) - 1):
                 if self.start_mode == StartMode.CONNECT_MID or self.start_mode == StartMode.SPLIT:
                     thickness = self.thickness_array[i - 41]
                 else:
@@ -359,16 +305,16 @@ class StarSegment(Segment):
 
 
 # Factory function to create a specific segment instance and wrap it in Segment
-def create_segment(start, start_mode, segment_type, **kwargs):
+def create_segment(start, start_mode, segment_type, end_thickness, relative_angle, colour, **kwargs):
     if segment_type == SegmentType.LINE:
         return LineSegment(
             segment_type = segment_type,
             start=start,
             start_mode=start_mode,
-            relative_angle=kwargs.get('relative_angle', 0),
+            end_thickness=end_thickness,
+            relative_angle=relative_angle,
+            colour=colour,
             start_thickness=kwargs.get('start_thickness', 1),
-            end_thickness=kwargs.get('end_thickness', 1),
-            colour=kwargs.get('colour', 'black'),
             length = kwargs.get('length', 1),
             curviness=kwargs.get('curviness', 0),
             curve_direction=kwargs.get('curve_direction', 90),
@@ -382,14 +328,26 @@ def create_segment(start, start_mode, segment_type, **kwargs):
             segment_type=segment_type,
             start=start,
             start_mode=start_mode,
+            end_thickness=end_thickness,
+            relative_angle=relative_angle,
+            colour=colour,
             radius=kwargs.get('radius', 0.5),
             arm_length=kwargs.get('arm_length', 1),
             num_points=kwargs.get('num_points', 5),
             asymmetry=kwargs.get('asymmetry', 0),
             star_type=kwargs.get('star_type', StarType.STRAIGHT),
-            end_thickness = kwargs.get('end_thickness', 1),
-            relative_angle =kwargs.get('relative_angle', 0),
-            colour=kwargs.get('colour', 'black')
+        )
+    elif segment_type == SegmentType.RANDOM_SHAPE:
+        return RandomShapeSegment(
+            segment_type=segment_type,
+            start=start,
+            start_mode=start_mode,
+            end_thickness=end_thickness,
+            relative_angle=relative_angle,
+            colour=colour,
+            bounding_size= kwargs.get('bounding_size', (1,1)),
+            edges = kwargs.get('edges', []),
+            lines_list = kwargs.get('lines_list', []),
         )
     else:
         raise ValueError(f"Unsupported segment type: {segment_type}")
@@ -403,8 +361,10 @@ def random_segment(eyeliner_wing = False, prev_colour=None,segment_number = 0, s
     else:
         if r < 0.65:
             new_segment_type = SegmentType.LINE
-        else:
+        elif r<0.8:
             new_segment_type = SegmentType.STAR
+        else:
+            new_segment_type = SegmentType.RANDOM_SHAPE
 
     #Pick colour, more likely to be the previous colour:
     if prev_colour is None:
@@ -412,7 +372,14 @@ def random_segment(eyeliner_wing = False, prev_colour=None,segment_number = 0, s
     else:
         #weights = [0.6 if colour == prev_colour else 0.1 for colour in colour_options]
         #random_colour = random.choices(colour_options, weights=weights, k=1)[0]
-        random_colour = prev_colour if random.random() < 0.5 else random.choice(colour_options)
+        random_colour = prev_colour if random.random() < 0.6 else random.choice(colour_options)
+
+    def random_curviness():
+        return random_normal_within_range(0.3, 0.5, curviness_range)
+    def random_curve_direction():
+        return random_from_two_distributions(90,40,270,40, direction_range)
+    def random_curve_location():
+        return random_normal_within_range(0.5, 0.25, relative_location_range)
 
     if new_segment_type == SegmentType.LINE:
         random_start_mode = random.choice(list(StartMode))
@@ -439,9 +406,9 @@ def random_segment(eyeliner_wing = False, prev_colour=None,segment_number = 0, s
             start_thickness=random.uniform(*thickness_range),
             end_thickness=random.uniform(*thickness_range),
             colour=random_colour,
-            curviness=0 if random.random() < 0.5 else random_normal_within_range(0.1,0.5,curviness_range),
-            curve_direction=random_from_two_distributions(90,40,270,40, direction_range),
-            curve_location=random_normal_within_range(0.5,0.25,relative_location_range),
+            curviness=0 if random.random() < 0.5 else random_curviness(),
+            curve_direction=random_curve_direction(),
+            curve_location=random_curve_location(),
             start_location=random_normal_within_range(0.5,0.25,relative_location_range),
             split_point=random_normal_within_range(0.5,0.25,relative_location_range)
         )
@@ -459,6 +426,23 @@ def random_segment(eyeliner_wing = False, prev_colour=None,segment_number = 0, s
             relative_angle=random.uniform(*direction_range),
             colour=random_colour,
         )
+    else:
+        n_of_edges = round(random_normal_within_range(5,3, num_points_range))
+        new_segment = create_segment(
+            segment_type=SegmentType.RANDOM_SHAPE,
+            start=segment_start,
+            start_mode=random.choice([StartMode.CONNECT, StartMode.JUMP]),
+            end_thickness=random_normal_within_range(2, 2, thickness_range),
+            relative_angle=random.uniform(*direction_range),
+            colour=random_colour,
+            bounding_size=(random.uniform(*random_shape_size_range), random.uniform(*random_shape_size_range)),
+            edges=np.array([
+                (random.uniform(*edge_initialisation_range), random.uniform(*edge_initialisation_range))
+                for i in range(n_of_edges)
+            ]),
+            lines_list= [(RandomShapeLineSegment(random_curviness(), random_curve_direction(), random_curve_location())) for i in range(n_of_edges)],
+        )
+
     return new_segment
 
 
@@ -539,3 +523,5 @@ design.add_segment(star_segment)
 # Render the design
 design.render()
 """
+
+
