@@ -49,25 +49,25 @@ class RandomShapeLineSegment:
 
 class RandomShapeSegment(Segment):
     """Line segment with additional properties specific to a line."""
-    def __init__(self, segment_type, start, start_mode, end_thickness, relative_angle, colour, bounding_size, edges, lines_list):
+    def __init__(self, segment_type, start, start_mode, end_thickness, relative_angle, colour, bounding_size, corners, lines_list):
         super().__init__(segment_type, start, start_mode, end_thickness, relative_angle, colour)
         self.segment_type = SegmentType.RANDOM_SHAPE
         self.start = start
         self.segment_type = SegmentType.RANDOM_SHAPE
         self.bounding_size = bounding_size
-        self.edges = np.array([(edge[0] * self.bounding_size[0], edge[1] * self.bounding_size[1]) for edge in edges])
+        self.corners = np.array([(corner[0] * self.bounding_size[0], corner[1] * self.bounding_size[1]) for corner in corners])
         #self.lines_segments = [(RandomShapeLineSegment(curviness, curve_direction, curve_location))for line in lines_list]
         self.lines_list = lines_list
         self.points_array = np.array([])  # Initialize as an empty array
 
 
-    def rotate_edges(self):
+    def rotated_corners(self):
         """Rotates edges around the start by """
         angle_rad = math.radians(self.absolute_angle)
-        rotated_edges = []
+        rotated_corners = []
         ox, oy = self.start  # Origin coordinates (start of shape)
-        for edge in self.edges:
-            x, y = edge
+        for corner in self.corners:
+            x, y = corner
             # Shift point back to the origin (subtract origin from edge)
             x -= ox
             y -= oy
@@ -79,14 +79,14 @@ class RandomShapeSegment(Segment):
             new_x += ox
             new_y += oy
 
-            rotated_edges.append((new_x, new_y))
+            rotated_corners.append((new_x, new_y))
 
-        return rotated_edges
+        return rotated_corners
 
     def move_edges(self):
-        movement = EyelinerWingGeneration.un_normalised_vector_direction(self.edges[0], self.start)
+        movement = EyelinerWingGeneration.un_normalised_vector_direction(self.corners[0], self.start)
 
-        for edge in self.edges:
+        for edge in self.corners:
             edge[0] += movement[0]
             edge[1] += movement[1]
 
@@ -102,23 +102,21 @@ class RandomShapeSegment(Segment):
         else:
             self.absolute_angle = (prev_angle + self.relative_angle) % 360
 
-        self.rotate_edges()
+        self.rotated_corners()
         self.move_edges()
 
-        start_point = np.array(self.edges[0])
+        start_point = np.array(self.corners[0])
         #ax_n.scatter(start_point[0], start_point[1], color='red',linewidth=8, zorder=5)
-        for i, edge in enumerate(self.edges):
-            if i+1 < len(self.edges):
-                end_point = np.array(self.edges[i + 1])
+        for i, edge in enumerate(self.corners):
+            if i+1 < len(self.corners):
+                end_point = np.array(self.corners[i + 1])
                 #ax_n.scatter(end_point[0], end_point[1], color='orange', linewidth=3,  zorder=6)
             else:
-                end_point = np.array(self.edges[0])
+                end_point = np.array(self.corners[0])
                 #ax_n.scatter(end_point[0], end_point[1], color='blue',linewidth=3,  zorder=6)
 
             section_points_array = self.lines_list[i].render(start_point, end_point, self.colour, self.end_thickness, ax_n)
             self.points_array = np.append(self.points_array,section_points_array)
             start_point = end_point
 
-
         #STILL NEED TO PICK ORDR OF EDGES SO THEY JOIN NICELY
-        #NEED TO ADD POINTS To points_array

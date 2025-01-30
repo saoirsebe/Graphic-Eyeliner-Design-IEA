@@ -346,7 +346,7 @@ def create_segment(start, start_mode, segment_type, end_thickness, relative_angl
             relative_angle=relative_angle,
             colour=colour,
             bounding_size= kwargs.get('bounding_size', (1,1)),
-            edges = kwargs.get('edges', []),
+            corners = kwargs.get('corners', []),
             lines_list = kwargs.get('lines_list', []),
         )
     else:
@@ -374,12 +374,27 @@ def random_segment(eyeliner_wing = False, prev_colour=None,segment_number = 0, s
         #random_colour = random.choices(colour_options, weights=weights, k=1)[0]
         random_colour = prev_colour if random.random() < 0.6 else random.choice(colour_options)
 
-    def random_curviness():
-        return random_normal_within_range(0.3, 0.5, curviness_range)
+    def random_curviness(mean=0.3, stddev=0.25):
+        return random_normal_within_range(mean, stddev, curviness_range)
     def random_curve_direction():
         return random_from_two_distributions(90,40,270,40, direction_range)
     def random_curve_location():
         return random_normal_within_range(0.5, 0.25, relative_location_range)
+
+    def angle_from_center(center, point):
+        dx = point[0] - center[0]
+        dy = point[1] - center[1]
+        return math.atan2(dy, dx)  # atan2 returns the angle in radians
+    def random_lines_corners_list(n_of_corners):
+        corners = np.array([(random.uniform(*edge_initialisation_range), random.uniform(*edge_initialisation_range)) for i in
+                  range(n_of_corners)])
+        lines_list = [
+            (RandomShapeLineSegment(random_curviness(0.2, 0.15), random_curve_direction(), random_curve_location())) for
+            i in range(n_of_corners)]
+        centroid = (sum(point[0] for point in corners) / n_of_corners, sum(point[1] for point in corners) / n_of_corners)
+        sorted_corners = sorted(corners, key=lambda point: angle_from_center(centroid, point))
+
+        return sorted_corners, lines_list
 
     if new_segment_type == SegmentType.LINE:
         random_start_mode = random.choice(list(StartMode))
@@ -427,7 +442,8 @@ def random_segment(eyeliner_wing = False, prev_colour=None,segment_number = 0, s
             colour=random_colour,
         )
     else:
-        n_of_edges = round(random_normal_within_range(5,3, num_points_range))
+        n_of_corners = round(random_normal_within_range(5, 3, num_points_range))
+        corners, lines = random_lines_corners_list(n_of_corners)
         new_segment = create_segment(
             segment_type=SegmentType.RANDOM_SHAPE,
             start=segment_start,
@@ -436,11 +452,8 @@ def random_segment(eyeliner_wing = False, prev_colour=None,segment_number = 0, s
             relative_angle=random.uniform(*direction_range),
             colour=random_colour,
             bounding_size=(random.uniform(*random_shape_size_range), random.uniform(*random_shape_size_range)),
-            edges=np.array([
-                (random.uniform(*edge_initialisation_range), random.uniform(*edge_initialisation_range))
-                for i in range(n_of_edges)
-            ]),
-            lines_list= [(RandomShapeLineSegment(random_curviness(), random_curve_direction(), random_curve_location())) for i in range(n_of_edges)],
+            corners=corners,
+            lines_list=lines
         )
 
     return new_segment

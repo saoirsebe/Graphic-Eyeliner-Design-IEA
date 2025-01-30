@@ -209,17 +209,35 @@ fig.show()
 score = analyse_design_shapes(random_design)
 print("Score:", score)
 """
-def random_curviness():
-    return random_normal_within_range(0.3, 0.5, curviness_range)
+def random_curviness(mean=0.3,stddev=0.25):
+    return random_normal_within_range(mean, stddev, curviness_range)
 def random_curve_direction():
     return random_from_two_distributions(90, 40, 270, 40, direction_range)
 def random_curve_location():
     return random_normal_within_range(0.5, 0.25, relative_location_range)
+def angle_from_center(center, point):
+    dx = point[0] - center[0]
+    dy = point[1] - center[1]
+    return math.atan2(dy, dx)  # atan2 returns the angle in radians
+
+
+def random_lines_corners_list(n_of_corners):
+    corners = np.array(
+        [(random.uniform(*edge_initialisation_range), random.uniform(*edge_initialisation_range)) for i in
+         range(n_of_corners)])
+    lines_list = [
+        (RandomShapeLineSegment(random_curviness(0.2, 0.15), random_curve_direction(), random_curve_location())) for
+        i in range(n_of_corners)]
+    centroid = (sum(point[0] for point in corners) / n_of_corners, sum(point[1] for point in corners) / n_of_corners)
+    sorted_corners = sorted(corners, key=lambda point: angle_from_center(centroid, point))
+
+    return sorted_corners, lines_list
 
 def random_random_shape():
     random_colour = random.choice(colour_options)
     segment_start=(random.uniform(*start_x_range), random.uniform(*start_y_range))
-    n_of_edges = round(random_normal_within_range(5,3, num_points_range))
+    n_of_corners = round(random_normal_within_range(5,3, num_points_range))
+    corners, lines = random_lines_corners_list(n_of_corners)
     new_segment = create_segment(
         segment_type=SegmentType.RANDOM_SHAPE,
         start=segment_start,
@@ -228,11 +246,8 @@ def random_random_shape():
         relative_angle=random.uniform(*direction_range),
         colour=random_colour,
         bounding_size=(random.uniform(*random_shape_size_range), random.uniform(*random_shape_size_range)),
-        edges=np.array([
-            (random.uniform(*edge_initialisation_range), random.uniform(*edge_initialisation_range))
-            for i in range(n_of_edges)
-        ]),
-        lines_list= [(RandomShapeLineSegment(random_curviness(), random_curve_direction(), random_curve_location())) for i in range(n_of_edges)],
+        corners=corners,
+        lines_list= lines
     )
     return new_segment
 #design = EyelinerDesign(random_random_shape())
