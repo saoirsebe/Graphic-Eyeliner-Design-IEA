@@ -14,17 +14,24 @@ class RandomShapeLineSegment:
         self.curve_location = curve_location
         self.points_array = []
 
-    def render(self, start_point, end_point, colour, thickness, ax_n=None):
+    def render(self,centroid, start_point, end_point, colour, thickness, ax_n=None):
         num_steps = 50  # Number of points to create a smooth thickness transition/ curve
 
         if self.curviness>0:
             t_values = np.linspace(0, 1, num_steps)
             P0 = start_point
             P2 = end_point
-            direction = EyelinerWingGeneration.normalised_vector_direction(P0, P2)
-            P1 = P0 + (self.curve_location * direction) #moves curve_location away from P0 towards P2 relative to length of curve segment
-            direction_angle = np.degrees(np.arctan2(direction[1], direction[0]))
-            relative_curve_direction_degrees = direction_angle + self.curve_direction
+            line_direction = EyelinerWingGeneration.normalised_vector_direction(P0, P2)
+            line_direction_angle = np.degrees(np.arctan2(line_direction[1], line_direction[0]))
+            P1 = P0 + (self.curve_location * line_direction) #moves curve_location away from P0 towards P2 relative to length of curve segment
+
+            to_center_direction = EyelinerWingGeneration.normalised_vector_direction(P1, centroid )
+            to_center_direction_angle = np.degrees(np.arctan2(to_center_direction[1], to_center_direction[0]))
+            relative_to_center_dir = to_center_direction_angle-line_direction_angle
+            if relative_to_center_dir >=0:
+                relative_curve_direction_degrees = line_direction_angle + self.curve_direction
+            else:
+                relative_curve_direction_degrees = line_direction_angle - self.curve_direction
             curve_dir_radians = np.radians(relative_curve_direction_degrees)
             # Calculate x and y offsets
             dx = self.curviness * np.cos(curve_dir_radians)
@@ -59,6 +66,7 @@ class RandomShapeSegment(Segment):
         #self.lines_segments = [(RandomShapeLineSegment(curviness, curve_direction, curve_location))for line in lines_list]
         self.lines_list = lines_list
         self.points_array = np.array([])  # Initialize as an empty array
+        self.line_arrays = []
 
 
     def rotated_corners(self):
@@ -106,6 +114,9 @@ class RandomShapeSegment(Segment):
         self.move_edges()
 
         start_point = np.array(self.corners[0])
+        n_of_corners = len(self.corners)
+        centroid = (
+        sum(point[0] for point in self.corners) / n_of_corners, sum(point[1] for point in self.corners) / n_of_corners)
         #ax_n.scatter(start_point[0], start_point[1], color='red',linewidth=8, zorder=5)
         for i, edge in enumerate(self.corners):
             if i+1 < len(self.corners):
@@ -115,8 +126,9 @@ class RandomShapeSegment(Segment):
                 end_point = np.array(self.corners[0])
                 #ax_n.scatter(end_point[0], end_point[1], color='blue',linewidth=3,  zorder=6)
 
-            section_points_array = self.lines_list[i].render(start_point, end_point, self.colour, self.end_thickness, ax_n)
+            section_points_array = self.lines_list[i].render(centroid,start_point, end_point, self.colour, self.end_thickness, ax_n)
             self.points_array = np.append(self.points_array,section_points_array)
+            self.line_arrays.append(section_points_array)
             start_point = end_point
 
         #STILL NEED TO PICK ORDR OF EDGES SO THEY JOIN NICELY

@@ -22,17 +22,25 @@ def check_overlaps(segment1,segment2):
 
 def check_design_overlaps(i, segments):
     segment = segments[i].points_array
+    first_1 = int(len(segment) * 0.025)
+    segment = segment[first_1:-first_1]
+
     overlaps = 0
     for j in range(i + 1, len(segments) - 1):
         segment_j = segments[j].points_array
+        #Take of first and las 2.5% of segments as they are allowed to meet at ends
+        first_1 = int(len(segment_j) * 0.025)
+        segment_j = segment_j[first_1:-first_1]
 
+        #Take of extra 2.5% if they are meant to connect
         if j == (i + 1) and (segments[j].start_mode == StartMode.CONNECT_MID or segments[j].start_mode == StartMode.CONNECT):
-            first_1 = int(len(segment_j) * 0.05)
+            first_1 = int(len(segment_j) * 0.025)
             segment_j = segment_j[first_1:]
         elif j == (i + 1) and (segments[j].start_mode == StartMode.CONNECT or segments[j].start_mode == StartMode.SPLIT):
-            first_1 = int(len(segment) * 0.05)
+            first_1 = int(len(segment) * 0.025)
             segment = segment[:-first_1]
-        overlaps = check_overlaps(segment, segment_j)
+
+        overlaps += check_overlaps(segment, segment_j)
 
         if -overlaps < min_fitness_score: #Return if less than min_fitness_score to save processing time
             return overlaps

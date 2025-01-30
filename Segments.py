@@ -385,12 +385,13 @@ def random_segment(eyeliner_wing = False, prev_colour=None,segment_number = 0, s
         dx = point[0] - center[0]
         dy = point[1] - center[1]
         return math.atan2(dy, dx)  # atan2 returns the angle in radians
+
     def random_lines_corners_list(n_of_corners):
-        corners = np.array([(random.uniform(*edge_initialisation_range), random.uniform(*edge_initialisation_range)) for i in
-                  range(n_of_corners)])
-        lines_list = [
-            (RandomShapeLineSegment(random_curviness(0.2, 0.15), random_curve_direction(), random_curve_location())) for
-            i in range(n_of_corners)]
+        corners = np.array(
+            [(random.uniform(*edge_initialisation_range), random.uniform(*edge_initialisation_range)) for i in
+             range(n_of_corners)])
+        lines_list = [(RandomShapeLineSegment(random_curviness(0.2, 0.2), random_normal_within_range(90, 30, (0, 180)),
+                                    random_curve_location())) for i in range(n_of_corners)]
         centroid = (sum(point[0] for point in corners) / n_of_corners, sum(point[1] for point in corners) / n_of_corners)
         sorted_corners = sorted(corners, key=lambda point: angle_from_center(centroid, point))
 
@@ -442,7 +443,7 @@ def random_segment(eyeliner_wing = False, prev_colour=None,segment_number = 0, s
             colour=random_colour,
         )
     else:
-        n_of_corners = round(random_normal_within_range(5, 3, num_points_range))
+        n_of_corners = round(random_normal_within_range(4.5,1.5, num_points_range))
         corners, lines = random_lines_corners_list(n_of_corners)
         new_segment = create_segment(
             segment_type=SegmentType.RANDOM_SHAPE,
