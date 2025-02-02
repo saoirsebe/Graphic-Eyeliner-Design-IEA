@@ -4,6 +4,7 @@ from conda.common.configuration import raise_errors
 from AnalyseDesign import analyse_negative, check_overlaps
 from Segments import *
 import cProfile
+from RandomShapeSegment import are_points_collinear
 
 class EyelinerDesign:   #Creates overall design, calculates start points, renders each segment by calling their render function
     def __init__(self, root_node):
@@ -222,44 +223,63 @@ def angle_from_center(center, point):
     return math.atan2(dy, dx)  # atan2 returns the angle in radians
 
 def shape_overlaps(lines):
-    overlaps = 0
     sorted_lines = sorted(lines, key=lambda line: line.curviness, reverse=True)
-
+    #Tries to fix overlaps by making lines less curvey:
     for i, line in enumerate(sorted_lines):
         try_again = True
         try_again_count = 0
         while try_again and try_again_count < 8:
             line_overlaps = 0
             line_array = line.points_array
-            for j in range(i + 1, len(lines) - 1):
-                line_j_array = lines[j].points_array
-                if j == (i + 1):
-                    first_1 = int(len(line_array) * 0.025)
-                    line_array = line_array[:-first_1]
-                    first_1 = int(len(line_j_array) * 0.025)
-                    line_j_array = line_j_array[first_1:]
-                line_overlaps += check_overlaps(line_array, line_j_array)
+            for j in range(0, len(lines) - 1):
+                if i!=j:
+                    line_j_array = lines[j].points_array
+                    if j == (i + 1):
+                        first_1 = int(len(line_array) * 0.025)
+                        line_array = line_array[:-first_1]
+                        first_1 = int(len(line_j_array) * 0.025)
+                        line_j_array = line_j_array[first_1:]
+                    line_overlaps += check_overlaps(line_array, line_j_array)
             try_again = False
 
-            if line_overlaps>2:
-                if line.curviness >0.05:
-                    line.curviness -=0.05
+            if line_overlaps>max_shape_overlaps:
+                if line.curviness >0.025:
+                    line.curviness -=0.025
                     try_again = True
 
             try_again_count += 1
+
+    overlaps = 0
+    #Check final overlaps:
+    for i, line in enumerate(sorted_lines):
+        line_overlaps = 0
+        line_array = line.points_array
+        for j in range(i + 1, len(lines) - 1):
+            line_j_array = lines[j].points_array
+            if j == (i + 1):
+                first_1 = int(len(line_array) * 0.025)
+                line_array = line_array[:-first_1]
+                first_1 = int(len(line_j_array) * 0.025)
+                line_j_array = line_j_array[first_1:]
+            line_overlaps += check_overlaps(line_array, line_j_array)
+            if line_overlaps > max_shape_overlaps:  # Return to save processing time
+                return overlaps
+
         overlaps += line_overlaps
         if overlaps > max_shape_overlaps:  # Return to save processing time
             return overlaps
 
-    if overlaps > max_shape_overlaps:  # Return to save processing time
-        return overlaps
-
     return overlaps
 
 def random_lines_corners_list(n_of_corners):
-    corners = np.array(
-        [(random.uniform(*edge_initialisation_range), random.uniform(*edge_initialisation_range))
-         for i in range(n_of_corners)])
+    collinear=True
+    #Check if points are collinear within tolerance
+    while collinear:
+        corners = np.array(
+            [(random.uniform(*edge_initialisation_range), random.uniform(*edge_initialisation_range))
+             for i in range(n_of_corners)])
+        collinear = are_points_collinear(corners)
+
     lines_list = [(RandomShapeLineSegment(random_curviness(0.3, 0.2), random_normal_within_range(0.5, 0.15, relative_location_range)))
                   for i in range(n_of_corners)]
     centroid = (sum(point[0] for point in corners) / n_of_corners, sum(point[1] for point in corners) / n_of_corners)
@@ -293,7 +313,7 @@ def random_random_shape():
         new_shape_overlaps = shape_overlaps(new_segment.lines_list)
 
     return new_segment
-"""
+
 #design = EyelinerDesign(random_random_shape())
 #design.render_design()
 fig, ax_n = plt.subplots(figsize=(3, 3))
@@ -305,7 +325,7 @@ prev_end_thickness= shape.end_thickness
 shape.render(prev_array, prev_angle, prev_colour, prev_end_thickness, ax_n)
 
 fig.show()
-
+"""
 
 line = RandomShapeLineSegment(0.7, 0.2)
 start= np.array((-1.0,2.0))
@@ -319,5 +339,6 @@ line = LineSegment(SegmentType.LINE, (-1,1), StartMode.JUMP, 4, 0, 3, 3, 'red', 
 line.render(np.array([line.start]), 0, 'red', line.end_thickness, ax_n)
 
 
-"""
+
 cProfile.run('random_random_shape()')
+"""

@@ -3,8 +3,27 @@ import numpy as np
 import EyelinerWingGeneration
 from A import StartMode, SegmentType
 from ParentSegment import Segment, point_in_array
-from EyelinerWingGeneration import bezier_curve
 from StarGeneration import bezier_curve_t
+
+def are_points_collinear(points, tolerance=0.1):
+    """
+    Checks if a set of points are collinear within tolerance.
+
+    points: Nx2 numpy array of (x, y) coordinates.
+    tolerance: Maximum allowed deviation from collinearity.
+    return: True if points are collinear, False otherwise.
+    """
+    if len(points) < 3:
+        return True  # Two points are always collinear
+
+    # Compute vector differences
+    vectors = np.diff(points, axis=0)
+
+    # Compute cross product magnitude (for 2D)
+    cross_products = np.cross(vectors[:-1], vectors[1:])
+
+    # If all cross products are close to zero, the points are collinear
+    return np.all(np.abs(cross_products) < tolerance)
 
 
 class RandomShapeLineSegment:
@@ -44,6 +63,7 @@ class RandomShapeLineSegment:
             x_values = np.linspace(start_point[0], end_point[0], num_steps)
             y_values = np.linspace(start_point[1], end_point[1], num_steps)
             self.points_array = np.column_stack((x_values, y_values))
+            self.points_array = np.round(self.points_array, 3)
 
         if ax_n:
             for i in range(len(x_values) - 1):

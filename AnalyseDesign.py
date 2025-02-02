@@ -9,7 +9,7 @@ def check_overlaps(segment1,segment2, segment1_tree = None):
     if segment1_tree is None:
         segment1_tree = cKDTree(segment1)  # Build KD-tree for the first set of points
     # Query all points in segment2 to find neighbors in segment1 within distance 0.075
-    overlap_lists = segment1_tree.query_ball_point(segment2, 0.075)
+    overlap_lists = segment1_tree.query_ball_point(segment2, 0.1)
     # Count the number of overlaps (non-empty lists indicate at least one neighbor)
     segment_overlaps = sum(len(neighbors) > 0 for neighbors in overlap_lists)
 

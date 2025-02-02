@@ -102,6 +102,7 @@ class LineSegment(Segment):
             x_values = np.linspace(self.start[0], self.end[0], num_steps)
             y_values = np.linspace(self.start[1], self.end[1], num_steps)
             self.points_array = np.column_stack((x_values, y_values))
+            self.points_array = np.round(self.points_array, 3)
 
         """Set self.points_array and move line if split type"""
         if self.start_mode == StartMode.SPLIT:
