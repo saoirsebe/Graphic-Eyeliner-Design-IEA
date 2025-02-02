@@ -1,3 +1,5 @@
+import cProfile
+
 import matplotlib.pyplot as plt
 import time
 from A import min_fitness_score, initial_gene_pool_size
@@ -196,3 +198,4 @@ ax.set_aspect('equal')
 star_seg.render(ax,[],0,"white",3)
 plt.show()
 """
+#cProfile.run('initialise_gene_pool()')

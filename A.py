@@ -1,7 +1,7 @@
 import random
 from enum import Enum
 min_fitness_score = -20
-initial_gene_pool_size = 30
+initial_gene_pool_size = 50
 node_re_gen_max = 12
 #Parameter ranges:
 start_x_range = (-1, 7)

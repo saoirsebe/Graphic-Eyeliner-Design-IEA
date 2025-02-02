@@ -57,14 +57,16 @@ def n_of_children_decreasing_likelihood(segment_number, branch_length, max_segme
     # Generate the number of children
     return round(random_normal_within_range(mean, std_dev, value_range))
 
-def random_gene_node( design, parent, prev_colour, eyeliner_wing=False, segment_number=1, depth=0):
+def random_gene_node(design, parent, prev_colour, eyeliner_wing=False, segment_number=1, depth=0):
     #Create new node, render, check overlaps with the other segments in design, if new_node overlaps more than min_fitness_score then re-generate random new_node
     new_node = random_segment(eyeliner_wing=eyeliner_wing,segment_number=segment_number,prev_colour=prev_colour)
     prev_end_thickness_array = set_prev_end_thickness_array(parent)
     if parent.segment_type == SegmentType.STAR:
         prev_array = parent.arm_points_array # if segment is a star then pass in the arm points that the next segment should start at:
-    else:
+    elif parent.segment_type == SegmentType.LINE:
         prev_array = parent.points_array
+    else:
+        prev_array = parent.corners
     new_node.render(prev_array, parent.absolute_angle, prev_colour, prev_end_thickness_array)
     regen_count = 0
     """

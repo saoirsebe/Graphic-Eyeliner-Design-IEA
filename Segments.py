@@ -1,8 +1,9 @@
 import EyelinerWingGeneration
+from AnalyseDesign import shape_overlaps
 from EyelinerWingGeneration import un_normalised_vector_direction, draw_eye_shape
 import StarGeneration
 from ParentSegment import Segment, point_in_array
-from RandomShapeSegment import RandomShapeSegment, RandomShapeLineSegment
+from RandomShapeSegment import RandomShapeSegment, RandomShapeLineSegment, are_points_collinear
 from StarGeneration import *
 from A import *
 import random
@@ -153,10 +154,10 @@ class LineSegment(Segment):
             # Plot the first 40 points as one segment
             if self.start_mode == StartMode.CONNECT_MID:
                 blend_thicknesses = np.linspace(prev_thickness_array[start_array_point_index], self.thickness_array[10], 20)
-            for i in range(min(40, len(x_values) - 1)):
+            for i in range(min(39, len(x_values) - 1)):
                 this_colour = self.colour
                 if self.start_mode == StartMode.CONNECT_MID:
-                    if i<=20:
+                    if i<20:
                         thickness = blend_thicknesses[i]
                     else:
                         thickness = blend_thicknesses[-(i-20)]
@@ -175,7 +176,7 @@ class LineSegment(Segment):
                     )
 
             # Plot remaining points
-            for i in range(41, len(x_values) - 1):
+            for i in range(40, len(x_values) - 1):
                 if self.start_mode == StartMode.CONNECT_MID or self.start_mode == StartMode.SPLIT:
                     thickness = self.thickness_array[i - 41]
                 else:
@@ -379,8 +380,6 @@ def random_segment(eyeliner_wing = False, prev_colour=None,segment_number = 0, s
 
     def random_curviness(mean=0.3, stddev=0.25):
         return random_normal_within_range(mean, stddev, curviness_range)
-    def random_curve_direction():
-        return random_from_two_distributions(90,40,270,40, direction_range)
     def random_curve_location():
         return random_normal_within_range(0.5, 0.25, relative_location_range)
 
@@ -390,12 +389,19 @@ def random_segment(eyeliner_wing = False, prev_colour=None,segment_number = 0, s
         return math.atan2(dy, dx)  # atan2 returns the angle in radians
 
     def random_lines_corners_list(n_of_corners):
-        corners = np.array(
-            [(random.uniform(*edge_initialisation_range), random.uniform(*edge_initialisation_range)) for i in
-             range(n_of_corners)])
-        lines_list = [(RandomShapeLineSegment(random_curviness(0.2, 0.2), random_normal_within_range(90, 30, (0, 180)),
-                                    random_curve_location())) for i in range(n_of_corners)]
-        centroid = (sum(point[0] for point in corners) / n_of_corners, sum(point[1] for point in corners) / n_of_corners)
+        collinear = True
+        # Check if points are collinear within tolerance
+        while collinear:
+            corners = np.array(
+                [(random.uniform(*edge_initialisation_range), random.uniform(*edge_initialisation_range))
+                 for i in range(n_of_corners)])
+            collinear = are_points_collinear(corners)
+
+        lines_list = [(RandomShapeLineSegment(random_curviness(0.35, 0.1),
+                                              random_normal_within_range(0.5, 0.15, relative_location_range)))
+                      for i in range(n_of_corners)]
+        centroid = (
+        sum(point[0] for point in corners) / n_of_corners, sum(point[1] for point in corners) / n_of_corners)
         sorted_corners = sorted(corners, key=lambda point: angle_from_center(centroid, point))
 
         return sorted_corners, lines_list
@@ -426,7 +432,7 @@ def random_segment(eyeliner_wing = False, prev_colour=None,segment_number = 0, s
             end_thickness=random.uniform(*thickness_range),
             colour=random_colour,
             curviness=0 if random.random() < 0.5 else random_curviness(),
-            curve_90=random.choice(True,False),
+            curve_left=random.choice([True, False]),
             curve_location=random_curve_location(),
             start_location=random_normal_within_range(0.5,0.25,relative_location_range),
             split_point=random_normal_within_range(0.5,0.25,relative_location_range)
@@ -446,19 +452,27 @@ def random_segment(eyeliner_wing = False, prev_colour=None,segment_number = 0, s
             colour=random_colour,
         )
     else:
-        n_of_corners = round(random_normal_within_range(4.5,1.5, num_points_range))
-        corners, lines = random_lines_corners_list(n_of_corners)
-        new_segment = create_segment(
-            segment_type=SegmentType.RANDOM_SHAPE,
-            start=segment_start,
-            start_mode=random.choice([StartMode.CONNECT, StartMode.JUMP]),
-            end_thickness=random_normal_within_range(2, 2, thickness_range),
-            relative_angle=random.uniform(*direction_range),
-            colour=random_colour,
-            bounding_size=(random.uniform(*random_shape_size_range), random.uniform(*random_shape_size_range)),
-            corners=corners,
-            lines_list=lines
-        )
+        new_shape_overlaps = 10
+        while new_shape_overlaps > max_shape_overlaps:
+            n_of_corners = round(random_normal_within_range(5, 1, num_points_range))
+            corners, lines = random_lines_corners_list(n_of_corners)
+            new_segment = create_segment(
+                segment_type=SegmentType.RANDOM_SHAPE,
+                start=segment_start,
+                start_mode=random.choice([StartMode.CONNECT, StartMode.JUMP]),
+                end_thickness=random_normal_within_range(2, 2, thickness_range),
+                relative_angle=random.uniform(*direction_range),
+                colour=random_colour,
+                bounding_size=(random.uniform(*random_shape_size_range), random.uniform(*random_shape_size_range)),
+                corners=corners,
+                lines_list=lines
+            )
+            prev_array = np.array([new_segment.start])
+            prev_angle = 0
+            prev_colour = new_segment.colour
+            prev_end_thickness = new_segment.end_thickness
+            new_segment.render(prev_array, prev_angle, prev_colour, prev_end_thickness)
+            new_shape_overlaps = shape_overlaps(new_segment.lines_list)
 
     return new_segment
 

@@ -83,7 +83,7 @@ class RandomShapeSegment(Segment):
         self.start = start
         self.segment_type = SegmentType.RANDOM_SHAPE
         self.bounding_size = bounding_size
-        self.corners = np.array([(corner[0] * self.bounding_size[0], corner[1] * self.bounding_size[1]) for corner in corners])
+        self.corners = corners
         #self.lines_segments = [(RandomShapeLineSegment(curviness, curve_direction, curve_location))for line in lines_list]
         self.lines_list = lines_list
         self.points_array = np.array([])  # Initialize as an empty array
@@ -130,6 +130,7 @@ class RandomShapeSegment(Segment):
         else:
             self.absolute_angle = (prev_angle + self.relative_angle) % 360
 
+        self.corners = np.array([(corner[0] * self.bounding_size[0], corner[1] * self.bounding_size[1]) for corner in self.corners])
         self.rotated_corners()
         self.move_edges()
 
@@ -137,8 +138,9 @@ class RandomShapeSegment(Segment):
         n_of_corners = len(self.corners)
         centroid = (
         sum(point[0] for point in self.corners) / n_of_corners, sum(point[1] for point in self.corners) / n_of_corners)
-        if ax_n:
-            ax_n.scatter(centroid[0], centroid[1], color='red',linewidth=4, zorder=5)
+        #if ax_n:
+        #    ax_n.scatter(centroid[0], centroid[1], color='red',linewidth=4, zorder=5)
+
         for i, edge in enumerate(self.corners):
             if i+1 < len(self.corners):
                 end_point = np.array(self.corners[i + 1])
@@ -148,7 +150,8 @@ class RandomShapeSegment(Segment):
                 #ax_n.scatter(end_point[0], end_point[1], color='blue',linewidth=3,  zorder=6)
 
             section_points_array = self.lines_list[i].render(centroid,start_point, end_point, self.colour, self.end_thickness, ax_n)
-            self.points_array = np.append(self.points_array,section_points_array)
+            if self.points_array.size == 0:
+                self.points_array = section_points_array  # Directly assign if empty
+            else:
+                self.points_array = np.vstack((self.points_array, section_points_array))
             start_point = end_point
-
-        #STILL NEED TO PICK ORDR OF EDGES SO THEY JOIN NICELY

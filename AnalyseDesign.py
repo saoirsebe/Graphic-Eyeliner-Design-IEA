@@ -1,5 +1,5 @@
 from scipy.spatial import cKDTree
-from A import SegmentType, StartMode, min_fitness_score
+from A import SegmentType, StartMode, min_fitness_score, max_shape_overlaps
 from AestheticAnalysis import analyse_design_shapes
 import numpy as np
 from EyelinerWingGeneration import get_quadratic_points
@@ -63,6 +63,11 @@ def is_in_eye(segment):
         print("Type:", segment.segment_type)
         print("Contents:", segment_array)
 
+    if segment_array.ndim == 1:
+        print("Segment Array:", segment_array)
+        print("Shape:", segment_array.shape)
+        print("Segment:", segment)
+
     upper_y_interp = np.interp(segment_array[:, 0], upper_x, upper_y)
     lower_y_interp = np.interp(segment_array[:, 0], lower_x, lower_y)
     inside = (lower_y_interp <= segment_array[:, 1]) & (segment_array[:, 1] <= upper_y_interp)
@@ -106,3 +111,52 @@ def analyse_positive(design):
     score += analyse_design_shapes(design)
     score = score * len(segments) * 0.5  # Higher score for designs with more segments
     return score
+
+def shape_overlaps(lines):
+    sorted_lines = sorted(lines, key=lambda line: line.curviness, reverse=True)
+    #Tries to fix overlaps by making lines less curvey:
+    for i, line in enumerate(sorted_lines):
+        try_again = True
+        try_again_count = 0
+        while try_again and try_again_count < 8:
+            line_overlaps = 0
+            line_array = line.points_array
+            for j in range(0, len(lines) - 1):
+                if i!=j:
+                    line_j_array = lines[j].points_array
+                    if j == (i + 1):
+                        first_1 = int(len(line_array) * 0.025)
+                        line_array = line_array[:-first_1]
+                        first_1 = int(len(line_j_array) * 0.025)
+                        line_j_array = line_j_array[first_1:]
+                    line_overlaps += check_overlaps(line_array, line_j_array)
+            try_again = False
+
+            if line_overlaps>max_shape_overlaps:
+                if line.curviness >0.025:
+                    line.curviness -=0.025
+                    try_again = True
+
+            try_again_count += 1
+
+    overlaps = 0
+    #Check final overlaps:
+    for i, line in enumerate(sorted_lines):
+        line_overlaps = 0
+        line_array = line.points_array
+        for j in range(i + 1, len(lines) - 1):
+            line_j_array = lines[j].points_array
+            if j == (i + 1):
+                first_1 = int(len(line_array) * 0.025)
+                line_array = line_array[:-first_1]
+                first_1 = int(len(line_j_array) * 0.025)
+                line_j_array = line_j_array[first_1:]
+            line_overlaps += check_overlaps(line_array, line_j_array)
+            if line_overlaps > max_shape_overlaps:  # Return to save processing time
+                return overlaps
+
+        overlaps += line_overlaps
+        if overlaps > max_shape_overlaps:  # Return to save processing time
+            return overlaps
+
+    return overlaps
