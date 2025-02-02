@@ -24,7 +24,7 @@ num_points_range = (3, 8)
 asymmetry_range = (0, 3)
 edge_initialisation_range = (0,1)
 random_shape_size_range = (0,5)
-max_shape_overlaps = 2
+max_shape_overlaps = 0
 
 number_of_children_range= (0,3)
 max_segments = 20

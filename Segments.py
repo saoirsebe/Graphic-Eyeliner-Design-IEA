@@ -9,19 +9,17 @@ import random
 
 class LineSegment(Segment):
     """Line segment with additional properties specific to a line."""
-    def __init__(self, segment_type, start, start_mode, length, relative_angle, start_thickness, end_thickness, colour, curviness, curve_direction, curve_location, start_location, split_point):
+    def __init__(self, segment_type, start, start_mode, length, relative_angle, start_thickness, end_thickness, colour, curviness, curve_left, curve_location, start_location, split_point):
         super().__init__(segment_type, start, start_mode, end_thickness, relative_angle, colour)
         self.segment_type = SegmentType.LINE
         self.end = None  # Calculated in render
         self.length = length
         self.start_thickness = start_thickness
         self.curviness = curviness
+        self.curve_left = curve_left
         if curviness>0:  #If curved line then curve direction else no curve direction
-            self.curve_direction = curve_direction #curve direction in degrees
-            self.curve_location = curve_location
             self.curve_location = curve_location
         else:
-            self.curve_direction = 0
             self.curve_location = 0
         if start_mode == StartMode.CONNECT_MID:
             self.start_location = start_location
@@ -88,7 +86,11 @@ class LineSegment(Segment):
             P0 = np.array(self.start)
             P2 = np.array(self.end)
             P1 = P0 + (self.curve_location * EyelinerWingGeneration.un_normalised_vector_direction(P0,P2)) #moves curve_location away from P0 towards P2 relative to length of curve segment
-            relative_curve_direction = self.absolute_angle + self.curve_direction
+            if self.curve_left:
+                curve_direction = 90 #curve direction in degrees
+            else:
+                curve_direction = -90
+            relative_curve_direction = self.absolute_angle + curve_direction
             curve_dir_radians = np.radians(relative_curve_direction)
             # Calculate x and y offsets
             dx = self.curviness * np.cos(curve_dir_radians)
@@ -317,7 +319,7 @@ def create_segment(start, start_mode, segment_type, end_thickness, relative_angl
             start_thickness=kwargs.get('start_thickness', 1),
             length = kwargs.get('length', 1),
             curviness=kwargs.get('curviness', 0),
-            curve_direction=kwargs.get('curve_direction', 90),
+            curve_left=kwargs.get('curve_90', True),
             curve_location=kwargs.get('curve_location', 0.5),
             start_location = kwargs.get('start_location', 1),
             split_point = kwargs.get('split_point', 0.5)
@@ -423,7 +425,7 @@ def random_segment(eyeliner_wing = False, prev_colour=None,segment_number = 0, s
             end_thickness=random.uniform(*thickness_range),
             colour=random_colour,
             curviness=0 if random.random() < 0.5 else random_curviness(),
-            curve_direction=random_curve_direction(),
+            curve_90=random.choice(True,False),
             curve_location=random_curve_location(),
             start_location=random_normal_within_range(0.5,0.25,relative_location_range),
             split_point=random_normal_within_range(0.5,0.25,relative_location_range)

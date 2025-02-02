@@ -1,21 +1,19 @@
+from scipy.spatial import cKDTree
 from A import SegmentType, StartMode, min_fitness_score
 from AestheticAnalysis import analyse_design_shapes
 import numpy as np
 from EyelinerWingGeneration import get_quadratic_points
 
-def check_overlaps(segment1,segment2):
-    overlap_found = False
-    segment_overlaps = 0
+def check_overlaps(segment1,segment2, segment1_tree = None):
     overlaps = 0
-    for point1 in segment1:
-        for point2 in segment2:
-            # Calculate Euclidean distance between point1 and point2
-            distance = np.linalg.norm(point1 - point2)
-            # Check if distance is within the tolerance
-            if distance <= 0.075:
-                overlap_found = True
-                segment_overlaps += 1
-    if overlap_found:
+    if segment1_tree is None:
+        segment1_tree = cKDTree(segment1)  # Build KD-tree for the first set of points
+    # Query all points in segment2 to find neighbors in segment1 within distance 0.075
+    overlap_lists = segment1_tree.query_ball_point(segment2, 0.075)
+    # Count the number of overlaps (non-empty lists indicate at least one neighbor)
+    segment_overlaps = sum(len(neighbors) > 0 for neighbors in overlap_lists)
+
+    if segment_overlaps:
         overlaps += int((segment_overlaps / (len(segment1) + len(segment2))) * 100)
 
     return overlaps
@@ -24,7 +22,7 @@ def check_design_overlaps(i, segments):
     segment = segments[i].points_array
     first_1 = int(len(segment) * 0.025)
     segment = segment[first_1:-first_1]
-
+    segment_tree = cKDTree(segment)
     overlaps = 0
     for j in range(i + 1, len(segments) - 1):
         segment_j = segments[j].points_array
@@ -40,7 +38,7 @@ def check_design_overlaps(i, segments):
             first_1 = int(len(segment) * 0.025)
             segment = segment[:-first_1]
 
-        overlaps += check_overlaps(segment, segment_j)
+        overlaps += check_overlaps(segment, segment_j, segment_tree)
 
         if -overlaps < min_fitness_score: #Return if less than min_fitness_score to save processing time
             return overlaps
