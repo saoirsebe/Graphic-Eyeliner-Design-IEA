@@ -230,7 +230,7 @@ def score_segment_against_eyelid_shape(segment, upper_curve, lower_curve, tolera
     elif lower_curve_results["overall_similarity"]>0.6:
         score += 2 * lower_curve_results["overall_similarity"]
     else:
-        score -= 0.5  # Penalty for deviating
+        score -= 0.25  # Penalty for deviating
 
     return score
 
@@ -252,7 +252,7 @@ def compair_segment_wing_shape(segment, curve1, curve2):
     if best_overall>0.6:
         best_overall+= 2 * best_overall
     else:
-        best_overall = -0.5  # Penalty for deviating
+        best_overall = -0.25  # Penalty for deviating
     return best_overall
 
 

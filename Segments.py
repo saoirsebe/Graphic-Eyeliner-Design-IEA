@@ -431,7 +431,7 @@ def random_segment(eyeliner_wing = False, prev_colour=None,segment_number = 0, s
             start_thickness=random.uniform(*thickness_range),
             end_thickness=random.uniform(*thickness_range),
             colour=random_colour,
-            curviness=0 if random.random() < 0.5 else random_curviness(),
+            curviness=0 if random.random() < 0.3 else random_curviness(),
             curve_left=random.choice([True, False]),
             curve_location=random_curve_location(),
             start_location=random_normal_within_range(0.5,0.25,relative_location_range),
@@ -459,7 +459,7 @@ def random_segment(eyeliner_wing = False, prev_colour=None,segment_number = 0, s
             new_segment = create_segment(
                 segment_type=SegmentType.RANDOM_SHAPE,
                 start=segment_start,
-                start_mode=random.choice([StartMode.CONNECT, StartMode.JUMP]),
+                start_mode= StartMode.CONNECT if random.random() <0.3 else StartMode.JUMP,
                 end_thickness=random_normal_within_range(2, 2, thickness_range),
                 relative_angle=random.uniform(*direction_range),
                 colour=random_colour,

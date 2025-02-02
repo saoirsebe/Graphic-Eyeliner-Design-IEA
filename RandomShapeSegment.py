@@ -89,12 +89,12 @@ class RandomShapeSegment(Segment):
         self.points_array = np.array([])  # Initialize as an empty array
 
 
-    def rotated_corners(self):
+    def rotated_corners(self,corners):
         """Rotates edges around the start by """
         angle_rad = math.radians(self.absolute_angle)
         rotated_corners = []
         ox, oy = self.start  # Origin coordinates (start of shape)
-        for corner in self.corners:
+        for corner in corners:
             x, y = corner
             # Shift point back to the origin (subtract origin from edge)
             x -= ox
@@ -109,14 +109,15 @@ class RandomShapeSegment(Segment):
 
             rotated_corners.append((new_x, new_y))
 
-        return rotated_corners
+        return np.array(rotated_corners)
 
-    def move_edges(self):
-        movement = EyelinerWingGeneration.un_normalised_vector_direction(self.corners[0], self.start)
+    def move_corners(self,corners):
+        movement = EyelinerWingGeneration.un_normalised_vector_direction(corners[0], self.start)
 
-        for edge in self.corners:
-            edge[0] += movement[0]
-            edge[1] += movement[1]
+        for corner in corners:
+            corner[0] += movement[0]
+            corner[1] += movement[1]
+        return corners
 
     def render(self, prev_array, prev_angle, prev_colour, prev_end_thickness, ax_n=None):
         if self.start_mode == StartMode.CONNECT and len(prev_array) > 15:
@@ -130,23 +131,23 @@ class RandomShapeSegment(Segment):
         else:
             self.absolute_angle = (prev_angle + self.relative_angle) % 360
 
-        self.corners = np.array([(corner[0] * self.bounding_size[0], corner[1] * self.bounding_size[1]) for corner in self.corners])
-        self.rotated_corners()
-        self.move_edges()
+        to_scale_corners = np.array([(corner[0] * self.bounding_size[0], corner[1] * self.bounding_size[1]) for corner in self.corners])
+        to_scale_corners= self.rotated_corners(to_scale_corners)
+        to_scale_corners = self.move_corners(to_scale_corners)
 
-        start_point = np.array(self.corners[0])
+        start_point = np.array(to_scale_corners[0])
         n_of_corners = len(self.corners)
         centroid = (
-        sum(point[0] for point in self.corners) / n_of_corners, sum(point[1] for point in self.corners) / n_of_corners)
+        sum(point[0] for point in self.corners) / n_of_corners, sum(point[1] for point in to_scale_corners) / n_of_corners)
         #if ax_n:
         #    ax_n.scatter(centroid[0], centroid[1], color='red',linewidth=4, zorder=5)
 
-        for i, edge in enumerate(self.corners):
-            if i+1 < len(self.corners):
-                end_point = np.array(self.corners[i + 1])
+        for i, edge in enumerate(to_scale_corners):
+            if i+1 < len(to_scale_corners):
+                end_point = np.array(to_scale_corners[i + 1])
                 #ax_n.scatter(end_point[0], end_point[1], color='orange', linewidth=3,  zorder=6)
             else:
-                end_point = np.array(self.corners[0])
+                end_point = np.array(to_scale_corners[0])
                 #ax_n.scatter(end_point[0], end_point[1], color='blue',linewidth=3,  zorder=6)
 
             section_points_array = self.lines_list[i].render(centroid,start_point, end_point, self.colour, self.end_thickness, ax_n)

@@ -1,7 +1,7 @@
 import random
 from enum import Enum
 min_fitness_score = -20
-initial_gene_pool_size = 50
+initial_gene_pool_size = 100
 node_re_gen_max = 12
 #Parameter ranges:
 start_x_range = (-1, 7)
@@ -23,7 +23,7 @@ arm_length_range = (0, 1.5)
 num_points_range = (3, 8)
 asymmetry_range = (0, 3)
 edge_initialisation_range = (0,1)
-random_shape_size_range = (0,5)
+random_shape_size_range = (1,5)
 max_shape_overlaps = 0
 
 number_of_children_range= (0,3)
