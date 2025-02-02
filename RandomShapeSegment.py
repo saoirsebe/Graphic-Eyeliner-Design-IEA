@@ -33,7 +33,7 @@ class RandomShapeLineSegment:
         self.points_array = []
 
     def render(self,centroid, start_point, end_point, colour, thickness, ax_n=None):
-        num_steps = 40  # Number of points to create a smooth thickness transition/ curve
+        num_steps = 50  # Number of points to create a smooth thickness transition/ curve
 
         if self.curviness>0:
             t_values = np.linspace(0, 1, num_steps)

@@ -280,7 +280,7 @@ def random_lines_corners_list(n_of_corners):
              for i in range(n_of_corners)])
         collinear = are_points_collinear(corners)
 
-    lines_list = [(RandomShapeLineSegment(random_curviness(0.3, 0.2), random_normal_within_range(0.5, 0.15, relative_location_range)))
+    lines_list = [(RandomShapeLineSegment(random_curviness(0.35, 0.1), random_normal_within_range(0.5, 0.15, relative_location_range)))
                   for i in range(n_of_corners)]
     centroid = (sum(point[0] for point in corners) / n_of_corners, sum(point[1] for point in corners) / n_of_corners)
     sorted_corners = sorted(corners, key=lambda point: angle_from_center(centroid, point))

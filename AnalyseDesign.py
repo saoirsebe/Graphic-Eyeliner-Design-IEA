@@ -4,17 +4,21 @@ from AestheticAnalysis import analyse_design_shapes
 import numpy as np
 from EyelinerWingGeneration import get_quadratic_points
 
-def check_overlaps(segment1,segment2, segment1_tree = None):
+def check_overlaps(segment1,segment2, segment1_tree = None, tolerance=0.0075):
     overlaps = 0
     if segment1_tree is None:
         segment1_tree = cKDTree(segment1)  # Build KD-tree for the first set of points
-    # Query all points in segment2 to find neighbors in segment1 within distance 0.075
-    overlap_lists = segment1_tree.query_ball_point(segment2, 0.1)
-    # Count the number of overlaps (non-empty lists indicate at least one neighbor)
-    segment_overlaps = sum(len(neighbors) > 0 for neighbors in overlap_lists)
 
-    if segment_overlaps:
-        overlaps += int((segment_overlaps / (len(segment1) + len(segment2))) * 100)
+    overlapping_indices = set()
+
+    for p in segment2:
+        indices = segment1_tree.query_ball_point(p, tolerance)
+        overlapping_indices.update(indices)  # Add all indices found within the tolerance
+
+    n_of_overlaps = len(overlapping_indices)
+    if n_of_overlaps > 0:
+        total_points = len(segment1) + len(segment2)
+        overlaps = int((n_of_overlaps / total_points) * 100)  # Calculate percentage overlap
 
     return overlaps
 
