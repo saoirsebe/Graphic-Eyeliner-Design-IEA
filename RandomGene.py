@@ -6,7 +6,7 @@ from AnalyseDesign import percentage_is_in_eye, check_design_overlaps, check_ove
 from EyelinerDesign import EyelinerDesign
 from Segments import create_segment, random_segment, set_prev_end_thickness_array
 
-def check_new_segments_negative_score(design,new_segment):
+def check_new_segments_negative_score(design, new_segment):
     segments = design.get_all_nodes()
     eye_overlaps = percentage_is_in_eye(new_segment)
     if eye_overlaps > 5:
@@ -121,20 +121,13 @@ def random_gene(gene_n):
 
         if success:
             #print(f"success {gene_n}")
-            print("Score:",total_score)
+            #print("Score:",total_score)
             return design
 
 
 
-"""
-random_design = random_gene(0)
-fig, ax_n= random_design.render_design()
-a,b = generate_eye_curve_directions(ax_n)
-fig.show()
-score = analyse_design_shapes(random_design)
-print("Score:", score)
-"""
-"""
+
+
 design = random_gene(0)
 fig = design.render_design()
 fig.show()
@@ -142,4 +135,3 @@ negative_score = analyse_negative(design)
 positive_score = analyse_positive(design)
 print("Negative Score:", negative_score)
 print("Positive Score:", positive_score)
-"""

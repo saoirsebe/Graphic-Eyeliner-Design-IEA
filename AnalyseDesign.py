@@ -5,13 +5,13 @@ from AestheticAnalysis import analyse_design_shapes
 import numpy as np
 
 def remove_ends_of_line(line1_array, line2_array):
-    first_1 = int(len(line1_array) * 0.025)
-    line1_array = line1_array[:-first_1]
-    first_1 = int(len(line2_array) * 0.025)
-    line2_array = line2_array[first_1:]
+    first_2 = int(len(line1_array) * 0.02)
+    line1_array = line1_array[:-first_2]
+    first_2 = int(len(line2_array) * 0.02)
+    line2_array = line2_array[first_2:]
     return line1_array, line2_array
 
-def check_overlaps( segment2_array, segment1_tree, tolerance=0.0075):
+def check_overlaps(segment2_array, segment1_tree, tolerance=0.0075):
     overlapping_indices = set()
 
     for p in segment2_array:
@@ -40,18 +40,20 @@ def check_segment_percentage_overlaps(segment1, segment2, segment1_tree = None):
             segment1_array = segment1_array[first_25:-first_25]
         segment1_tree = cKDTree(segment1_array)  # Build KD-tree for the first set of points
 
-    n_of_overlaps = check_overlaps(segment2_array, segment1_tree)
-    if n_of_overlaps > 0:
-        total_points = len(segment1_tree.data) + len(segment2_array)
-        overlaps = int((n_of_overlaps / total_points) * 100)  # Calculate percentage overlap
-    else:
-        overlaps = 0
+    overlaps = check_overlaps(segment2_array, segment1_tree)
+    #if n_of_overlaps > 0:
+    #    total_points = len(segment1_tree.data) + len(segment2_array)
+    #    overlaps = int((n_of_overlaps / total_points) * 100)  # Calculate percentage overlap
+    #else:
+    #    overlaps = 0
 
     return overlaps
 
 def check_design_overlaps(i, segments):
     segment = segments[i]
-    segment_array= segment.points_array
+    segment_array = segment.points_array
+    if len(segment_array) <50:
+        print(f"segment {segment.segment_type} if length", len(segment_array))
     if segment.segment_type == SegmentType.LINE:
         first_25 = int(len(segment_array) * 0.025)
         segment_array = segment_array[first_25:-first_25]
@@ -59,9 +61,11 @@ def check_design_overlaps(i, segments):
     overlaps = 0
     for j in range(i + 1, len(segments) - 1):
         segment_j = segments[j]
-
         overlaps += check_segment_percentage_overlaps(segment, segment_j, segment_tree)
-
+        if overlaps > 0:
+            print("segment.segment_type:",segment.segment_type)
+            print("segment_j.segment_type:",segment_j.segment_type)
+            print("overlaps:", overlaps)
         if -overlaps < min_fitness_score: #Return if less than min_fitness_score to save processing time
             return overlaps
 
@@ -69,15 +73,24 @@ def check_design_overlaps(i, segments):
 
 def percentage_is_in_eye(segment):
     segment_array = segment.points_array
+    #Remove ends so segment can touch eye but not go in
+    if segment.segment_type == SegmentType.LINE:
+        first_2 = int(len(segment_array) * 0.02)
+        segment_array = segment_array[first_2:-first_2]
+
     if not isinstance(segment_array, np.ndarray):
         print("segment is NOT a NumPy array")
-        print("Type:", segment.segment_type)
         print("Contents:", segment_array)
 
     if segment_array.ndim == 1:
         print("Segment Array:", segment_array)
         print("Shape:", segment_array.shape)
-        print("Segment:", segment)
+
+    if len(segment_array) == 0:
+        print("Segment Array is empty")
+        print("len(segment_array)", len(segment_array))
+        print("first2:",first_2)
+        print("Segment", segment)
 
     upper_y_interp = np.interp(segment_array[:, 0], upper_eyelid_x, upper_eyelid_y)
     lower_y_interp = np.interp(segment_array[:, 0], lower_eyelid_x, lower_eyelid_y)
@@ -96,11 +109,14 @@ def wing_angle(node1,node2):
     return 0
 
 def analyse_negative(design):
+    print("design:")
     segments = design.get_all_nodes()
     score = 0  # Count how many overlaps there are in this gene
     # Compare each pair of segments for overlap
-    for i in range(len(segments)-1):
+    for i in range(len(segments)):
         eye_overlaps = percentage_is_in_eye(segments[i])
+        if eye_overlaps>0:
+            print("percentage_in_eye=", eye_overlaps)
         if eye_overlaps > 5:
             return min_fitness_score *2
         else:

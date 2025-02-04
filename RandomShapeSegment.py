@@ -140,8 +140,8 @@ class RandomShapeSegment(Segment):
         n_of_corners = len(self.corners)
         centroid = (
         sum(point[0] for point in to_scale_corners) / n_of_corners, sum(point[1] for point in to_scale_corners) / n_of_corners)
-        if ax_n:
-            ax_n.scatter(centroid[0], centroid[1], color='red',linewidth=4, zorder=5)
+        #if ax_n:
+        #    ax_n.scatter(centroid[0], centroid[1], color='red',linewidth=4, zorder=5)
 
         for i, edge in enumerate(to_scale_corners):
             if i+1 < len(to_scale_corners):

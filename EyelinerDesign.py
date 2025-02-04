@@ -265,7 +265,7 @@ def random_random_shape():
 
     return new_segment
 
-
+"""
 fig, ax_n = plt.subplots(figsize=(3, 3))
 shape = random_random_shape()
 prev_array = np.array([shape.start])
@@ -276,7 +276,7 @@ shape.render(prev_array, prev_angle, prev_colour, prev_end_thickness, ax_n)
 
 fig.show()
 
-"""
+
 
 #design = EyelinerDesign(random_random_shape())
 #design.render_design()
