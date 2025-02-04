@@ -395,7 +395,7 @@ def random_segment(eyeliner_wing = False, prev_colour=None,segment_number = 0, s
                  for i in range(n_of_corners)])
             collinear = are_points_collinear(corners)
 
-        lines_list = [(RandomShapeLineSegment(random_curviness(0.35, 0.1),
+        lines_list = [(RandomShapeLineSegment(random_curviness(0.4, 0.1),
                                               random_normal_within_range(0.5, 0.15, relative_location_range)))
                       for i in range(n_of_corners)]
         centroid = (

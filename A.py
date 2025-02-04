@@ -20,7 +20,7 @@ colour_options = [
     "pink", "brown", "gray", "lime", "navy",
     "teal", "maroon", "gold", "olive"
 ]
-curviness_range = (0, 10)
+curviness_range = (0.1, 10)
 relative_location_range = (0, 1)
 radius_range = (0, 1.5)
 arm_length_range = (0, 1.5)

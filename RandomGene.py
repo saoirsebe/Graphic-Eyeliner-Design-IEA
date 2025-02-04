@@ -134,6 +134,7 @@ fig.show()
 score = analyse_design_shapes(random_design)
 print("Score:", score)
 """
+"""
 design = random_gene(0)
 fig = design.render_design()
 fig.show()
@@ -141,3 +142,4 @@ negative_score = analyse_negative(design)
 positive_score = analyse_positive(design)
 print("Negative Score:", negative_score)
 print("Positive Score:", positive_score)
+"""

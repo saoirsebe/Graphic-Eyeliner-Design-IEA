@@ -231,7 +231,7 @@ def random_lines_corners_list(n_of_corners):
              for i in range(n_of_corners)])
         collinear = are_points_collinear(corners)
 
-    lines_list = [(RandomShapeLineSegment(random_curviness(0.35, 0.1), random_normal_within_range(0.5, 0.15, relative_location_range)))
+    lines_list = [(RandomShapeLineSegment(random_curviness(0.45, 0.15), random_normal_within_range(0.5, 0.15, relative_location_range)))
                   for i in range(n_of_corners)]
     centroid = (sum(point[0] for point in corners) / n_of_corners, sum(point[1] for point in corners) / n_of_corners)
     sorted_corners = sorted(corners, key=lambda point: angle_from_center(centroid, point))
@@ -265,7 +265,7 @@ def random_random_shape():
 
     return new_segment
 
-"""
+
 fig, ax_n = plt.subplots(figsize=(3, 3))
 shape = random_random_shape()
 prev_array = np.array([shape.start])
@@ -276,6 +276,7 @@ shape.render(prev_array, prev_angle, prev_colour, prev_end_thickness, ax_n)
 
 fig.show()
 
+"""
 
 #design = EyelinerDesign(random_random_shape())
 #design.render_design()

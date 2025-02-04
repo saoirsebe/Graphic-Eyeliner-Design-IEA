@@ -49,6 +49,9 @@ class RandomShapeLineSegment:
             #If the direction to the centroid is  +0-180 degrees from the angle of the line then curve 90 else curve -90
             if 0< c <180:
                 relative_curve_direction_degrees = line_direction_angle + 90
+            elif  c ==0 or c==180:
+                relative_curve_direction_degrees = line_direction_angle + 90
+                print("aaaaaaaaaaaaaa")
             else:
                 relative_curve_direction_degrees = line_direction_angle - 90
             curve_dir_radians = np.radians(relative_curve_direction_degrees)
@@ -83,7 +86,6 @@ class RandomShapeSegment(Segment):
         self.segment_type = SegmentType.RANDOM_SHAPE
         self.bounding_size = bounding_size
         self.corners = corners
-        #self.lines_segments = [(RandomShapeLineSegment(curviness, curve_direction, curve_location))for line in lines_list]
         self.lines_list = lines_list
         self.points_array = np.array([])  # Initialize as an empty array
 
@@ -137,9 +139,9 @@ class RandomShapeSegment(Segment):
         start_point = np.array(to_scale_corners[0])
         n_of_corners = len(self.corners)
         centroid = (
-        sum(point[0] for point in self.corners) / n_of_corners, sum(point[1] for point in to_scale_corners) / n_of_corners)
-        #if ax_n:
-        #    ax_n.scatter(centroid[0], centroid[1], color='red',linewidth=4, zorder=5)
+        sum(point[0] for point in to_scale_corners) / n_of_corners, sum(point[1] for point in to_scale_corners) / n_of_corners)
+        if ax_n:
+            ax_n.scatter(centroid[0], centroid[1], color='red',linewidth=4, zorder=5)
 
         for i, edge in enumerate(to_scale_corners):
             if i+1 < len(to_scale_corners):
