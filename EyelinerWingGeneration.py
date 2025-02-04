@@ -3,28 +3,14 @@ import matplotlib.pyplot as plt
 import sympy as sp
 import random
 
-from A import eye_corner_start
+from A import eye_corner_start, normalised_vector_direction, get_quadratic_points
 
 
 def bezier_curve(P0, P1, P2):
     t = np.linspace(0, 1, 100).reshape(-1, 1)
     return (1 - t) ** 2 * P0 + 2 * (1 - t) * t * P1 + t ** 2 * P2
 
-def get_quadratic_points(a, b, c, x_start, x_end, num_points=100):
-    x = np.linspace(x_start, x_end, num_points)  # Generate x values from x_start to x_end
-    y = a * x ** 2 + b * x + c  # Calculate corresponding y values
-    return x, y
 
-def un_normalised_vector_direction(start,end):
-    direction = end - start
-
-    return direction
-def normalised_vector_direction(start,end):
-    direction = end - start
-    norm = np.linalg.norm(direction) #length of direction vector
-    if norm != 0:
-        direction /= norm  # Normalize the direction vector
-    return direction
 
 def perpendicular_direction(start,end):
     direction = normalised_vector_direction(start,end)
@@ -120,17 +106,7 @@ def create_eyeliner_wing(length, angle, liner_corner,topStart ,bottomStart ,thic
     return np.concatenate((topLine,bottomLine))
 
 
-def draw_eye_shape(ax_n):
-    # Get points with the same x-range but scale y-values for vertical stretch
-    x_vals, y_vals = get_quadratic_points(0.5, 0, 0, -1, 1)
-    x_vals = [x * 3 for x in x_vals]
-    y_vals = [y * 3 for y in y_vals]  # Scale y-values
-    ax_n.plot(x_vals, y_vals, label=f"$y = 0.5x^2$", color="b")
 
-    x_vals, y_vals = get_quadratic_points(-0.5, 0, 1, -1, 1)
-    x_vals = [x * 3 for x in x_vals]
-    y_vals = [y * 3 for y in y_vals]  # Scale y-values
-    ax_n.plot(x_vals, y_vals, label=f"$y = -0.5x^2 + 1$", color="b")
 
 def generate_bezier_curve(P0,P1,P2,P3, num_points=100):
     t = np.linspace(0, 1, num_points)

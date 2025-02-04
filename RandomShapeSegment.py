@@ -1,7 +1,6 @@
 import math
 import numpy as np
-import EyelinerWingGeneration
-from A import StartMode, SegmentType
+from A import StartMode, SegmentType, un_normalised_vector_direction, normalised_vector_direction
 from ParentSegment import Segment, point_in_array
 from StarGeneration import bezier_curve_t
 
@@ -37,13 +36,13 @@ class RandomShapeLineSegment:
 
         if self.curviness>0:
             t_values = np.linspace(0, 1, num_steps)
-            P0 = start_point
-            P2 = end_point
-            line_direction = EyelinerWingGeneration.normalised_vector_direction(P0, P2)
+            p0 = start_point
+            p2 = end_point
+            line_direction = normalised_vector_direction(p0, p2)
             line_direction_angle = np.degrees(np.arctan2(line_direction[1], line_direction[0]))
-            P1 = P0 + (self.curve_location * EyelinerWingGeneration.un_normalised_vector_direction(P0,P2)) #moves curve_location away from P0 towards P2 relative to length of curve segment
+            p1 = p0 + (self.curve_location * un_normalised_vector_direction(p0,p2)) #moves curve_location away from P0 towards P2 relative to length of curve segment
 
-            to_center_direction = EyelinerWingGeneration.normalised_vector_direction(P1, centroid)
+            to_center_direction = normalised_vector_direction(p1, centroid)
             to_center_direction_angle = np.degrees(np.arctan2(to_center_direction[1], to_center_direction[0]))
 
             c = (to_center_direction_angle - line_direction_angle) % 360
@@ -56,8 +55,8 @@ class RandomShapeLineSegment:
             # Calculate x and y offsets
             dx = self.curviness * np.cos(curve_dir_radians)
             dy = self.curviness * np.sin(curve_dir_radians)
-            P1 = P1 + np.array([dx, dy])
-            self.points_array = np.array([bezier_curve_t(t, P0, P1, P2) for t in t_values])
+            p1 = p1 + np.array([dx, dy])
+            self.points_array = np.array([bezier_curve_t(t, p0, p1, p2) for t in t_values])
             x_values, y_values = self.points_array[:, 0], self.points_array[:, 1]
         else:
             x_values = np.linspace(start_point[0], end_point[0], num_steps)
@@ -112,7 +111,7 @@ class RandomShapeSegment(Segment):
         return np.array(rotated_corners)
 
     def move_corners(self,corners):
-        movement = EyelinerWingGeneration.un_normalised_vector_direction(corners[0], self.start)
+        movement = un_normalised_vector_direction(corners[0], self.start)
 
         for corner in corners:
             corner[0] += movement[0]

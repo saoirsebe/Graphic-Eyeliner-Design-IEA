@@ -1,6 +1,6 @@
 from matplotlib import pyplot as plt
-from A import SegmentType, StartMode
-from EyelinerWingGeneration import get_quadratic_points, generate_eye_curve_directions
+from A import SegmentType, StartMode, get_quadratic_points
+from EyelinerWingGeneration import generate_eye_curve_directions
 import numpy as np
 from scipy.interpolate import interp1d
 

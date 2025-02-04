@@ -1,6 +1,10 @@
 import random
 from enum import Enum
+
+import numpy as np
+
 min_fitness_score = -20
+min_segment_score = -5
 initial_gene_pool_size = 100
 node_re_gen_max = 12
 #Parameter ranges:
@@ -50,6 +54,24 @@ class StartMode(Enum):
     SPLIT = 'SPLIT' #connect but end of prev is in segment
     CONNECT_MID = 'CONNECT_MID'
 
+
+
+def get_quadratic_points(a, b, c, x_start, x_end, num_points=100):
+    x = np.linspace(x_start, x_end, num_points)  # Generate x values from x_start to x_end
+    y = a * x ** 2 + b * x + c  # Calculate corresponding y values
+    return x, y
+
+def un_normalised_vector_direction(start,end):
+    direction = end - start
+
+    return direction
+def normalised_vector_direction(start,end):
+    direction = end - start
+    norm = np.linalg.norm(direction) #length of direction vector
+    if norm != 0:
+        direction /= norm  # Normalize the direction vector
+    return direction
+
 def random_normal_within_range(mean, stddev, value_range):
     while True:
         # Generate a number using normal distribution
@@ -68,3 +90,21 @@ def random_from_two_distributions(mean1, stddev1, mean2, stddev2, value_range, p
 
         if value_range[0] <= value <= value_range[1]:
             return value
+
+def draw_eye_shape(ax_n):
+    # Get points with the same x-range but scale y-values for vertical stretch
+    x_vals, y_vals = get_quadratic_points(0.5, 0, 0, -1, 1)
+    x_vals = [x * 3 for x in x_vals]
+    y_vals = [y * 3 for y in y_vals]  # Scale y-values
+    ax_n.plot(x_vals, y_vals, label=f"$y = 0.5x^2$", color="b")
+
+    x_vals, y_vals = get_quadratic_points(-0.5, 0, 1, -1, 1)
+    x_vals = [x * 3 for x in x_vals]
+    y_vals = [y * 3 for y in y_vals]  # Scale y-values
+    ax_n.plot(x_vals, y_vals, label=f"$y = -0.5x^2 + 1$", color="b")
+
+upper_x, upper_y = get_quadratic_points(-0.5, 0, 1, -1, 1)
+upper_eyelid_x, upper_eyelid_y = np.array(upper_x) * 3, np.array(upper_y) * 3
+
+lower_x, lower_y = get_quadratic_points(0.5, 0, 0, -1, 1)
+lower_eyelid_x, lower_eyelid_y = np.array(lower_x) * 3, np.array(lower_y) * 3

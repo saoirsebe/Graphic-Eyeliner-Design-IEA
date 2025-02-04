@@ -1,6 +1,4 @@
-import EyelinerWingGeneration
 from AnalyseDesign import shape_overlaps
-from EyelinerWingGeneration import un_normalised_vector_direction, draw_eye_shape
 import StarGeneration
 from ParentSegment import Segment, point_in_array
 from RandomShapeSegment import RandomShapeSegment, RandomShapeLineSegment, are_points_collinear
@@ -46,11 +44,11 @@ class LineSegment(Segment):
         self.end = (end_x, end_y)
 
 
-    def curve_between_lines(self, P0, P1, P2, P3, colour):
+    def curve_between_lines(self, p0, p1, p2, p3, colour):
         t_values = np.linspace(0, 1, 20)
-        left_curve = np.array([bezier_curve_t(t, P0, P1, P2) for t in t_values])
+        left_curve = np.array([bezier_curve_t(t, p0, p1, p2) for t in t_values])
         # np.array((prev_array[start_array_point_index+2]) - np.array(self.points_array[2]))/2
-        right_curve = np.array([bezier_curve_t(t, P2, P1, P3) for t in t_values])
+        right_curve = np.array([bezier_curve_t(t, p2, p1, p3) for t in t_values])
         left_x, left_y = left_curve[:, 0], left_curve[:, 1]
         right_x, right_y = right_curve[:, 0], right_curve[:, 1]
 
@@ -84,9 +82,9 @@ class LineSegment(Segment):
 
         if self.curviness>0:
             t_values = np.linspace(0, 1, num_steps)
-            P0 = np.array(self.start)
-            P2 = np.array(self.end)
-            P1 = P0 + (self.curve_location * EyelinerWingGeneration.un_normalised_vector_direction(P0,P2)) #moves curve_location away from P0 towards P2 relative to length of curve segment
+            p0 = np.array(self.start)
+            p2 = np.array(self.end)
+            p1 = p0 + (self.curve_location * un_normalised_vector_direction(p0,p2)) #moves curve_location away from P0 towards P2 relative to length of curve segment
             if self.curve_left:
                 curve_direction = 90 #curve direction in degrees
             else:
@@ -96,8 +94,8 @@ class LineSegment(Segment):
             # Calculate x and y offsets
             dx = self.curviness * np.cos(curve_dir_radians)
             dy = self.curviness * np.sin(curve_dir_radians)
-            P1 = P1 + np.array([dx, dy])
-            self.points_array = np.array([bezier_curve_t(t, P0, P1, P2) for t in t_values])
+            p1 = p1 + np.array([dx, dy])
+            self.points_array = np.array([bezier_curve_t(t, p0, p1, p2) for t in t_values])
             x_values, y_values = self.points_array[:, 0], self.points_array[:, 1]
         else:
             x_values = np.linspace(self.start[0], self.end[0], num_steps)
@@ -116,37 +114,37 @@ class LineSegment(Segment):
 
             """Add curve from prev line to split point"""
             if len(prev_array) > 20:
-                P2 = np.array(prev_array[-10])
+                p2 = np.array(prev_array[-10])
                 if split_point_point_index <= 5:
                     beep = 0
                 else:
                     beep = split_point_point_index - 5
-                P0 = np.array(self.points_array[beep])
+                p0 = np.array(self.points_array[beep])
                 if len(self.points_array) <= (split_point_point_index + 5):
                     beep = len(prev_array) - 1
                 else:
                     beep = split_point_point_index + 5
-                P3 = np.array(self.points_array[beep])
-                P1 = np.array(self.start)
-                new_array = self.curve_between_lines(P0, P1, P2, P3, prev_colour)
+                p3 = np.array(self.points_array[beep])
+                p1 = np.array(self.start)
+                new_array = self.curve_between_lines(p0, p1, p2, p3, prev_colour)
                 x_values, y_values = new_array[:, 0], new_array[:, 1]
 
         self.thickness_array = np.linspace(self.start_thickness, self.end_thickness, num_steps) #Render a line segment with thickness tapering from start to end
         """Add curve from bottom of connect mid line"""
         if self.start_mode == StartMode.CONNECT_MID and len(prev_array)>20:
-            P2 = np.array(self.points_array[10])
+            p2 = np.array(self.points_array[10])
             if start_array_point_index <= 5:
                 beep = 0
             else:
                 beep = start_array_point_index - 5
-            P0 = np.array(prev_array[beep])
+            p0 = np.array(prev_array[beep])
             if len(prev_array) <= (start_array_point_index + 5):
                 beep = len(prev_array) - 1
             else:
                 beep = start_array_point_index + 5
-            P3 = np.array(prev_array[beep])
-            P1 = np.array(self.start)
-            new_array = self.curve_between_lines(P0, P1, P2, P3,self.colour)
+            p3 = np.array(prev_array[beep])
+            p1 = np.array(self.start)
+            new_array = self.curve_between_lines(p0, p1, p2, p3, self.colour)
             x_values, y_values = new_array[:, 0], new_array[:, 1]
 
         # Plot each small segment with the varying thickness

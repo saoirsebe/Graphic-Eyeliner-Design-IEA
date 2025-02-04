@@ -1,27 +1,22 @@
 import random
-
 import numpy as np
-
 from A import *
-from AestheticAnalysis import analyse_design_shapes
-from AnalyseDesign import is_in_eye, check_design_overlaps, check_overlaps, analyse_negative
+from AnalyseDesign import percentage_is_in_eye, check_design_overlaps, check_overlaps, analyse_negative, analyse_positive, \
+    check_segment_percentage_overlaps
 from EyelinerDesign import EyelinerDesign
-from EyelinerWingGeneration import generate_eye_curve_directions
 from Segments import create_segment, random_segment, set_prev_end_thickness_array
 
-
-def check_new_segments_overlaps(design,new_segment):
+def check_new_segments_negative_score(design,new_segment):
     segments = design.get_all_nodes()
-    eye_overlaps = is_in_eye(new_segment)
+    eye_overlaps = percentage_is_in_eye(new_segment)
     if eye_overlaps > 5:
         return min_fitness_score * 2
     else:
         score = -eye_overlaps
 
-    new_segment_array = new_segment.points_array
     for segment in segments:
-        score -= check_overlaps(segment.points_array,new_segment_array)
-        if score<min_fitness_score:
+        score -= check_segment_percentage_overlaps(segment,new_segment)
+        if score < min_fitness_score:
             return score
 
     return score
@@ -69,29 +64,14 @@ def random_gene_node(design, parent, prev_colour, eyeliner_wing=False, segment_n
         prev_array = parent.corners
     new_node.render(prev_array, parent.absolute_angle, prev_colour, prev_end_thickness_array)
     regen_count = 0
-    """
-    parent.children.append(new_node)
-    fig = design.render_design()
-    fig.suptitle(f"New Node,{regen_count}")
-    fig.show()
-    #plt.close(fig)
-    parent.children.remove(new_node)
-    """
-    new_segment_score = check_new_segments_overlaps(design, new_node)
+
+    new_segment_score = check_new_segments_negative_score(design, new_node)
     while new_segment_score < min_fitness_score and regen_count < node_re_gen_max:
         new_node = random_segment(eyeliner_wing=eyeliner_wing, segment_number=segment_number, prev_colour=prev_colour)
-        """
-        parent.children.append(new_node)
-        fig = design.render_design()
-        fig.suptitle(f"New Node,{regen_count}")
-        fig.show()
-        parent.children.remove(new_node)
-        """
         new_node.render(prev_array, parent.absolute_angle, prev_colour, prev_end_thickness_array)
         regen_count+=1
-        new_segment_score = check_new_segments_overlaps(design, new_node)
+        new_segment_score = check_new_segments_negative_score(design, new_node)
     if regen_count ==node_re_gen_max:
-        #print("regen_count ==6")
         return False, min_fitness_score *2
 
     parent.children.append(new_node)
@@ -112,33 +92,38 @@ def random_gene(gene_n):
     success = False
     while not success:
         success = True
-        score = 0
-        #The first 2 thirds of the initial population start at the corner of the eye, the second third starts as an eyeliner wing, last 1/3 is random
-        if initial_gene_pool_size/3 < gene_n <= 2* (initial_gene_pool_size / 3):
-            design = EyelinerDesign(random_segment(eyeliner_wing=True, segment_number=0,segment_start=eye_corner_start))
-            n_of_children = 2
-        elif gene_n <= 2 *(initial_gene_pool_size/3):
-            design = EyelinerDesign(random_segment(segment_start=eye_corner_start))
-            n_of_children = round(random_normal_within_range(1, 0.5, number_of_children_range))
-        else:
-            design = EyelinerDesign(random_segment())
-            n_of_children = round(random_normal_within_range(1,0.5,number_of_children_range))
+        root_score = min_segment_score -1
+        while root_score < min_segment_score:
+            #The first 2 thirds of the initial population start at the corner of the eye, the second third starts as an eyeliner wing, last 1/3 is random
+            if initial_gene_pool_size/3 < gene_n <= 2* (initial_gene_pool_size / 3):
+                design = EyelinerDesign(random_segment(eyeliner_wing=True, segment_number=0,segment_start=eye_corner_start))
+                n_of_children = 2
+            elif gene_n <= 2 *(initial_gene_pool_size/3):
+                design = EyelinerDesign(random_segment(segment_start=eye_corner_start))
+                n_of_children = round(random_normal_within_range(1, 0.5, number_of_children_range))
+            else:
+                design = EyelinerDesign(random_segment())
+                n_of_children = round(random_normal_within_range(1,0.5,number_of_children_range))
 
-        root_node = design.root
-        prev_colour = root_node.colour
-        segment_number = 0
-        prev_end_thickness_array = root_node.end_thickness
-        root_node.render(np.array([root_node.start]), 0, prev_colour, prev_end_thickness_array)
+            root_node = design.root
+            prev_colour = root_node.colour
+            segment_number = 0
+            prev_end_thickness_array = root_node.end_thickness
+            root_node.render(np.array([root_node.start]), 0, prev_colour, prev_end_thickness_array)
+            root_score = -percentage_is_in_eye(root_node)
+        total_score = root_score
         for i in range(n_of_children):
             segment_number +=1
             success, child_score = random_gene_node(design, root_node, prev_colour, eyeliner_wing=True, segment_number=segment_number, depth=0)
-            score+=child_score
-            if not success or score < min_fitness_score:
+            total_score+=child_score
+            if not success or total_score < min_fitness_score:
                 success = False
 
         if success:
             #print(f"success {gene_n}")
+            print("Score:",total_score)
             return design
+
 
 
 """
@@ -149,3 +134,10 @@ fig.show()
 score = analyse_design_shapes(random_design)
 print("Score:", score)
 """
+design = random_gene(0)
+fig = design.render_design()
+fig.show()
+negative_score = analyse_negative(design)
+positive_score = analyse_positive(design)
+print("Negative Score:", negative_score)
+print("Positive Score:", positive_score)

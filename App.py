@@ -6,8 +6,6 @@ from LoginPage import LoginPage
 from LoginPage import SignUpPage
 from Page import Page
 import ttkbootstrap as ttk
-from ttkbootstrap.constants import *
-from ttkbootstrap.constants import *
 
 class App(ttk.Window):
     def __init__(self):

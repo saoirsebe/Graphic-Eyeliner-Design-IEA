@@ -3,7 +3,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.signal.windows import cosine
 from A import *
-from EyelinerWingGeneration import normalised_vector_direction
 
 
 # Function to create a quadratic Bézier curve with three control points
