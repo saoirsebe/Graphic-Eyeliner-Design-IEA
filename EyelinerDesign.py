@@ -1,7 +1,7 @@
 import copy
 import random
 from conda.common.configuration import raise_errors
-from AnalyseDesign import analyse_negative, check_overlaps, shape_overlaps
+from AnalyseDesign import analyse_negative, check_overlaps, shape_overlaps, check_segment_overlaps, check_design_overlaps
 from Segments import *
 import cProfile
 from RandomShapeSegment import are_points_collinear
@@ -292,6 +292,28 @@ line = LineSegment(SegmentType.LINE, (-1,1), StartMode.JUMP, 4, 0, 3, 3, 'red', 
 line.render(np.array([line.start]), 0, 'red', line.end_thickness, ax_n)
 
 
-
 cProfile.run('random_random_shape()')
+"""
+"""
+fig, ax_n = plt.subplots(figsize=(3, 3))
+line = LineSegment(SegmentType.LINE, (5,1), StartMode.JUMP, 4, 0, 4, 4, 'red', 0.5, False, 0.5, 0, 0)
+line.render(np.array([line.start]), 0, 'red', line.end_thickness, ax_n)
+line2 = LineSegment(SegmentType.LINE, (4,1), StartMode.JUMP, 4, 0, 2, 2, 'blue', 0.5, False, 0.5, 0, 0)
+line2.render(line.points_array, line.absolute_angle, 'red', line.thickness_array, ax_n)
+
+star = StarSegment(SegmentType.STAR, (6,0),"purple",StarType.CURVED,0.5,1,5,0.2,StartMode.JUMP,2,20)
+star.render(line2.points_array, line2.absolute_angle, 'blue', line2.thickness_array, ax_n)
+
+
+#overlaps = check_segment_overlaps(line,line2)
+#print("The overlaps:", overlaps)
+
+fig.show()
+
+design = EyelinerDesign(line)
+line.add_child_segment(line2)
+line.add_child_segment(star)
+design.render_design()
+negative_score = analyse_negative(design)
+print("negative_score:",negative_score)
 """

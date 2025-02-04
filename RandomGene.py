@@ -2,7 +2,7 @@ import random
 import numpy as np
 from A import *
 from AnalyseDesign import percentage_is_in_eye, check_design_overlaps, check_overlaps, analyse_negative, analyse_positive, \
-    check_segment_percentage_overlaps
+    check_segment_overlaps
 from EyelinerDesign import EyelinerDesign
 from Segments import create_segment, random_segment, set_prev_end_thickness_array
 
@@ -15,7 +15,7 @@ def check_new_segments_negative_score(design, new_segment):
         score = -eye_overlaps
 
     for segment in segments:
-        score -= check_segment_percentage_overlaps(segment,new_segment)
+        score -= check_segment_overlaps(segment,new_segment)
         if score < min_fitness_score:
             return score
 
@@ -126,8 +126,6 @@ def random_gene(gene_n):
 
 
 
-
-
 design = random_gene(0)
 fig = design.render_design()
 fig.show()
@@ -135,3 +133,5 @@ negative_score = analyse_negative(design)
 positive_score = analyse_positive(design)
 print("Negative Score:", negative_score)
 print("Positive Score:", positive_score)
+
+

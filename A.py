@@ -3,9 +3,9 @@ from enum import Enum
 
 import numpy as np
 
-min_fitness_score = -20
+min_fitness_score = -2
 min_segment_score = -5
-initial_gene_pool_size = 100
+initial_gene_pool_size = 200
 node_re_gen_max = 12
 #Parameter ranges:
 start_x_range = (-1, 7)

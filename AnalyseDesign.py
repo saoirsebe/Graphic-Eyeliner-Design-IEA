@@ -11,7 +11,7 @@ def remove_ends_of_line(line1_array, line2_array):
     line2_array = line2_array[first_2:]
     return line1_array, line2_array
 
-def check_overlaps(segment2_array, segment1_tree, tolerance=0.0075):
+def check_overlaps(segment2_array, segment1_tree, tolerance=0.025):
     overlapping_indices = set()
 
     for p in segment2_array:
@@ -27,7 +27,7 @@ def check_shape_edge_overlaps(segment1_array, segment2_array):
     overlaps = check_overlaps(segment2_array, segment1_tree)
     return overlaps
 
-def check_segment_percentage_overlaps(segment1, segment2, segment1_tree = None):
+def check_segment_overlaps(segment1, segment2, segment1_tree = None):
     segment2_array = segment2.points_array
     if segment2.segment_type == SegmentType.LINE:
         first_25 = int(len(segment2_array) * 0.025)
@@ -52,6 +52,8 @@ def check_segment_percentage_overlaps(segment1, segment2, segment1_tree = None):
 def check_design_overlaps(i, segments):
     segment = segments[i]
     segment_array = segment.points_array
+    if len(segments)==0:
+        print("len(segments)==0")
     if len(segment_array) <50:
         print(f"segment {segment.segment_type} if length", len(segment_array))
     if segment.segment_type == SegmentType.LINE:
@@ -59,9 +61,9 @@ def check_design_overlaps(i, segments):
         segment_array = segment_array[first_25:-first_25]
     segment_tree = cKDTree(segment_array)
     overlaps = 0
-    for j in range(i + 1, len(segments) - 1):
+    for j in range(i + 1, len(segments)):
         segment_j = segments[j]
-        overlaps += check_segment_percentage_overlaps(segment, segment_j, segment_tree)
+        overlaps += check_segment_overlaps(segment, segment_j, segment_tree)
         if overlaps > 0:
             print("segment.segment_type:",segment.segment_type)
             print("segment_j.segment_type:",segment_j.segment_type)
@@ -96,7 +98,8 @@ def percentage_is_in_eye(segment):
     lower_y_interp = np.interp(segment_array[:, 0], lower_eyelid_x, lower_eyelid_y)
     inside = (lower_y_interp <= segment_array[:, 1]) & (segment_array[:, 1] <= upper_y_interp)
     overlap = np.sum(inside)
-    score = int((overlap / len(segment_array)) * 100)
+    #score = int((overlap / len(segment_array)) * 100)
+    score = overlap
     if score > 0:
         return max(score, 1)
     else:
@@ -123,7 +126,8 @@ def analyse_negative(design):
             score-=eye_overlaps
         if score < min_fitness_score:
             return score
-        score = score - check_design_overlaps(i, segments)
+        if i!=len(segments)-1:
+            score = score - check_design_overlaps(i, segments)
         if score < min_fitness_score:
             return score
     return score
@@ -149,7 +153,7 @@ def shape_overlaps(lines):
         while try_again and try_again_count < 8:
             line_overlaps = 0
             line_array = line.points_array
-            for j in range(0, len(lines) - 1):
+            for j in range(0, len(lines)):
                 if i!=j:
                     line_j_array = lines[j].points_array
                     if j == (i + 1):
@@ -169,7 +173,7 @@ def shape_overlaps(lines):
     for i, line in enumerate(sorted_lines):
         line_overlaps = 0
         line_array = line.points_array
-        for j in range(i + 1, len(lines) - 1):
+        for j in range(i + 1, len(lines)):
             line_j_array = lines[j].points_array
             if j == (i + 1):
                 remove_ends_of_line(line_array, line_j_array)

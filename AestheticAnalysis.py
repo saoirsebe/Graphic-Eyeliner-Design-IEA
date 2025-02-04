@@ -103,7 +103,7 @@ def direction_between_points(point1,point2):
 
 def compute_directions(points):
     directions = []
-    for i in range(len(points)-2):
+    for i in range(len(points)-1):#1 less?
         val = i
         next_val = i +1
         distance_from_next_point = np.linalg.norm(np.array(points[val]) - np.array(points[next_val]))

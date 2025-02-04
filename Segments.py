@@ -152,7 +152,7 @@ class LineSegment(Segment):
             # Plot the first 40 points as one segment
             if self.start_mode == StartMode.CONNECT_MID:
                 blend_thicknesses = np.linspace(prev_thickness_array[start_array_point_index], self.thickness_array[10], 20)
-            for i in range(min(39, len(x_values) - 1)):
+            for i in range(min(39, len(x_values))):
                 this_colour = self.colour
                 if self.start_mode == StartMode.CONNECT_MID:
                     if i<20:
@@ -174,7 +174,7 @@ class LineSegment(Segment):
                     )
 
             # Plot remaining points
-            for i in range(40, len(x_values) - 1):
+            for i in range(40, len(x_values)-1):
                 if self.start_mode == StartMode.CONNECT_MID or self.start_mode == StartMode.SPLIT:
                     thickness = self.thickness_array[i - 41]
                 else:
@@ -189,7 +189,7 @@ class LineSegment(Segment):
                     )
         else:
             # Plot normally if no new_array exists (Start type is jump or connect so no blend between lines needed)
-            for i in range(len(x_values) - 1):
+            for i in range(len(x_values)-1):
                 thickness = self.thickness_array[i]
                 if ax_n:
                     ax_n.plot(
