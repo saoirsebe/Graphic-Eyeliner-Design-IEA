@@ -1,7 +1,7 @@
 from AnalyseDesign import shape_overlaps
 import StarGeneration
 from ParentSegment import Segment, point_in_array
-from RandomShapeSegment import RandomShapeSegment, RandomShapeLineSegment, are_points_collinear
+from IrregularPolygonSegment import IrregularPolygonEdgeSegment, are_points_collinear, IrregularPolygonSegment
 from StarGeneration import *
 from A import *
 import random
@@ -44,11 +44,11 @@ class LineSegment(Segment):
         self.end = (end_x, end_y)
 
 
-    def curve_between_lines(self, p0, p1, p2, p3, colour):
+    def curve_between_lines(self, p0, p1, p2, p3, p4, colour):
         t_values = np.linspace(0, 1, 20)
         left_curve = np.array([bezier_curve_t(t, p0, p1, p2) for t in t_values])
         # np.array((prev_array[start_array_point_index+2]) - np.array(self.points_array[2]))/2
-        right_curve = np.array([bezier_curve_t(t, p2, p1, p3) for t in t_values])
+        right_curve = np.array([bezier_curve_t(t, p2, p3, p4) for t in t_values])
         left_x, left_y = left_curve[:, 0], left_curve[:, 1]
         right_x, right_y = right_curve[:, 0], right_curve[:, 1]
 
@@ -112,53 +112,104 @@ class LineSegment(Segment):
             self.points_array = np.array([(point[0] + transformation_vector[0], point[1] + transformation_vector[1]) for point in self.points_array])
             x_values, y_values = self.points_array[:, 0], self.points_array[:, 1]
 
-            """Add curve from prev line to split point"""
-            if len(prev_array) > 20:
-                p2 = np.array(prev_array[-10])
-                if split_point_point_index <= 5:
-                    beep = 0
+            len_prev_array = len(prev_array)
+            """Add curve from 10% from end of prev line to split point"""
+            if len_prev_array > num_points_range[1]: #If prev array is a line
+                percent_30_prev = int(len_prev_array * 0.3)
+                p2 = np.array(prev_array[-percent_30_prev])
+
+                # p0 index is -10% from connect point or start of current line:
+                len_self_array = len(self.points_array)
+                percent_30_current = int(len_self_array * 0.3)
+                if split_point_point_index <= percent_30_current:
+                    curve_start_point = 0
                 else:
-                    beep = split_point_point_index - 5
-                p0 = np.array(self.points_array[beep])
-                if len(self.points_array) <= (split_point_point_index + 5):
-                    beep = len(prev_array) - 1
-                else:
-                    beep = split_point_point_index + 5
-                p3 = np.array(self.points_array[beep])
+                    curve_start_point = split_point_point_index - percent_30_current
+                p0 = np.array(self.points_array[curve_start_point])
+
+                # p1 is 5% of average line length in direction half way from  point
+                average_line_length_25 = int(((len_prev_array + len_self_array) // 2)*0.015)
+                c = (self.absolute_angle - prev_angle) % 360
+                p1_angle = self.absolute_angle + (180 - c//2)
+                p1_dir_radians = np.radians(p1_angle)
+                dx = average_line_length_25 * np.cos(p1_dir_radians)
+                dy = average_line_length_25 * np.sin(p1_dir_radians)
                 p1 = np.array(self.start)
-                new_array = self.curve_between_lines(p0, p1, p2, p3, prev_colour)
+                p1 = p1 + np.array([dx, dy])
+
+                # p4 index is +10% from connect point or ond of current line:
+                if len_self_array <= (split_point_point_index + percent_30_current):
+                    curve_start_point = len_prev_array - 1
+                else:
+                    curve_start_point = split_point_point_index + percent_30_current
+                p4 = np.array(self.points_array[curve_start_point])
+
+                # p3 is 5% of average line length in direction half w
+                p3_angle = self.absolute_angle + ((180 - c) // 2)
+                p3_dir_radians = np.radians(p3_angle)
+                dx = average_line_length_25 * np.cos(p3_dir_radians)
+                dy = average_line_length_25 * np.sin(p3_dir_radians)
+                p3 = np.array(self.start)
+                p3 = p3 + np.array([dx, dy])
+
+                new_array = self.curve_between_lines(p0, p1, p2, p3, p4, prev_colour)
                 x_values, y_values = new_array[:, 0], new_array[:, 1]
 
         self.thickness_array = np.linspace(self.start_thickness, self.end_thickness, num_steps) #Render a line segment with thickness tapering from start to end
-        """Add curve from bottom of connect mid line"""
-        if self.start_mode == StartMode.CONNECT_MID and len(prev_array)>20:
-            p2 = np.array(self.points_array[10])
-            if start_array_point_index <= 5:
-                beep = 0
+        """Add curve from 10% from each side of connect (start) point on previous line to 10% up current line"""
+        len_prev_array = len(prev_array)
+        if self.start_mode == StartMode.CONNECT_MID and len_prev_array>num_points_range[1]:#If prev array is a line
+            len_self_array = len(self.points_array)
+            percent_30_current = int(len_self_array * 0.3)
+            p2 = np.array(self.points_array[percent_30_current])
+
+            # p0 index is -30% from connect point or start of the previous line:
+            percent_30_prev = int(len_prev_array * 0.3)
+            if start_array_point_index <= percent_30_prev:
+                curve_start_point = 0
             else:
-                beep = start_array_point_index - 5
-            p0 = np.array(prev_array[beep])
-            if len(prev_array) <= (start_array_point_index + 5):
-                beep = len(prev_array) - 1
-            else:
-                beep = start_array_point_index + 5
-            p3 = np.array(prev_array[beep])
+                curve_start_point = start_array_point_index - percent_30_prev
+            p0 = np.array(prev_array[curve_start_point])
+
+            # p1 is 2.5% of average line length in direction half way from current line to previous line, away from the connect point
+            average_line_length_25 = int(((len_prev_array + len_self_array) // 2)*0.015)
+            c = (self.absolute_angle - prev_angle) % 360
+            p1_angle = self.absolute_angle + ((180-c)//2)
+            p1_dir_radians = np.radians(p1_angle)
+            dx = average_line_length_25 * np.cos(p1_dir_radians)
+            dy = average_line_length_25 * np.sin(p1_dir_radians)
             p1 = np.array(self.start)
-            new_array = self.curve_between_lines(p0, p1, p2, p3, self.colour)
+            p1 = p1 + np.array([dx, dy])
+
+            # p4 index is +10% from connect point or end of the previous line:
+            if len(prev_array) <= (start_array_point_index + percent_30_prev):
+                curve_start_point = len(prev_array) - 1
+            else:
+                curve_start_point = start_array_point_index + percent_30_prev
+            p4 = np.array(prev_array[curve_start_point])
+
+            # p1 is 5% of average line length in direction half way from previous line to current line, away from the connect point
+            p3_angle = prev_angle + c//2
+            p3_dir_radians = np.radians(p3_angle)
+            dx = average_line_length_25 * np.cos(p3_dir_radians)
+            dy = average_line_length_25 * np.sin(p3_dir_radians)
+            p3 = np.array(self.start)
+            p3 = p3 + np.array([dx, dy])
+            new_array = self.curve_between_lines(p0, p1, p2, p3, p4, self.colour)
             x_values, y_values = new_array[:, 0], new_array[:, 1]
 
         # Plot each small segment with the varying thickness
         if len(new_array) > 0:
-            # Plot the first 40 points as one segment
+            # Plot the first 40 points as one segment (blend lines)
             if self.start_mode == StartMode.CONNECT_MID:
-                blend_thicknesses = np.linspace(prev_thickness_array[start_array_point_index], self.thickness_array[10], 20)
+                blend_thicknesses = np.linspace(prev_thickness_array[start_array_point_index], self.thickness_array[percent_30_current], 20)
             for i in range(min(39, len(x_values))):
                 this_colour = self.colour
                 if self.start_mode == StartMode.CONNECT_MID:
                     if i<20:
                         thickness = blend_thicknesses[i]
                     else:
-                        thickness = blend_thicknesses[-(i-20)]
+                        thickness = blend_thicknesses[-(i-19)]
                 elif self.start_mode == StartMode.SPLIT:
                     thickness = self.thickness_array [0]
                     this_colour = prev_colour
@@ -176,7 +227,7 @@ class LineSegment(Segment):
             # Plot remaining points
             for i in range(40, len(x_values)-1):
                 if self.start_mode == StartMode.CONNECT_MID or self.start_mode == StartMode.SPLIT:
-                    thickness = self.thickness_array[i - 41]
+                    thickness = self.thickness_array[i - 40]
                 else:
                     thickness = self.thickness_array[i]
 
@@ -340,7 +391,7 @@ def create_segment(start, start_mode, segment_type, end_thickness, relative_angl
             star_type=kwargs.get('star_type', StarType.STRAIGHT),
         )
     elif segment_type == SegmentType.RANDOM_SHAPE:
-        return RandomShapeSegment(
+        return IrregularPolygonSegment(
             segment_type=segment_type,
             start=start,
             start_mode=start_mode,
@@ -395,8 +446,8 @@ def random_segment(eyeliner_wing = False, prev_colour=None,segment_number = 0, s
                  for i in range(n_of_corners)])
             collinear = are_points_collinear(corners)
 
-        lines_list = [(RandomShapeLineSegment(random_curviness(0.4, 0.1),
-                                              random_normal_within_range(0.5, 0.15, relative_location_range)))
+        lines_list = [(IrregularPolygonEdgeSegment(random_curviness(0.4, 0.1),
+                                                   random_normal_within_range(0.5, 0.15, relative_location_range)))
                       for i in range(n_of_corners)]
         centroid = (
         sum(point[0] for point in corners) / n_of_corners, sum(point[1] for point in corners) / n_of_corners)

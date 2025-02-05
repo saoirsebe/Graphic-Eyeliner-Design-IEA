@@ -25,7 +25,7 @@ def are_points_collinear(points, tolerance=0.1):
     return np.all(np.abs(cross_products) < tolerance)
 
 
-class RandomShapeLineSegment:
+class IrregularPolygonEdgeSegment:
     def __init__(self, curviness, curve_location):
         self.curviness = curviness
         self.curve_location = curve_location
@@ -77,7 +77,7 @@ class RandomShapeLineSegment:
                 )
         return self.points_array
 
-class RandomShapeSegment(Segment):
+class IrregularPolygonSegment(Segment):
     """Line segment with additional properties specific to a line."""
     def __init__(self, segment_type, start, start_mode, end_thickness, relative_angle, colour, bounding_size, corners, lines_list):
         super().__init__(segment_type, start, start_mode, end_thickness, relative_angle, colour)

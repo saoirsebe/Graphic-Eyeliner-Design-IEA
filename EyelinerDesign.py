@@ -4,7 +4,7 @@ from conda.common.configuration import raise_errors
 from AnalyseDesign import analyse_negative, check_overlaps, shape_overlaps, check_segment_overlaps, check_design_overlaps
 from Segments import *
 import cProfile
-from RandomShapeSegment import are_points_collinear
+from IrregularPolygonSegment import are_points_collinear
 
 class EyelinerDesign:   #Creates overall design, calculates start points, renders each segment by calling their render function
     def __init__(self, root_node):
@@ -231,7 +231,7 @@ def random_lines_corners_list(n_of_corners):
              for i in range(n_of_corners)])
         collinear = are_points_collinear(corners)
 
-    lines_list = [(RandomShapeLineSegment(random_curviness(0.45, 0.15), random_normal_within_range(0.5, 0.15, relative_location_range)))
+    lines_list = [(IrregularPolygonEdgeSegment(random_curviness(0.45, 0.15), random_normal_within_range(0.5, 0.15, relative_location_range)))
                   for i in range(n_of_corners)]
     centroid = (sum(point[0] for point in corners) / n_of_corners, sum(point[1] for point in corners) / n_of_corners)
     sorted_corners = sorted(corners, key=lambda point: angle_from_center(centroid, point))
@@ -280,7 +280,7 @@ fig.show()
 
 #design = EyelinerDesign(random_random_shape())
 #design.render_design()
-line = RandomShapeLineSegment(0.7, 0.2)
+line = IrregularPolygonEdgeSegment(0.7, 0.2)
 start= np.array((-1.0,2.0))
 end = np.array((3.0,2.0))
 line.render((0,0), start, end, 'green', 3, ax_n)
@@ -294,26 +294,19 @@ line.render(np.array([line.start]), 0, 'red', line.end_thickness, ax_n)
 
 cProfile.run('random_random_shape()')
 """
-"""
+
 fig, ax_n = plt.subplots(figsize=(3, 3))
-line = LineSegment(SegmentType.LINE, (5,1), StartMode.JUMP, 4, 0, 4, 4, 'red', 0.5, False, 0.5, 0, 0)
-line.render(np.array([line.start]), 0, 'red', line.end_thickness, ax_n)
-line2 = LineSegment(SegmentType.LINE, (4,1), StartMode.JUMP, 4, 0, 2, 2, 'blue', 0.5, False, 0.5, 0, 0)
-line2.render(line.points_array, line.absolute_angle, 'red', line.thickness_array, ax_n)
-
-star = StarSegment(SegmentType.STAR, (6,0),"purple",StarType.CURVED,0.5,1,5,0.2,StartMode.JUMP,2,20)
-star.render(line2.points_array, line2.absolute_angle, 'blue', line2.thickness_array, ax_n)
+line = LineSegment(SegmentType.LINE, (5,1), StartMode.JUMP, 4, 20, 4, 4, 'red', 0.5, False, 0.5, 0, 0)
+line2 = LineSegment(SegmentType.LINE, (4,1), StartMode.CONNECT_MID, 4, 50, 2, 2, 'blue', 0.5, False, 0.5, 0.5, 0)
+line3 = LineSegment(SegmentType.LINE, (5,1), StartMode.SPLIT, 4, 90, 4, 4, 'red', 0.5, False, 0.5, 0, 0.5)
 
 
-#overlaps = check_segment_overlaps(line,line2)
-#print("The overlaps:", overlaps)
-
-fig.show()
 
 design = EyelinerDesign(line)
 line.add_child_segment(line2)
-line.add_child_segment(star)
-design.render_design()
+line2.add_child_segment(line3)
+fig = design.render_design(ax_n)
+fig.show()
+
 negative_score = analyse_negative(design)
 print("negative_score:",negative_score)
-"""

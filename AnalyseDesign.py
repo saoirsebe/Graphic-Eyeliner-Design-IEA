@@ -4,6 +4,9 @@ from A import SegmentType, StartMode, min_fitness_score, max_shape_overlaps, upp
 from AestheticAnalysis import analyse_design_shapes
 import numpy as np
 
+from ParentSegment import point_in_array
+
+
 def remove_ends_of_line(line1_array, line2_array):
     first_2 = int(len(line1_array) * 0.02)
     line1_array = line1_array[:-first_2]
@@ -32,6 +35,10 @@ def check_segment_overlaps(segment1, segment2, segment1_tree = None):
     if segment2.segment_type == SegmentType.LINE:
         first_25 = int(len(segment2_array) * 0.025)
         segment2_array = segment2_array[first_25:-first_25]
+        if segment2.start_mode == StartMode.SPLIT:
+            #Remove the split point from array as it will overlap with the previous segment:
+            split_point_point_index = point_in_array(segment2.points_array, segment2.split_point)
+            segment2_array = np.delete(segment2_array, split_point_point_index, axis=0)
 
     if segment1_tree is None:
         segment1_array = segment1.points_array
@@ -94,8 +101,9 @@ def percentage_is_in_eye(segment):
         print("first2:",first_2)
         print("Segment", segment)
 
-    upper_y_interp = np.interp(segment_array[:, 0], upper_eyelid_x, upper_eyelid_y)
-    lower_y_interp = np.interp(segment_array[:, 0], lower_eyelid_x, lower_eyelid_y)
+    tolerance = 0.01
+    upper_y_interp = np.interp(segment_array[:, 0], upper_eyelid_x, upper_eyelid_y) - tolerance
+    lower_y_interp = np.interp(segment_array[:, 0], lower_eyelid_x, lower_eyelid_y) + tolerance
     inside = (lower_y_interp <= segment_array[:, 1]) & (segment_array[:, 1] <= upper_y_interp)
     overlap = np.sum(inside)
     #score = int((overlap / len(segment_array)) * 100)
