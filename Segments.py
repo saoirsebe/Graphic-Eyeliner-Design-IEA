@@ -426,11 +426,12 @@ def random_segment_colour(prev_colour = None):
 
 def random_eyeliner_lines_corners():
     start_at_corner = random.choice([True, False])
-    section_of_upper_eyelid_coords = int(0.4* len(upper_eyelid_coords))
-    p2 = upper_eyelid_coords[random.randint(-section_of_upper_eyelid_coords, -1)]
+    upper_eyelid_coords_40 = int(0.4* len(upper_eyelid_coords))
+    upper_eyelid_coords_10 = int(0.1 * len(upper_eyelid_coords))
+    p2 = upper_eyelid_coords[random.randint(-upper_eyelid_coords_40, -upper_eyelid_coords_10)]
     p0 = np.array(eye_corner_start)
     # p1 = wing length in wing direction away from the corner of the eye:
-    p1_angle = random_normal_within_range(22.5, 40, direction_range)
+    p1_angle = random_normal_within_range(22.5, 20, direction_range)
     p1_dir_radians = np.radians(p1_angle)
     wing_length = random_normal_within_range(3, 2, (0.5,5))
     dx = wing_length * np.cos(p1_dir_radians)
@@ -441,7 +442,7 @@ def random_eyeliner_lines_corners():
         eyeliner_corners = np.array([p0, p1, p2])
         eyeliner_lines = [IrregularPolygonEdgeSegment(random_normal_within_range(-0.1, 0.1,(-0.2,0)),random_normal_within_range(0.5, 0.15,relative_location_range)),
                           IrregularPolygonEdgeSegment(random_normal_within_range(0.2,0.2, curviness_range), random_normal_within_range(0.5, 0.15,relative_location_range)),
-                          IrregularPolygonEdgeSegment(0.1,0.5)]
+                          IrregularPolygonEdgeSegment(0.3,0.3)]
     else:
         lower_eyelid_coords_section = int(0.1 * len(lower_eyelid_coords))
         p3 = lower_eyelid_coords[random.randint(-lower_eyelid_coords_section, -1)]
@@ -450,7 +451,7 @@ def random_eyeliner_lines_corners():
         eyeliner_lines = [IrregularPolygonEdgeSegment(0, 0.5),
                           IrregularPolygonEdgeSegment(random_normal_within_range(-0.1, 0.1,(-0.2,0)), random_normal_within_range(0.5, 0.15, relative_location_range)),
                           IrregularPolygonEdgeSegment(random_normal_within_range(0.2,0.2, curviness_range), random_normal_within_range(0.5, 0.15,relative_location_range)),
-                          IrregularPolygonEdgeSegment(0.1,0.5)]
+                          IrregularPolygonEdgeSegment(0.3,0.3)]
 
     return eyeliner_corners, eyeliner_lines, p0
 
