@@ -33,12 +33,12 @@ def check_shape_edge_overlaps(segment1_array, segment2_array):
 def check_segment_overlaps(segment1, segment2, segment1_tree = None):
     segment2_array = segment2.points_array
     if segment2.segment_type == SegmentType.LINE:
-        first_25 = int(len(segment2_array) * 0.025)
-        segment2_array = segment2_array[first_25:-first_25]
         if segment2.start_mode == StartMode.SPLIT:
             #Remove the split point from array as it will overlap with the previous segment:
             split_point_point_index = point_in_array(segment2.points_array, segment2.split_point)
             segment2_array = np.delete(segment2_array, split_point_point_index, axis=0)
+        first_25 = int(len(segment2_array) * 0.025)
+        segment2_array = segment2_array[first_25:-first_25]
 
     if segment1_tree is None:
         segment1_array = segment1.points_array
@@ -62,7 +62,8 @@ def check_design_overlaps(i, segments):
     if len(segments)==0:
         print("len(segments)==0")
     if len(segment_array) <50:
-        print(f"segment {segment.segment_type} if length", len(segment_array))
+        print(f"segment {segment.segment_type} is length", len(segment_array))
+        print("segment_array:", segment_array)
     if segment.segment_type == SegmentType.LINE:
         first_25 = int(len(segment_array) * 0.025)
         segment_array = segment_array[first_25:-first_25]
@@ -80,7 +81,7 @@ def check_design_overlaps(i, segments):
 
     return overlaps
 
-def percentage_is_in_eye(segment):
+def is_in_eye(segment):
     segment_array = segment.points_array
     #Remove ends so segment can touch eye but not go in
     if segment.segment_type == SegmentType.LINE:
@@ -125,10 +126,9 @@ def analyse_negative(design):
     score = 0  # Count how many overlaps there are in this gene
     # Compare each pair of segments for overlap
     for i in range(len(segments)):
-        eye_overlaps = percentage_is_in_eye(segments[i])
+        eye_overlaps = is_in_eye(segments[i])
         if eye_overlaps>0:
             print("percentage_in_eye=", eye_overlaps)
-        if eye_overlaps > 5:
             return min_fitness_score *2
         else:
             score-=eye_overlaps

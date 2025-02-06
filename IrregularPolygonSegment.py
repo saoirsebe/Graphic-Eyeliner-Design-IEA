@@ -79,7 +79,7 @@ class IrregularPolygonEdgeSegment:
 
 class IrregularPolygonSegment(Segment):
     """Line segment with additional properties specific to a line."""
-    def __init__(self, segment_type, start, start_mode, end_thickness, relative_angle, colour, bounding_size, corners, lines_list):
+    def __init__(self, segment_type, start, start_mode, end_thickness, relative_angle, colour, bounding_size, corners, lines_list, is_eyeliner_wing=False):
         super().__init__(segment_type, start, start_mode, end_thickness, relative_angle, colour)
         self.segment_type = SegmentType.RANDOM_SHAPE
         self.start = start
@@ -88,6 +88,8 @@ class IrregularPolygonSegment(Segment):
         self.corners = corners
         self.lines_list = lines_list
         self.points_array = np.array([])  # Initialize as an empty array
+        self.to_scale_corners = np.array([])
+        self.is_eyeliner_wing = is_eyeliner_wing
 
 
     def rotated_corners(self,corners):
@@ -135,6 +137,7 @@ class IrregularPolygonSegment(Segment):
         to_scale_corners = np.array([(corner[0] * self.bounding_size[0], corner[1] * self.bounding_size[1]) for corner in self.corners])
         to_scale_corners= self.rotated_corners(to_scale_corners)
         to_scale_corners = self.move_corners(to_scale_corners)
+        self.to_scale_corners = to_scale_corners
 
         start_point = np.array(to_scale_corners[0])
         n_of_corners = len(self.corners)

@@ -3,8 +3,8 @@ from enum import Enum
 
 import numpy as np
 
-min_fitness_score = -2
-min_segment_score = -5
+min_fitness_score = -3
+min_segment_score = -2
 initial_gene_pool_size = 200
 node_re_gen_max = 12
 #Parameter ranges:
@@ -105,6 +105,8 @@ def draw_eye_shape(ax_n):
 
 upper_x, upper_y = get_quadratic_points(-0.5, 0, 1, -1, 1)
 upper_eyelid_x, upper_eyelid_y = np.array(upper_x) * 3, np.array(upper_y) * 3
+upper_eyelid_coords = np.column_stack((upper_eyelid_x, upper_eyelid_y))
 
 lower_x, lower_y = get_quadratic_points(0.5, 0, 0, -1, 1)
 lower_eyelid_x, lower_eyelid_y = np.array(lower_x) * 3, np.array(lower_y) * 3
+lower_eyelid_coords = np.column_stack((lower_eyelid_x, lower_eyelid_y))

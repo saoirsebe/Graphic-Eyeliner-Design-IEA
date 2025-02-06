@@ -55,7 +55,7 @@ class LineSegment(Segment):
         # Combine the points to form a closed boundary
         boundary_x = np.concatenate([left_x, right_x[::1]])  # Combine left and reversed right x
         boundary_y = np.concatenate([left_y, right_y[::1]])  # Combine left and reversed right y
-        plt.fill(boundary_x, boundary_y, color=colour, alpha=0.5)
+        plt.fill(boundary_x, boundary_y, color=colour, alpha=1)
         return np.concatenate((left_curve, right_curve, self.points_array), axis=0)
 
 
@@ -114,7 +114,7 @@ class LineSegment(Segment):
 
             len_prev_array = len(prev_array)
             """Add curve from 10% from end of prev line to split point"""
-            if len_prev_array > num_points_range[1]: #If prev array is a line
+            if ax_n and len_prev_array > num_points_range[1]: #If prev array is a line
                 percent_30_prev = int(len_prev_array * 0.3)
                 p2 = np.array(prev_array[-percent_30_prev])
 
@@ -158,7 +158,7 @@ class LineSegment(Segment):
         self.thickness_array = np.linspace(self.start_thickness, self.end_thickness, num_steps) #Render a line segment with thickness tapering from start to end
         """Add curve from 10% from each side of connect (start) point on previous line to 10% up current line"""
         len_prev_array = len(prev_array)
-        if self.start_mode == StartMode.CONNECT_MID and len_prev_array>num_points_range[1]:#If prev array is a line
+        if ax_n and self.start_mode == StartMode.CONNECT_MID and len_prev_array>num_points_range[1]:#If prev array is a line
             len_self_array = len(self.points_array)
             percent_30_current = int(len_self_array * 0.3)
             p2 = np.array(self.points_array[percent_30_current])
@@ -198,8 +198,8 @@ class LineSegment(Segment):
             new_array = self.curve_between_lines(p0, p1, p2, p3, p4, self.colour)
             x_values, y_values = new_array[:, 0], new_array[:, 1]
 
-        # Plot each small segment with the varying thickness
-        if len(new_array) > 0:
+        # Plot each segment with the varying thickness
+        if len(new_array) > 0 and ax_n:
             # Plot the first 40 points as one segment (blend lines)
             if self.start_mode == StartMode.CONNECT_MID:
                 blend_thicknesses = np.linspace(prev_thickness_array[start_array_point_index], self.thickness_array[percent_30_current], 20)
@@ -216,15 +216,14 @@ class LineSegment(Segment):
                 else:
                     thickness = self.thickness_array [i]
 
-                if ax_n:
-                    ax_n.plot(
-                        [x_values[i], x_values[i + 1]], [y_values[i], y_values[i + 1]],
-                        color=this_colour,
-                        linewidth=thickness,
-                        solid_capstyle='butt',
-                    )
+                ax_n.plot(
+                    [x_values[i], x_values[i + 1]], [y_values[i], y_values[i + 1]],
+                    color=this_colour,
+                    linewidth=thickness,
+                    solid_capstyle='butt',
+                )
 
-            # Plot remaining points
+            # Plot remaining points (segment)
             for i in range(40, len(x_values)-1):
                 if self.start_mode == StartMode.CONNECT_MID or self.start_mode == StartMode.SPLIT:
                     thickness = self.thickness_array[i - 40]
@@ -291,7 +290,7 @@ class LineSegment(Segment):
 class StarSegment(Segment):
     """Line segment with additional properties specific to a line."""
     def __init__(self, segment_type, start, colour, star_type, radius, arm_length, num_points, asymmetry, start_mode, end_thickness, relative_angle):
-        super().__init__(segment_type, start, start_mode, end_thickness,relative_angle, colour)
+        super().__init__(segment_type, start, start_mode, end_thickness, relative_angle, colour)
         self.segment_type = SegmentType.STAR
         self.center = self.start
         self.radius = radius
@@ -323,11 +322,11 @@ class StarSegment(Segment):
         transformation_vector = (self.center[0] - start_coord[0], self.center[1] - start_coord[1])
         #self.end = (end_coord[0]+transformation_vector[0], end_coord[1]+transformation_vector[1])
         transformed_star_points = np.array([(point[0] + transformation_vector[0], point[1] + transformation_vector[1]) for point in star_points])
+        self.points_array = transformed_star_points
         if ax_n:
             ax_n.plot(transformed_star_points[:, 0], transformed_star_points[:, 1], self.colour, lw=self.end_thickness)  # Plot all points as a single object
         transformed_arm_points = np.array([(point[0] + transformation_vector[0], point[1] + transformation_vector[1]) for point in star_arm_points])
         self.arm_points_array = transformed_arm_points
-        self.points_array = transformed_star_points
 
     def mutate(self,mutation_rate=0.05):
         #(self, segment_type, start, colour, star_type, radius, arm_length, num_points, asymmetry, start_mode, end_thickness, relative_angle)
@@ -401,36 +400,105 @@ def create_segment(start, start_mode, segment_type, end_thickness, relative_angl
             bounding_size= kwargs.get('bounding_size', (1,1)),
             corners = kwargs.get('corners', []),
             lines_list = kwargs.get('lines_list', []),
+            is_eyeliner_wing = kwargs.get('is_eyeliner_wing', False),
         )
     else:
         raise ValueError(f"Unsupported segment type: {segment_type}")
 
+def generate_valid_start():
+    while True:
+        x = random.uniform(*start_x_range)
+        y = random.uniform(*start_y_range)
+        upper_y_interp = np.interp(x, upper_eyelid_x, upper_eyelid_y)  # Interpolated upper eyelid y-value at x
+        lower_y_interp = np.interp(x, lower_eyelid_x, lower_eyelid_y)  # Interpolated lower eyelid y-value at x
 
-def random_segment(eyeliner_wing = False, prev_colour=None,segment_number = 0, segment_start=(random.uniform(*start_x_range), random.uniform(*start_y_range))):
-    r = random.random()
-    #If we want to start with an eyeliner wing, the first two segments must be lines:
-    if eyeliner_wing:
-        new_segment_type = SegmentType.LINE
-    else:
-        if r < 0.65:
-            new_segment_type = SegmentType.LINE
-        elif r<0.8:
-            new_segment_type = SegmentType.STAR
-        else:
-            new_segment_type = SegmentType.RANDOM_SHAPE
+        if not (lower_y_interp <= y <= upper_y_interp):  # If y is outside the forbidden area
+            return (x, y)
 
-    #Pick colour, more likely to be the previous colour:
+def random_segment_colour(prev_colour = None):
     if prev_colour is None:
         random_colour = random.choice(colour_options)
     else:
-        #weights = [0.6 if colour == prev_colour else 0.1 for colour in colour_options]
-        #random_colour = random.choices(colour_options, weights=weights, k=1)[0]
+        # weights = [0.6 if colour == prev_colour else 0.1 for colour in colour_options]
+        # random_colour = random.choices(colour_options, weights=weights, k=1)[0]
         random_colour = prev_colour if random.random() < 0.6 else random.choice(colour_options)
+    return random_colour
 
+def random_eyeliner_lines_corners():
+    start_at_corner = random.choice([True, False])
+    section_of_upper_eyelid_coords = int(0.4* len(upper_eyelid_coords))
+    p2 = upper_eyelid_coords[random.randint(-section_of_upper_eyelid_coords, -1)]
+    p0 = np.array(eye_corner_start)
+    # p1 = wing length in wing direction away from the corner of the eye:
+    p1_angle = random_normal_within_range(22.5, 40, direction_range)
+    p1_dir_radians = np.radians(p1_angle)
+    wing_length = random_normal_within_range(3, 2, (0.5,5))
+    dx = wing_length * np.cos(p1_dir_radians)
+    dy = wing_length * np.sin(p1_dir_radians)
+    p1 = p0 + np.array([dx, dy])
+
+    if start_at_corner:
+        eyeliner_corners = np.array([p0, p1, p2])
+        eyeliner_lines = [IrregularPolygonEdgeSegment(random_normal_within_range(-0.1, 0.1,(-0.2,0)),random_normal_within_range(0.5, 0.15,relative_location_range)),
+                          IrregularPolygonEdgeSegment(random_normal_within_range(0.2,0.2, curviness_range), random_normal_within_range(0.5, 0.15,relative_location_range)),
+                          IrregularPolygonEdgeSegment(0.1,0.5)]
+    else:
+        lower_eyelid_coords_section = int(0.1 * len(lower_eyelid_coords))
+        p3 = lower_eyelid_coords[random.randint(-lower_eyelid_coords_section, -1)]
+        eyeliner_corners = np.array([p0, p3, p1, p2])
+
+        eyeliner_lines = [IrregularPolygonEdgeSegment(0, 0.5),
+                          IrregularPolygonEdgeSegment(random_normal_within_range(-0.1, 0.1,(-0.2,0)), random_normal_within_range(0.5, 0.15, relative_location_range)),
+                          IrregularPolygonEdgeSegment(random_normal_within_range(0.2,0.2, curviness_range), random_normal_within_range(0.5, 0.15,relative_location_range)),
+                          IrregularPolygonEdgeSegment(0.1,0.5)]
+
+    return eyeliner_corners, eyeliner_lines, p0
+
+def make_eyeliner_wing(random_colour):
+    while True:
+        corners, lines, wing_start = random_eyeliner_lines_corners()
+        new_segment = create_segment(
+            segment_type=SegmentType.RANDOM_SHAPE,
+            start=wing_start,
+            start_mode=StartMode.CONNECT if random.random() < 0.3 else StartMode.JUMP,
+            end_thickness=random_normal_within_range(2, 2, thickness_range),
+            relative_angle=0,
+            colour=random_colour,
+            bounding_size=(1,1),
+            corners=corners,
+            lines_list=lines,
+            is_eyeliner_wing = True
+        )
+        prev_array = np.array([new_segment.start])
+        prev_angle = 0
+        prev_colour = new_segment.colour
+        prev_end_thickness = new_segment.end_thickness
+        new_segment.render(prev_array, prev_angle, prev_colour, prev_end_thickness)
+        new_shape_overlaps = shape_overlaps(new_segment.lines_list)
+        print("Eyeliner shape overlaps:", new_shape_overlaps)
+        if new_shape_overlaps <= max_shape_overlaps:
+            return new_segment
+
+def random_segment(prev_colour=None, segment_start=None):
     def random_curviness(mean=0.3, stddev=0.25):
         return random_normal_within_range(mean, stddev, curviness_range)
     def random_curve_location():
         return random_normal_within_range(0.5, 0.25, relative_location_range)
+
+    if segment_start is None:
+        segment_start = generate_valid_start()
+    r = random.random()
+    #If we want to start with an eyeliner wing, the segment must be an irregular polygon:
+
+    random_colour = random_segment_colour(prev_colour)
+
+    if r < 0.65:
+        new_segment_type = SegmentType.LINE
+    elif r<0.8:
+        new_segment_type = SegmentType.STAR
+    else:
+        new_segment_type = SegmentType.RANDOM_SHAPE
+
 
     def angle_from_center(center, point):
         dx = point[0] - center[0]
@@ -457,11 +525,8 @@ def random_segment(eyeliner_wing = False, prev_colour=None,segment_number = 0, s
 
     if new_segment_type == SegmentType.LINE:
         random_start_mode = random.choice(list(StartMode))
-        if segment_start == eye_corner_start and eyeliner_wing: #First segment (line) in eyeliner wing:
-            random_relative_angle = random_normal_within_range(22.5, 40, direction_range)
-        elif eyeliner_wing and segment_number == 1: #Second segment in eyeliner wing:
-            random_relative_angle = random_normal_within_range(157.5, 40, direction_range)
-            random_start_mode = StartMode.CONNECT
+        if segment_start == eye_corner_start:
+            random_relative_angle = random_normal_within_range(22.5, 20, direction_range)
         elif random_start_mode == StartMode.CONNECT:
             random_relative_angle = random_from_two_distributions(135, 60, 225, 60, direction_range)
         elif random_start_mode == StartMode.CONNECT_MID:
@@ -501,7 +566,7 @@ def random_segment(eyeliner_wing = False, prev_colour=None,segment_number = 0, s
             colour=random_colour,
         )
     else:
-        new_shape_overlaps = 10
+        new_shape_overlaps = max_shape_overlaps+1
         while new_shape_overlaps > max_shape_overlaps:
             n_of_corners = round(random_normal_within_range(5, 1, num_points_range))
             corners, lines = random_lines_corners_list(n_of_corners)

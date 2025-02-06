@@ -122,7 +122,7 @@ class EyelinerDesign:   #Creates overall design, calculates start points, render
             # if segment is a star then pass in the arm points that the next segment should start at:
             prev_array = prev_segment.arm_points_array
         elif prev_segment.segment_type == SegmentType.RANDOM_SHAPE:
-            prev_array = prev_segment.corners
+            prev_array = prev_segment.to_scale_corners
 
         prev_angle = prev_segment.absolute_angle
         prev_colour = prev_segment.colour
@@ -238,11 +238,14 @@ def random_lines_corners_list(n_of_corners):
 
     return sorted_corners, lines_list
 
+
 def random_random_shape():
     new_shape_overlaps = 10
     while new_shape_overlaps>max_shape_overlaps:
         random_colour = random.choice(colour_options)
-        segment_start=(random.uniform(*start_x_range), random.uniform(*start_y_range))
+        #Start not inside the eye:
+        segment_start=generate_valid_start()
+
         n_of_corners = round(random_normal_within_range(5,1.5, num_points_range))
         corners, lines = random_lines_corners_list(n_of_corners)
         new_segment = create_segment(
@@ -294,7 +297,7 @@ line.render(np.array([line.start]), 0, 'red', line.end_thickness, ax_n)
 
 cProfile.run('random_random_shape()')
 """
-
+"""
 fig, ax_n = plt.subplots(figsize=(3, 3))
 line = LineSegment(SegmentType.LINE, (5,1), StartMode.JUMP, 4, 20, 4, 4, 'red', 0.5, False, 0.5, 0, 0)
 line2 = LineSegment(SegmentType.LINE, (4,1), StartMode.CONNECT_MID, 4, 50, 2, 2, 'blue', 0.5, False, 0.5, 0.5, 0)
@@ -310,3 +313,4 @@ fig.show()
 
 negative_score = analyse_negative(design)
 print("negative_score:",negative_score)
+"""
