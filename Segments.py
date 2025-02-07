@@ -16,10 +16,8 @@ class LineSegment(Segment):
         self.start_thickness = start_thickness
         self.curviness = curviness
         self.curve_left = curve_left
-        if curviness>0:  #If curved line then curve direction else no curve direction
-            self.curve_location = curve_location
-        else:
-            self.curve_location = 0
+        self.curve_location = curve_location
+
         if start_mode == StartMode.CONNECT_MID:
             self.start_location = start_location
             self.split_point = 0
@@ -61,7 +59,6 @@ class LineSegment(Segment):
 
     def render(self, prev_array, prev_angle, prev_colour, prev_thickness_array, ax_n=None):
         new_array = []
-        num_steps = 50  # Number of points to create a smooth thickness transition/ curve
         if self.start_mode == StartMode.CONNECT and len(prev_array)>15 or self.start_mode == StartMode.SPLIT and len(prev_array)>15:
             self.start = (prev_array[-1][0], prev_array[-1][1])
             if prev_thickness_array.size == 1:
@@ -81,7 +78,7 @@ class LineSegment(Segment):
         self.calculate_end(prev_angle)  # Calculate the endpoint
 
         if self.curviness>0:
-            t_values = np.linspace(0, 1, num_steps)
+            t_values = np.linspace(0, 1, line_num_points)
             p0 = np.array(self.start)
             p2 = np.array(self.end)
             p1 = p0 + (self.curve_location * un_normalised_vector_direction(p0,p2)) #moves curve_location away from P0 towards P2 relative to length of curve segment
@@ -98,8 +95,8 @@ class LineSegment(Segment):
             self.points_array = np.array([bezier_curve_t(t, p0, p1, p2) for t in t_values])
             x_values, y_values = self.points_array[:, 0], self.points_array[:, 1]
         else:
-            x_values = np.linspace(self.start[0], self.end[0], num_steps)
-            y_values = np.linspace(self.start[1], self.end[1], num_steps)
+            x_values = np.linspace(self.start[0], self.end[0], line_num_points)
+            y_values = np.linspace(self.start[1], self.end[1], line_num_points)
             self.points_array = np.column_stack((x_values, y_values))
             self.points_array = np.round(self.points_array, 3)
 
@@ -155,7 +152,7 @@ class LineSegment(Segment):
                 new_array = self.curve_between_lines(p0, p1, p2, p3, p4, prev_colour)
                 x_values, y_values = new_array[:, 0], new_array[:, 1]
 
-        self.thickness_array = np.linspace(self.start_thickness, self.end_thickness, num_steps) #Render a line segment with thickness tapering from start to end
+        self.thickness_array = np.linspace(self.start_thickness, self.end_thickness, line_num_points) #Render a line segment with thickness tapering from start to end
         """Add curve from 10% from each side of connect (start) point on previous line to 10% up current line"""
         len_prev_array = len(prev_array)
         if ax_n and self.start_mode == StartMode.CONNECT_MID and len_prev_array>num_points_range[1]:#If prev array is a line
@@ -279,12 +276,9 @@ class LineSegment(Segment):
         else:
             self.curviness = self.mutate_val(self.curviness,curviness_range,mutation_rate)
 
-        if self.curviness > 0:
-            self.curve_direction = self.mutate_val(self.curve_direction,direction_range,mutation_rate)
-            self.curve_location = self.mutate_val(self.curve_location,relative_location_range,mutation_rate)
-        else:
-            self.curve_direction = 0
-            self.curve_location = 0
+        self.curve_left = self.mutate_choice(self.curve_left, [True, False], mutation_rate)
+        self.curve_location = self.mutate_val(self.curve_location,relative_location_range,mutation_rate)
+
 
 
 class StarSegment(Segment):
@@ -427,8 +421,8 @@ def random_segment_colour(prev_colour = None):
 def random_eyeliner_lines_corners():
     start_at_corner = random.choice([True, False])
     upper_eyelid_coords_40 = int(0.4* len(upper_eyelid_coords))
-    upper_eyelid_coords_10 = int(0.1 * len(upper_eyelid_coords))
-    p2 = upper_eyelid_coords[random.randint(-upper_eyelid_coords_40, -upper_eyelid_coords_10)]
+    upper_eyelid_coords_10 = int(0.05 * len(upper_eyelid_coords))
+    p2 = upper_eyelid_coords[random.randint(-upper_eyelid_coords_40, -upper_eyelid_coords_10)] +0.05
     p0 = np.array(eye_corner_start)
     # p1 = wing length in wing direction away from the corner of the eye:
     p1_angle = random_normal_within_range(22.5, 20, direction_range)
@@ -442,16 +436,16 @@ def random_eyeliner_lines_corners():
         eyeliner_corners = np.array([p0, p1, p2])
         eyeliner_lines = [IrregularPolygonEdgeSegment(random_normal_within_range(-0.1, 0.1,(-0.2,0)),random_normal_within_range(0.5, 0.15,relative_location_range)),
                           IrregularPolygonEdgeSegment(random_normal_within_range(0.2,0.2, curviness_range), random_normal_within_range(0.5, 0.15,relative_location_range)),
-                          IrregularPolygonEdgeSegment(0.3,0.3)]
+                          IrregularPolygonEdgeSegment(0.3,0.4)]
     else:
         lower_eyelid_coords_section = int(0.1 * len(lower_eyelid_coords))
-        p3 = lower_eyelid_coords[random.randint(-lower_eyelid_coords_section, -1)]
+        p3 = lower_eyelid_coords[random.randint(-lower_eyelid_coords_section, -1)] -0.05
         eyeliner_corners = np.array([p0, p3, p1, p2])
 
         eyeliner_lines = [IrregularPolygonEdgeSegment(0, 0.5),
                           IrregularPolygonEdgeSegment(random_normal_within_range(-0.1, 0.1,(-0.2,0)), random_normal_within_range(0.5, 0.15, relative_location_range)),
                           IrregularPolygonEdgeSegment(random_normal_within_range(0.2,0.2, curviness_range), random_normal_within_range(0.5, 0.15,relative_location_range)),
-                          IrregularPolygonEdgeSegment(0.3,0.3)]
+                          IrregularPolygonEdgeSegment(0.3,0.4)]
 
     return eyeliner_corners, eyeliner_lines, p0
 
@@ -476,8 +470,8 @@ def make_eyeliner_wing(random_colour):
         prev_end_thickness = new_segment.end_thickness
         new_segment.render(prev_array, prev_angle, prev_colour, prev_end_thickness)
         new_shape_overlaps = shape_overlaps(new_segment.lines_list)
-        print("Eyeliner shape overlaps:", new_shape_overlaps)
-        if new_shape_overlaps <= max_shape_overlaps:
+        #print("Eyeliner shape overlaps:", new_shape_overlaps)
+        if not new_shape_overlaps > max_shape_overlaps:
             return new_segment
 
 def random_segment(prev_colour=None, segment_start=None):
@@ -511,7 +505,7 @@ def random_segment(prev_colour=None, segment_start=None):
         # Check if points are collinear within tolerance
         while collinear:
             corners = np.array(
-                [(random.uniform(*edge_initialisation_range), random.uniform(*edge_initialisation_range))
+                [(random.uniform(*corner_initialisation_range), random.uniform(*corner_initialisation_range))
                  for i in range(n_of_corners)])
             collinear = are_points_collinear(corners)
 

@@ -26,14 +26,16 @@ radius_range = (0, 1.5)
 arm_length_range = (0, 1.5)
 num_points_range = (3, 8)
 asymmetry_range = (0, 3)
-edge_initialisation_range = (0,1)
+corner_initialisation_range = (0,1)
 random_shape_size_range = (1,5)
 max_shape_overlaps = 0
 
 number_of_children_range= (0,3)
 max_segments = 20
 average_branch_length = 3.5
-eye_corner_start = (3,1.5)
+eye_corner_start = (3.05,1.5)
+
+line_num_points = 50
 
 class StarType(Enum):
     STRAIGHT = 'STRAIGHT'

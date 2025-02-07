@@ -128,7 +128,6 @@ def analyse_negative(design):
     for i in range(len(segments)):
         eye_overlaps = is_in_eye(segments[i])
         if eye_overlaps>0:
-            print("percentage_in_eye=", eye_overlaps)
             return min_fitness_score *2
         else:
             score-=eye_overlaps

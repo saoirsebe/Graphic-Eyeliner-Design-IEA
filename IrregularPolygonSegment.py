@@ -1,6 +1,8 @@
 import math
 import numpy as np
-from A import StartMode, SegmentType, un_normalised_vector_direction, normalised_vector_direction
+from A import StartMode, SegmentType, un_normalised_vector_direction, normalised_vector_direction, start_x_range, \
+    start_y_range, curviness_range, relative_location_range, random_shape_size_range, corner_initialisation_range, \
+    line_num_points
 from ParentSegment import Segment, point_in_array
 from StarGeneration import bezier_curve_t
 
@@ -32,10 +34,8 @@ class IrregularPolygonEdgeSegment:
         self.points_array = []
 
     def render(self,centroid, start_point, end_point, colour, thickness, ax_n=None):
-        num_steps = 50  # Number of points to create a smooth thickness transition/ curve
-
         if self.curviness>0:
-            t_values = np.linspace(0, 1, num_steps)
+            t_values = np.linspace(0, 1, line_num_points)
             p0 = start_point
             p2 = end_point
             line_direction = normalised_vector_direction(p0, p2)
@@ -62,8 +62,8 @@ class IrregularPolygonEdgeSegment:
             self.points_array = np.array([bezier_curve_t(t, p0, p1, p2) for t in t_values])
             x_values, y_values = self.points_array[:, 0], self.points_array[:, 1]
         else:
-            x_values = np.linspace(start_point[0], end_point[0], num_steps)
-            y_values = np.linspace(start_point[1], end_point[1], num_steps)
+            x_values = np.linspace(start_point[0], end_point[0], line_num_points)
+            y_values = np.linspace(start_point[1], end_point[1], line_num_points)
             self.points_array = np.column_stack((x_values, y_values))
             self.points_array = np.round(self.points_array, 3)
 
@@ -76,6 +76,26 @@ class IrregularPolygonEdgeSegment:
                     solid_capstyle='butt',
                 )
         return self.points_array
+
+    def mutate_val(self, value, range, mutation_rate):
+        if np.random.random() < mutation_rate:
+            mutation_magnitude = mutation_rate * (range[1] - range[0])
+            return min(range[1], max(range[0], value * (1 + np.random.normal(-mutation_magnitude, mutation_magnitude))))
+        else:
+            return value
+
+    def mutate(self, mutation_rate=0.05):
+        if self.curviness == 0:
+            self.curviness = 0 if np.random.random() > mutation_rate else self.mutate_val(self.curviness, curviness_range,
+                                                                                      mutation_rate)
+        else:
+            self.curviness = self.mutate_val(self.curviness, curviness_range, mutation_rate)
+
+        self.curve_location = self.mutate_val(self.curve_location, relative_location_range, mutation_rate)
+
+
+
+
 
 class IrregularPolygonSegment(Segment):
     """Line segment with additional properties specific to a line."""
@@ -160,3 +180,16 @@ class IrregularPolygonSegment(Segment):
             else:
                 self.points_array = np.vstack((self.points_array, section_points_array))
             start_point = end_point
+
+    def mutate(self, mutation_rate=0.05):
+        if self.start_mode == StartMode.JUMP:
+            self.start = (self.mutate_val(self.start[0], start_x_range, mutation_rate),
+                          self.mutate_val(self.start[1], start_y_range, mutation_rate))
+
+        self.bounding_size = (self.mutate_val(self.bounding_size[0], random_shape_size_range, mutation_rate),
+                          self.mutate_val(self.bounding_size[1], random_shape_size_range, mutation_rate))
+        for i , corner in enumerate(self.corners):
+            self.corners[i] = (self.mutate_val(corner[0], corner_initialisation_range, mutation_rate),
+                          self.mutate_val(corner[1], corner_initialisation_range, mutation_rate))
+        for line in self.lines_list:
+            line.mutate(mutation_rate)

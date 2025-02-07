@@ -122,13 +122,16 @@ def random_gene(gene_n):
             prev_end_thickness_array = root_node.end_thickness
             root_node.render(np.array([root_node.start]), 0, prev_colour, prev_end_thickness_array)
             root_score = -is_in_eye(root_node)
-            print("root_score", root_score)
-            root_score = 0 #FOR TESTING!!!!!!!!
+            if initial_gene_pool_size/3 < gene_n <= 2* (initial_gene_pool_size / 3):
+                print("root_score", root_score)
+                root_score = 0 #FOR EYELINER WINGS - FIX!!!!!!
         total_score = root_score
         for i in range(n_of_children):
             segment_number +=1
             success, child_score = random_gene_node(design, root_node, prev_colour, segment_number=segment_number, depth=0)
             total_score+=child_score
+            #print("child_score", child_score)
+            #print("Total score:",total_score)
             if not success or total_score < min_fitness_score:
                 success = False
 
@@ -137,13 +140,19 @@ def random_gene(gene_n):
             #print("Score:",total_score)
             return design
 
-
+"""
 design = random_gene(68)
 fig = design.render_design()
 fig.show()
-negative_score = analyse_negative(design)
+#negative_score = analyse_negative(design)
 positive_score = analyse_positive(design)
+segments = design.get_all_nodes()
+negative_score = 0
+for i in range(len(segments)):
+    if i != len(segments) - 1:
+        negative_score = negative_score - check_design_overlaps(i, segments)
+
 print("Negative Score:", negative_score)
 print("Positive Score:", positive_score)
 
-
+"""

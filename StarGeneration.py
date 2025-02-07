@@ -48,10 +48,12 @@ def create_star_arm(center, radius, arm_length, num_points, start_angle, asymmet
 
 
     if star_type == StarType.CURVED or star_type == StarType.FLOWER:
-        t_values = np.linspace(0, 1, 100)
+        t_values = np.linspace(0, 1, line_num_points)
         arm_points = np.array([bezier_curve_t(t, P0, P1, P2) for t in t_values])
     else:
-        arm_points = np.array([P0, P1, P2])
+        interp_P0_P1 = np.linspace(P0, P1, int(line_num_points // 2), endpoint=False)
+        interp_P1_P2 = np.linspace(P1, P2, int(line_num_points // 2), endpoint=True)
+        arm_points = np.vstack((interp_P0_P1, interp_P1_P2))
 
     if asymmetry==0 and star_type == StarType.CURVED:
         x, y = P2
