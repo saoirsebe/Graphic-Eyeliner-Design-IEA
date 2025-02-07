@@ -140,8 +140,9 @@ def random_gene(gene_n):
             #print("Score:",total_score)
             return design
 
-"""
-design = random_gene(68)
+
+#design = random_gene(68)
+design = random_gene(190)
 fig = design.render_design()
 fig.show()
 #negative_score = analyse_negative(design)
@@ -155,4 +156,4 @@ for i in range(len(segments)):
 print("Negative Score:", negative_score)
 print("Positive Score:", positive_score)
 
-"""
+

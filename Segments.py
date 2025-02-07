@@ -283,7 +283,7 @@ class LineSegment(Segment):
 
 class StarSegment(Segment):
     """Line segment with additional properties specific to a line."""
-    def __init__(self, segment_type, start, colour, star_type, radius, arm_length, num_points, asymmetry, start_mode, end_thickness, relative_angle):
+    def __init__(self, segment_type, start, colour, star_type, radius, arm_length, num_points, asymmetry, start_mode, end_thickness, relative_angle, fill):
         super().__init__(segment_type, start, start_mode, end_thickness, relative_angle, colour)
         self.segment_type = SegmentType.STAR
         self.center = self.start
@@ -295,6 +295,7 @@ class StarSegment(Segment):
         #start_angle = 2 * np.pi * num_points / num_points #angle for last arm
         #bin, end_p = StarGeneration.create_star_arm(center, radius,arm_length, num_points,start_angle,asymmetry,num_points,curved) #armN = last arm so num_points
         self.arm_points_array = []
+        self.fill = fill
 
     def render(self, prev_array, prev_angle, prev_colour, prev_end_thickness, ax_n=None):
         if self.start_mode == StartMode.CONNECT and len(prev_array)>15:
@@ -311,20 +312,27 @@ class StarSegment(Segment):
         else:
             self.absolute_angle = (prev_angle + self.relative_angle)%360
 
-        star_points, star_arm_points = StarGeneration.create_star(self.num_points, self.center, self.radius, self.arm_length, self.asymmetry, self.star_type, self.absolute_angle)
+        star_points, star_arm_points = StarGeneration.create_star(self.num_points, self.center, self.radius, self.arm_length, self.asymmetry, self.star_type, self.absolute_angle, self.fill)
         start_coord = star_arm_points[-1]
         transformation_vector = (self.center[0] - start_coord[0], self.center[1] - start_coord[1])
         #self.end = (end_coord[0]+transformation_vector[0], end_coord[1]+transformation_vector[1])
         transformed_star_points = np.array([(point[0] + transformation_vector[0], point[1] + transformation_vector[1]) for point in star_points])
         self.points_array = transformed_star_points
         if ax_n:
-            ax_n.plot(transformed_star_points[:, 0], transformed_star_points[:, 1], self.colour, lw=self.end_thickness)  # Plot all points as a single object
+            if self.fill == True:
+                x, y = transformed_star_points[:, 0], transformed_star_points[:, 1]
+                plt.fill(x, y, color=self.colour)
+            else:
+                ax_n.plot(transformed_star_points[:, 0], transformed_star_points[:, 1], self.colour, lw=self.end_thickness)  # Plot all points as a single object
+
         transformed_arm_points = np.array([(point[0] + transformation_vector[0], point[1] + transformation_vector[1]) for point in star_arm_points])
         self.arm_points_array = transformed_arm_points
 
     def mutate(self,mutation_rate=0.05):
         #(self, segment_type, start, colour, star_type, radius, arm_length, num_points, asymmetry, start_mode, end_thickness, relative_angle)
         # mutation rate chance of changing:
+        self.star_type = self.mutate_choice(self.star_type, [StarType.STRAIGHT, StarType.FLOWER, StarType.CURVED], mutation_rate)
+
         self.start_mode = self.mutate_choice(self.start_mode, [StartMode.CONNECT, StartMode.JUMP], mutation_rate)
         if self.start_mode == StartMode.JUMP:
             self.start = (self.mutate_val(self.start[0], start_x_range, mutation_rate),
@@ -335,6 +343,7 @@ class StarSegment(Segment):
         self.colour = self.mutate_choice(self.colour, colour_options, mutation_rate)
         self.radius = self.mutate_val(self.radius,radius_range, mutation_rate)
         self.arm_length = self.mutate_val(self.arm_length,arm_length_range, mutation_rate)
+        self.fill = self.mutate_choice(self.fill, [True, False], mutation_rate)
 
         if np.random.random() < mutation_rate:
             if self.num_points ==num_points_range[0]:
@@ -347,7 +356,6 @@ class StarSegment(Segment):
         if (self.asymmetry == 0 and np.random.random() < mutation_rate) or (self.asymmetry != 0): #Less likely to mutate from 0
             self.asymmetry = self.mutate_val(self.asymmetry, asymmetry_range, mutation_rate)
 
-        self.star_type = self.mutate_choice(self.star_type, [StarType.STRAIGHT,StarType.FLOWER,StarType.CURVED], mutation_rate)
 
 
 # Factory function to create a specific segment instance and wrap it in Segment
@@ -382,6 +390,7 @@ def create_segment(start, start_mode, segment_type, end_thickness, relative_angl
             num_points=kwargs.get('num_points', 5),
             asymmetry=kwargs.get('asymmetry', 0),
             star_type=kwargs.get('star_type', StarType.STRAIGHT),
+            fill = kwargs.get('fill', False),
         )
     elif segment_type == SegmentType.RANDOM_SHAPE:
         return IrregularPolygonSegment(
@@ -394,6 +403,7 @@ def create_segment(start, start_mode, segment_type, end_thickness, relative_angl
             bounding_size= kwargs.get('bounding_size', (1,1)),
             corners = kwargs.get('corners', []),
             lines_list = kwargs.get('lines_list', []),
+            fill=kwargs.get('fill', False),
             is_eyeliner_wing = kwargs.get('is_eyeliner_wing', False),
         )
     else:
@@ -559,6 +569,7 @@ def random_segment(prev_colour=None, segment_start=None):
             end_thickness=random_normal_within_range(2,2,thickness_range),
             relative_angle=random.uniform(*direction_range),
             colour=random_colour,
+            fill = random.choice([True, False]),
         )
     else:
         new_shape_overlaps = max_shape_overlaps+1
@@ -574,7 +585,8 @@ def random_segment(prev_colour=None, segment_start=None):
                 colour=random_colour,
                 bounding_size=(random.uniform(*random_shape_size_range), random.uniform(*random_shape_size_range)),
                 corners=corners,
-                lines_list=lines
+                lines_list=lines,
+                fill=random.choice([True, False]),
             )
             prev_array = np.array([new_segment.start])
             prev_angle = 0

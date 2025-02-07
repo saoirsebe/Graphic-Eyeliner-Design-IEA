@@ -1,5 +1,7 @@
 import math
 import numpy as np
+from matplotlib import pyplot as plt
+
 from A import StartMode, SegmentType, un_normalised_vector_direction, normalised_vector_direction, start_x_range, \
     start_y_range, curviness_range, relative_location_range, random_shape_size_range, corner_initialisation_range, \
     line_num_points
@@ -67,14 +69,6 @@ class IrregularPolygonEdgeSegment:
             self.points_array = np.column_stack((x_values, y_values))
             self.points_array = np.round(self.points_array, 3)
 
-        if ax_n:
-            for i in range(len(x_values) - 1):
-                ax_n.plot(
-                    [x_values[i], x_values[i + 1]], [y_values[i], y_values[i + 1]],
-                    color=colour,
-                    linewidth=thickness,
-                    solid_capstyle='butt',
-                )
         return self.points_array
 
     def mutate_val(self, value, range, mutation_rate):
@@ -95,11 +89,9 @@ class IrregularPolygonEdgeSegment:
 
 
 
-
-
 class IrregularPolygonSegment(Segment):
     """Line segment with additional properties specific to a line."""
-    def __init__(self, segment_type, start, start_mode, end_thickness, relative_angle, colour, bounding_size, corners, lines_list, is_eyeliner_wing=False):
+    def __init__(self, segment_type, start, start_mode, end_thickness, relative_angle, colour, bounding_size, corners, lines_list, fill, is_eyeliner_wing=False):
         super().__init__(segment_type, start, start_mode, end_thickness, relative_angle, colour)
         self.segment_type = SegmentType.RANDOM_SHAPE
         self.start = start
@@ -110,6 +102,7 @@ class IrregularPolygonSegment(Segment):
         self.points_array = np.array([])  # Initialize as an empty array
         self.to_scale_corners = np.array([])
         self.is_eyeliner_wing = is_eyeliner_wing
+        self.fill = fill
 
 
     def rotated_corners(self,corners):
@@ -180,6 +173,14 @@ class IrregularPolygonSegment(Segment):
             else:
                 self.points_array = np.vstack((self.points_array, section_points_array))
             start_point = end_point
+
+        if ax_n:
+            if self.fill == True:
+                x, y = self.points_array[:, 0], self.points_array[:, 1]
+                plt.fill(x, y, color=self.colour)
+            else:
+                ax_n.plot(self.points_array[:, 0], self.points_array[:, 1], self.colour, lw=self.end_thickness)  # Plot all points as a single object
+
 
     def mutate(self, mutation_rate=0.05):
         if self.start_mode == StartMode.JUMP:

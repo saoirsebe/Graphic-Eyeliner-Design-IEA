@@ -64,7 +64,7 @@ def create_star_arm(center, radius, arm_length, num_points, start_angle, asymmet
     #print(arm_points)
     return arm_points, (x,y)
 
-def create_star(num_points, center, radius, arm_length , asymmetry, star_type, star_direction):
+def create_star(num_points, center, radius, arm_length , asymmetry, star_type, star_direction, fill):
     star_points = []
     end_point = (0,0) #Starts at (0,0) and changed to P2 after each arm creation
     start_point = (0,0)
