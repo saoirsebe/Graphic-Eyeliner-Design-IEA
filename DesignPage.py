@@ -1,14 +1,11 @@
 import tkinter as tk
-from random import randint
 from tkinter import messagebox
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import matplotlib.pyplot as plt
-import numpy as np
 
 from BreedingMechanism import breed_new_designs
 from InitialiseGenePool import initialise_gene_pool
 from Page import Page
-import random
 
 class DesignPage(Page):
     def __init__(self, parent, controller):
@@ -139,6 +136,7 @@ class DesignPage(Page):
 
             fig = gene.render_design()
             self.current_gene_pool_figures.append(fig)
+
             canvas = FigureCanvasTkAgg(fig, master=canvas_frame)
             canvas.draw()
             canvas_widget = canvas.get_tk_widget()

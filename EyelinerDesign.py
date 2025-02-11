@@ -5,6 +5,7 @@ from AnalyseDesign import analyse_negative, check_overlaps, shape_overlaps, chec
 from Segments import *
 import cProfile
 from IrregularPolygonSegment import are_points_collinear
+from PIL import Image, ImageTk
 
 class EyelinerDesign:   #Creates overall design, calculates start points, renders each segment by calling their render function
     def __init__(self, root_node):
@@ -12,6 +13,8 @@ class EyelinerDesign:   #Creates overall design, calculates start points, render
         self.n_of_lines= 0
         self.n_of_stars= 0
         self.tree_size= 0
+        self.image_path = "simple-human-face-line-art-vector-19575655.jpg"
+        self.face_image = Image.open(self.image_path)
 
     def get_all_nodes(self, node=None, nodes_list=None):
         """
@@ -121,7 +124,7 @@ class EyelinerDesign:   #Creates overall design, calculates start points, render
         elif prev_segment.segment_type == SegmentType.STAR:
             # if segment is a star then pass in the arm points that the next segment should start at:
             prev_array = prev_segment.arm_points_array
-        elif prev_segment.segment_type == SegmentType.RANDOM_SHAPE:
+        elif prev_segment.segment_type == SegmentType.IRREGULAR_POLYGON:
             prev_array = prev_segment.to_scale_corners
 
         prev_angle = prev_segment.absolute_angle
@@ -143,7 +146,12 @@ class EyelinerDesign:   #Creates overall design, calculates start points, render
         prev_end_thickness_array = root_node.end_thickness
 
         if show:
-            fig, ax_n = plt.subplots(figsize=(3, 3))
+            fig, ax_n = plt.subplots(figsize=(self.face_image.width / 100, self.face_image.height / 100), dpi=100)
+            flipped_img = np.flipud(self.face_image)
+            ax_n.imshow(flipped_img)
+            ax_n.invert_yaxis()
+
+            #fig, ax_n = plt.subplots(figsize=(3, 3))
             draw_eye_shape(ax_n)
             self.render_node(root_node, prev_array, prev_angle, prev_colour, prev_end_thickness_array,ax_n)
             return fig
@@ -227,7 +235,7 @@ def random_lines_corners_list(n_of_corners):
     #Check if points are collinear within tolerance
     while collinear:
         corners = np.array(
-            [(random.uniform(*edge_initialisation_range), random.uniform(*edge_initialisation_range))
+            [(random.uniform(*corner_initialisation_range), random.uniform(*corner_initialisation_range))
              for i in range(n_of_corners)])
         collinear = are_points_collinear(corners)
 
@@ -249,7 +257,7 @@ def random_random_shape():
         n_of_corners = round(random_normal_within_range(5,1.5, num_points_range))
         corners, lines = random_lines_corners_list(n_of_corners)
         new_segment = create_segment(
-            segment_type=SegmentType.RANDOM_SHAPE,
+            segment_type=SegmentType.IRREGULAR_POLYGON,
             start=segment_start,
             start_mode=random.choice([StartMode.CONNECT, StartMode.JUMP]),
             end_thickness=random_normal_within_range(2, 2, thickness_range),
@@ -278,11 +286,12 @@ prev_end_thickness= shape.end_thickness
 shape.render(prev_array, prev_angle, prev_colour, prev_end_thickness, ax_n)
 
 fig.show()
+"""
 
-
-
+"""
 #design = EyelinerDesign(random_random_shape())
 #design.render_design()
+fig, ax_n = plt.subplots(figsize=(3, 3))
 line = IrregularPolygonEdgeSegment(0.7, 0.2)
 start= np.array((-1.0,2.0))
 end = np.array((3.0,2.0))
@@ -299,10 +308,9 @@ cProfile.run('random_random_shape()')
 """
 """
 fig, ax_n = plt.subplots(figsize=(3, 3))
-line = LineSegment(SegmentType.LINE, (5,1), StartMode.JUMP, 4, 20, 4, 4, 'red', 0.5, False, 0.5, 0, 0)
-line2 = LineSegment(SegmentType.LINE, (4,1), StartMode.CONNECT_MID, 4, 50, 2, 2, 'blue', 0.5, False, 0.5, 0.5, 0)
-line3 = LineSegment(SegmentType.LINE, (5,1), StartMode.SPLIT, 4, 90, 4, 4, 'red', 0.5, False, 0.5, 0, 0.5)
-
+line = LineSegment(SegmentType.LINE, (470,10), StartMode.JUMP, 70, 90, 4, 4, 'red', 0.5, False, 0.5, 0, 0)
+line2 = LineSegment(SegmentType.LINE, (350,50), StartMode.CONNECT, 70, 200, 2, 2, 'blue', 0.5, False, 0.5, 0.5, 0)
+line3 = LineSegment(SegmentType.LINE, (480,30), StartMode.JUMP, 70, 90, 4, 4, 'red', 0.5, False, 0.5, 0, 0.5)
 
 
 design = EyelinerDesign(line)

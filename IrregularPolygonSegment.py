@@ -8,7 +8,7 @@ from A import StartMode, SegmentType, un_normalised_vector_direction, normalised
 from ParentSegment import Segment, point_in_array
 from StarGeneration import bezier_curve_t
 
-def are_points_collinear(points, tolerance=0.1):
+def are_points_collinear(points, tolerance=0.5):
     """
     Checks if a set of points are collinear within tolerance.
 
@@ -93,9 +93,9 @@ class IrregularPolygonSegment(Segment):
     """Line segment with additional properties specific to a line."""
     def __init__(self, segment_type, start, start_mode, end_thickness, relative_angle, colour, bounding_size, corners, lines_list, fill, is_eyeliner_wing=False):
         super().__init__(segment_type, start, start_mode, end_thickness, relative_angle, colour)
-        self.segment_type = SegmentType.RANDOM_SHAPE
+        self.segment_type = SegmentType.IRREGULAR_POLYGON
         self.start = start
-        self.segment_type = SegmentType.RANDOM_SHAPE
+        self.segment_type = SegmentType.IRREGULAR_POLYGON
         self.bounding_size = bounding_size
         self.corners = corners
         self.lines_list = lines_list

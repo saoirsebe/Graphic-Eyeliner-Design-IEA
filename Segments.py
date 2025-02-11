@@ -392,7 +392,7 @@ def create_segment(start, start_mode, segment_type, end_thickness, relative_angl
             star_type=kwargs.get('star_type', StarType.STRAIGHT),
             fill = kwargs.get('fill', False),
         )
-    elif segment_type == SegmentType.RANDOM_SHAPE:
+    elif segment_type == SegmentType.IRREGULAR_POLYGON:
         return IrregularPolygonSegment(
             segment_type=segment_type,
             start=start,
@@ -463,7 +463,7 @@ def make_eyeliner_wing(random_colour):
     while True:
         corners, lines, wing_start = random_eyeliner_lines_corners()
         new_segment = create_segment(
-            segment_type=SegmentType.RANDOM_SHAPE,
+            segment_type=SegmentType.IRREGULAR_POLYGON,
             start=wing_start,
             start_mode=StartMode.CONNECT if random.random() < 0.3 else StartMode.JUMP,
             end_thickness=random_normal_within_range(2, 2, thickness_range),
@@ -502,7 +502,7 @@ def random_segment(prev_colour=None, segment_start=None):
     elif r<0.8:
         new_segment_type = SegmentType.STAR
     else:
-        new_segment_type = SegmentType.RANDOM_SHAPE
+        new_segment_type = SegmentType.IRREGULAR_POLYGON
 
 
     def angle_from_center(center, point):
@@ -561,8 +561,8 @@ def random_segment(prev_colour=None, segment_start=None):
             segment_type=SegmentType.STAR,
             start=segment_start,
             start_mode=random.choice([StartMode.CONNECT, StartMode.JUMP]),
-            radius=random_normal_within_range(0.5,0.5,radius_range),
-            arm_length=random_normal_within_range(0.75,0.5,arm_length_range),
+            radius=random_normal_within_range(30,30,radius_range),
+            arm_length=random_normal_within_range(50,30,arm_length_range),
             num_points=round(random_normal_within_range(5,2, num_points_range)),
             asymmetry=0 if random.random() < 0.6 else random_normal_within_range(2,2,asymmetry_range),
             star_type=random.choice([StarType.STRAIGHT, StarType.CURVED, StarType.FLOWER]),
@@ -576,14 +576,15 @@ def random_segment(prev_colour=None, segment_start=None):
         while new_shape_overlaps > max_shape_overlaps:
             n_of_corners = round(random_normal_within_range(5, 1, num_points_range))
             corners, lines = random_lines_corners_list(n_of_corners)
+            bounding_size_x = random_normal_within_range(50, 30,random_shape_size_range)
             new_segment = create_segment(
-                segment_type=SegmentType.RANDOM_SHAPE,
+                segment_type=SegmentType.IRREGULAR_POLYGON,
                 start=segment_start,
                 start_mode= StartMode.CONNECT if random.random() <0.3 else StartMode.JUMP,
                 end_thickness=random_normal_within_range(2, 2, thickness_range),
                 relative_angle=random.uniform(*direction_range),
                 colour=random_colour,
-                bounding_size=(random.uniform(*random_shape_size_range), random.uniform(*random_shape_size_range)),
+                bounding_size=(bounding_size_x, random_normal_within_range(bounding_size_x, 30,random_shape_size_range)),
                 corners=corners,
                 lines_list=lines,
                 fill=random.choice([True, False]),

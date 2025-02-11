@@ -14,7 +14,7 @@ def remove_ends_of_line(line1_array, line2_array):
     line2_array = line2_array[first_2:]
     return line1_array, line2_array
 
-def check_overlaps(segment2_array, segment1_tree, tolerance=0.025):
+def check_overlaps(segment2_array, segment1_tree, tolerance=0.4):
     overlapping_indices = set()
 
     for p in segment2_array:
@@ -37,14 +37,14 @@ def check_segment_overlaps(segment1, segment2, segment1_tree = None):
             #Remove the split point from array as it will overlap with the previous segment:
             split_point_point_index = point_in_array(segment2.points_array, segment2.split_point)
             segment2_array = np.delete(segment2_array, split_point_point_index, axis=0)
-        first_25 = int(len(segment2_array) * 0.025)
-        segment2_array = segment2_array[first_25:-first_25]
+        first_2 = int(len(segment2_array) * 0.02)
+        segment2_array = segment2_array[first_2:-first_2]
 
     if segment1_tree is None:
         segment1_array = segment1.points_array
         if segment1.segment_type == SegmentType.LINE:
-            first_25 = int(len(segment1_array) * 0.025)
-            segment1_array = segment1_array[first_25:-first_25]
+            first_2 = int(len(segment1_array) * 0.02)
+            segment1_array = segment1_array[first_2:-first_2]
         segment1_tree = cKDTree(segment1_array)  # Build KD-tree for the first set of points
 
     overlaps = check_overlaps(segment2_array, segment1_tree)
@@ -65,8 +65,8 @@ def check_design_overlaps(i, segments):
         print(f"segment {segment.segment_type} is length", len(segment_array))
         print("segment_array:", segment_array)
     if segment.segment_type == SegmentType.LINE:
-        first_25 = int(len(segment_array) * 0.025)
-        segment_array = segment_array[first_25:-first_25]
+        first_2 = int(len(segment_array) * 0.02)
+        segment_array = segment_array[first_2:-first_2]
     segment_tree = cKDTree(segment_array)
     overlaps = 0
     for j in range(i + 1, len(segments)):
@@ -125,7 +125,9 @@ def analyse_negative(design):
     segments = design.get_all_nodes()
     score = 0  # Count how many overlaps there are in this gene
     # Compare each pair of segments for overlap
+    print("N of segments = ",len(segments))
     for i in range(len(segments)):
+        print("Segment type:",segments[i].segment_type)
         eye_overlaps = is_in_eye(segments[i])
         if eye_overlaps>0:
             return min_fitness_score *2

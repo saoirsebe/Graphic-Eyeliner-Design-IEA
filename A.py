@@ -1,6 +1,5 @@
 import random
 from enum import Enum
-
 import numpy as np
 
 min_fitness_score = -3
@@ -8,11 +7,11 @@ min_segment_score = -2
 initial_gene_pool_size = 200
 node_re_gen_max = 12
 #Parameter ranges:
-start_x_range = (-1, 7)
-start_y_range = (0, 6)
+start_x_range = (300, 470)
+start_y_range = (0, 100)
 #start_mode_options = list(StartMode)
 #Segment_type_options = list(SegmentType)
-length_range = (0.5, 5)
+length_range = (30, 100)
 direction_range = (0, 360)
 thickness_range = (1, 5)
 colour_options = [
@@ -20,22 +19,35 @@ colour_options = [
     "pink", "brown", "gray", "lime", "navy",
     "teal", "maroon", "gold", "olive"
 ]
-curviness_range = (0.1, 10)
+curviness_range = (0.1, 5)
 relative_location_range = (0, 1)
-radius_range = (0, 1.5)
-arm_length_range = (0, 1.5)
+radius_range = (0, 70)
+arm_length_range = (0, 70)
 num_points_range = (3, 8)
-asymmetry_range = (0, 3)
+asymmetry_range = (0, 10)
 corner_initialisation_range = (0,1)
-random_shape_size_range = (1,5)
+random_shape_size_range = (1,50)
 max_shape_overlaps = 0
 
 number_of_children_range= (0,3)
 max_segments = 20
 average_branch_length = 3.5
-eye_corner_start = (3.05,1.5)
+eye_corner_start = (435.1,60)
 
-line_num_points = 50
+line_num_points = 100
+
+def bezier_curve(P0, P1, P2):
+    """returns an array of shape (100,2)(100,2), which represents 100 points on the Bézier curve. """
+    t = np.linspace(0, 1, 100).reshape(-1, 1)
+    return (1 - t) ** 2 * P0 + 2 * (1 - t) * t * P1 + t ** 2 * P2
+
+# Function to create a quadratic Bézier curve with three control points
+def bezier_curve_t(t, P0, P1, P2):
+    """The Bézier curve formulas used in the function calculate the x-coordinate and y-coordinate of a point at a given tt on the curve using the quadratic Bézier formula:"""
+    x = (1 - t) ** 2 * P0[0] + 2 * (1 - t) * t * P1[0] + t ** 2 * P2[0]
+    y = (1 - t) ** 2 * P0[1] + 2 * (1 - t) * t * P1[1] + t ** 2 * P2[1]
+
+    return [round(x, 3), round(y, 3)]
 
 class StarType(Enum):
     STRAIGHT = 'STRAIGHT'
@@ -48,7 +60,7 @@ class SegmentType(Enum):
     #TAPER = 'TAPER'
     STAR = 'STAR'
     #WING = 'WING'
-    RANDOM_SHAPE = 'RANDOM_SHAPE'
+    IRREGULAR_POLYGON = 'IRREGULAR_POLYGON'
 
 class StartMode(Enum):
     CONNECT = 'CONNECT'
@@ -93,18 +105,10 @@ def random_from_two_distributions(mean1, stddev1, mean2, stddev2, value_range, p
         if value_range[0] <= value <= value_range[1]:
             return value
 
-def draw_eye_shape(ax_n):
-    # Get points with the same x-range but scale y-values for vertical stretch
-    x_vals, y_vals = get_quadratic_points(0.5, 0, 0, -1, 1)
-    x_vals = [x * 3 for x in x_vals]
-    y_vals = [y * 3 for y in y_vals]  # Scale y-values
-    ax_n.plot(x_vals, y_vals, label=f"$y = 0.5x^2$", color="b")
-
-    x_vals, y_vals = get_quadratic_points(-0.5, 0, 1, -1, 1)
-    x_vals = [x * 3 for x in x_vals]
-    y_vals = [y * 3 for y in y_vals]  # Scale y-values
-    ax_n.plot(x_vals, y_vals, label=f"$y = -0.5x^2 + 1$", color="b")
-
+#upper_x, upper_y = get_quadratic_points(0.0121,-9.1205, -1575.91,  320, 435)
+#upper_eyelid_x, upper_eyelid_y = np.array(upper_x) * 3, np.array(upper_y) * 3
+#upper_eyelid_coords = np.column_stack((upper_eyelid_x, upper_eyelid_y))
+"""
 upper_x, upper_y = get_quadratic_points(-0.5, 0, 1, -1, 1)
 upper_eyelid_x, upper_eyelid_y = np.array(upper_x) * 3, np.array(upper_y) * 3
 upper_eyelid_coords = np.column_stack((upper_eyelid_x, upper_eyelid_y))
@@ -112,3 +116,33 @@ upper_eyelid_coords = np.column_stack((upper_eyelid_x, upper_eyelid_y))
 lower_x, lower_y = get_quadratic_points(0.5, 0, 0, -1, 1)
 lower_eyelid_x, lower_eyelid_y = np.array(lower_x) * 3, np.array(lower_y) * 3
 lower_eyelid_coords = np.column_stack((lower_eyelid_x, lower_eyelid_y))
+"""
+
+upper_eyelid_coords =  bezier_curve(np.array([320,50]), np.array([370,100]), np.array([435,60]))
+upper_eyelid_x = [coord[0] for coord in upper_eyelid_coords]
+upper_eyelid_y = [coord[1] for coord in upper_eyelid_coords]
+
+lower_eyelid_coords =  bezier_curve(np.array([320,45]), np.array([400,30]), np.array([435,60]))
+lower_eyelid_x = [coord[0] for coord in lower_eyelid_coords]
+lower_eyelid_y = [coord[1] for coord in lower_eyelid_coords]
+"""
+
+lower_x, lower_y = get_quadratic_points(-0.0121, 9.1205, -1576.91,  320, 435)
+lower_eyelid_x, lower_eyelid_y = np.array(lower_x) * 3, np.array(lower_y) * 3
+lower_eyelid_coords = np.column_stack((lower_eyelid_x, lower_eyelid_y))
+
+upper_x_left, upper_y_left = get_quadratic_points(0.000185,-0.240, 99.69, 5, 221)
+upper_eyelid_x_left, upper_eyelid_y_left = np.array(upper_x) * 3, np.array(upper_y) * 3
+upper_eyelid_coords_left = np.column_stack((upper_eyelid_x, upper_eyelid_y))
+
+lower_x_left, lower_y_left = get_quadratic_points(0.00133, -0.351, 106.58, 5, 221)
+lower_eyelid_x_left, lower_eyelid_y_left = np.array(lower_x) * 3, np.array(lower_y) * 3
+lower_eyelid_coords_left = np.column_stack((lower_eyelid_x, lower_eyelid_y))
+"""
+def draw_eye_shape(ax_n):
+    ax_n.plot(lower_eyelid_x, lower_eyelid_y, label=f"$y = 0.5x^2$", color="b")
+    #ax_n.plot(upper_x, upper_y, label=f"$y = -0.5x^2 + 1$", color="red")
+    ax_n.plot(upper_eyelid_x, upper_eyelid_y, label=f"$y = -0.5x^2 + 1$", color="green")
+
+
+

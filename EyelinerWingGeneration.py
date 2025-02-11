@@ -3,13 +3,7 @@ import matplotlib.pyplot as plt
 import sympy as sp
 import random
 
-from A import eye_corner_start, normalised_vector_direction, get_quadratic_points
-
-
-def bezier_curve(P0, P1, P2):
-    t = np.linspace(0, 1, 100).reshape(-1, 1)
-    return (1 - t) ** 2 * P0 + 2 * (1 - t) * t * P1 + t ** 2 * P2
-
+from A import eye_corner_start, normalised_vector_direction, get_quadratic_points, bezier_curve
 
 
 def perpendicular_direction(start,end):
