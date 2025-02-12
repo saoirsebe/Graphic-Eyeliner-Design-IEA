@@ -7,13 +7,13 @@ min_segment_score = -2
 initial_gene_pool_size = 200
 node_re_gen_max = 12
 #Parameter ranges:
-start_x_range = (300, 470)
-start_y_range = (0, 100)
+start_x_range = (20, 130)
+start_y_range = (50, 150)
 #start_mode_options = list(StartMode)
 #Segment_type_options = list(SegmentType)
-length_range = (30, 100)
+length_range = (10, 50)
 direction_range = (0, 360)
-thickness_range = (1, 5)
+thickness_range = (0.5, 3)
 colour_options = [
     "red", "green", "blue", "cyan", "magenta", "black", "orange", "purple",
     "pink", "brown", "gray", "lime", "navy",
@@ -21,18 +21,18 @@ colour_options = [
 ]
 curviness_range = (0.1, 5)
 relative_location_range = (0, 1)
-radius_range = (0, 70)
-arm_length_range = (0, 70)
+radius_range = (0, 30)
+arm_length_range = (0, 30)
 num_points_range = (3, 8)
 asymmetry_range = (0, 10)
 corner_initialisation_range = (0,1)
-random_shape_size_range = (1,50)
+random_shape_size_range = (1,30)
 max_shape_overlaps = 0
 
 number_of_children_range= (0,3)
 max_segments = 20
 average_branch_length = 3.5
-eye_corner_start = (435.1,60)
+eye_corner_start = (118.1,93)
 
 line_num_points = 100
 
@@ -118,11 +118,11 @@ lower_eyelid_x, lower_eyelid_y = np.array(lower_x) * 3, np.array(lower_y) * 3
 lower_eyelid_coords = np.column_stack((lower_eyelid_x, lower_eyelid_y))
 """
 
-upper_eyelid_coords =  bezier_curve(np.array([320,50]), np.array([370,100]), np.array([435,60]))
+upper_eyelid_coords =  bezier_curve(np.array([28,82]), np.array([70,120]), np.array([118,93]))
 upper_eyelid_x = [coord[0] for coord in upper_eyelid_coords]
 upper_eyelid_y = [coord[1] for coord in upper_eyelid_coords]
 
-lower_eyelid_coords =  bezier_curve(np.array([320,45]), np.array([400,30]), np.array([435,60]))
+lower_eyelid_coords =  bezier_curve(np.array([28,82]), np.array([100,60]), np.array([118,93]))
 lower_eyelid_x = [coord[0] for coord in lower_eyelid_coords]
 lower_eyelid_y = [coord[1] for coord in lower_eyelid_coords]
 """

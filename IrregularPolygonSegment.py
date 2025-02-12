@@ -88,7 +88,6 @@ class IrregularPolygonEdgeSegment:
         self.curve_location = self.mutate_val(self.curve_location, relative_location_range, mutation_rate)
 
 
-
 class IrregularPolygonSegment(Segment):
     """Line segment with additional properties specific to a line."""
     def __init__(self, segment_type, start, start_mode, end_thickness, relative_angle, colour, bounding_size, corners, lines_list, fill, is_eyeliner_wing=False):
@@ -136,6 +135,7 @@ class IrregularPolygonSegment(Segment):
         return corners
 
     def render(self, prev_array, prev_angle, prev_colour, prev_end_thickness, ax_n=None):
+        self.points_array = np.array([])
         if self.start_mode == StartMode.CONNECT and len(prev_array) > 15:
             self.start = (prev_array[-1][0], prev_array[-1][1])
         elif self.start_mode == StartMode.CONNECT and len(prev_array) <= 15:

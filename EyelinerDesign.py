@@ -13,8 +13,8 @@ class EyelinerDesign:   #Creates overall design, calculates start points, render
         self.n_of_lines= 0
         self.n_of_stars= 0
         self.tree_size= 0
-        self.image_path = "simple-human-face-line-art-vector-19575655.jpg"
-        self.face_image = Image.open(self.image_path)
+        self.image_path = "female-face-drawing-template-one-eye.jpg"
+        self.eye_image = Image.open(self.image_path)
 
     def get_all_nodes(self, node=None, nodes_list=None):
         """
@@ -146,8 +146,8 @@ class EyelinerDesign:   #Creates overall design, calculates start points, render
         prev_end_thickness_array = root_node.end_thickness
 
         if show:
-            fig, ax_n = plt.subplots(figsize=(self.face_image.width / 100, self.face_image.height / 100), dpi=100)
-            flipped_img = np.flipud(self.face_image)
+            fig, ax_n = plt.subplots(figsize=(self.eye_image.width / 100, self.eye_image.height / 100), dpi=100)
+            flipped_img = np.flipud(self.eye_image)
             ax_n.imshow(flipped_img)
             ax_n.invert_yaxis()
 
@@ -260,7 +260,7 @@ def random_random_shape():
             segment_type=SegmentType.IRREGULAR_POLYGON,
             start=segment_start,
             start_mode=random.choice([StartMode.CONNECT, StartMode.JUMP]),
-            end_thickness=random_normal_within_range(2, 2, thickness_range),
+            end_thickness=random_normal_within_range(1, 2, thickness_range),
             relative_angle=random.uniform(*direction_range),
             colour=random_colour,
             bounding_size=(random.uniform(*random_shape_size_range), random.uniform(*random_shape_size_range)),
@@ -289,8 +289,7 @@ fig.show()
 """
 
 """
-#design = EyelinerDesign(random_random_shape())
-#design.render_design()
+
 fig, ax_n = plt.subplots(figsize=(3, 3))
 line = IrregularPolygonEdgeSegment(0.7, 0.2)
 start= np.array((-1.0,2.0))
@@ -321,4 +320,10 @@ fig.show()
 
 negative_score = analyse_negative(design)
 print("negative_score:",negative_score)
+"""
+"""
+design = EyelinerDesign(random_random_shape())
+fig, ax_n = plt.subplots(figsize=(3, 3))
+fig = design.render_design(ax_n)
+fig.show()
 """
