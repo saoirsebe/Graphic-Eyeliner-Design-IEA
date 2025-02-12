@@ -57,9 +57,11 @@ class IrregularPolygonEdgeSegment:
             else:
                 relative_curve_direction_degrees = line_direction_angle - 90
             curve_dir_radians = np.radians(relative_curve_direction_degrees)
+
             # Calculate x and y offsets
-            dx = self.curviness * np.cos(curve_dir_radians)
-            dy = self.curviness * np.sin(curve_dir_radians)
+            length = math.sqrt((p2[0] - p0[0]) ** 2 + (p2[1] - p0[1]) ** 2)
+            dx = length * self.curviness * np.cos(curve_dir_radians)
+            dy = length * self.curviness * np.sin(curve_dir_radians)
             p1 = p1 + np.array([dx, dy])
             self.points_array = np.array([bezier_curve_t(t, p0, p1, p2) for t in t_values])
             x_values, y_values = self.points_array[:, 0], self.points_array[:, 1]

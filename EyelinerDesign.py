@@ -307,9 +307,9 @@ cProfile.run('random_random_shape()')
 """
 """
 fig, ax_n = plt.subplots(figsize=(3, 3))
-line = LineSegment(SegmentType.LINE, (470,10), StartMode.JUMP, 70, 90, 4, 4, 'red', 0.5, False, 0.5, 0, 0)
-line2 = LineSegment(SegmentType.LINE, (350,50), StartMode.CONNECT, 70, 200, 2, 2, 'blue', 0.5, False, 0.5, 0.5, 0)
-line3 = LineSegment(SegmentType.LINE, (480,30), StartMode.JUMP, 70, 90, 4, 4, 'red', 0.5, False, 0.5, 0, 0.5)
+line = LineSegment(SegmentType.LINE, (20,10), StartMode.JUMP, 70, 90, 1, 1, 'red', 0.3, False, 0.5, 0, 0)
+line2 = LineSegment(SegmentType.LINE, (50,50), StartMode.CONNECT, 70, 200, 1, 2, 'blue', 0.3, False, 0.5, 0.5, 0)
+line3 = LineSegment(SegmentType.LINE, (80,30), StartMode.JUMP, 70, 90, 2, 4, 'red', 0.3, False, 0.5, 0, 0.5)
 
 
 design = EyelinerDesign(line)

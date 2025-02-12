@@ -89,8 +89,8 @@ class LineSegment(Segment):
             relative_curve_direction = self.absolute_angle + curve_direction
             curve_dir_radians = np.radians(relative_curve_direction)
             # Calculate x and y offsets
-            dx = self.curviness * np.cos(curve_dir_radians)
-            dy = self.curviness * np.sin(curve_dir_radians)
+            dx = self.length * self.curviness * np.cos(curve_dir_radians)
+            dy = self.length * self.curviness * np.sin(curve_dir_radians)
             p1 = p1 + np.array([dx, dy])
             self.points_array = np.array([bezier_curve_t(t, p0, p1, p2) for t in t_values])
             x_values, y_values = self.points_array[:, 0], self.points_array[:, 1]
@@ -485,7 +485,7 @@ def make_eyeliner_wing(random_colour):
             return new_segment
 
 def random_segment(prev_colour=None, segment_start=None):
-    def random_curviness(mean=0.3, stddev=0.25):
+    def random_curviness(mean=0.3, stddev=0.15):
         return random_normal_within_range(mean, stddev, curviness_range)
     def random_curve_location():
         return random_normal_within_range(0.5, 0.25, relative_location_range)

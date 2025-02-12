@@ -140,6 +140,7 @@ def random_gene(gene_n):
             #print("Score:",total_score)
             return design
 
+
 design = random_gene(1)
 #design = random_gene(68)
 #design = random_gene(190)
