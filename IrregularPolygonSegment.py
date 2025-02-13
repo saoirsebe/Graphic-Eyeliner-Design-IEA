@@ -8,7 +8,7 @@ from A import StartMode, SegmentType, un_normalised_vector_direction, normalised
 from ParentSegment import Segment, point_in_array
 from StarGeneration import bezier_curve_t
 
-def are_points_collinear(points, tolerance=0.5):
+def are_points_collinear(points, tolerance=0.75):
     """
     Checks if a set of points are collinear within tolerance.
 
@@ -177,11 +177,13 @@ class IrregularPolygonSegment(Segment):
             start_point = end_point
 
         if ax_n:
+            """ #FOR TETSING!!
             if self.fill == True:
                 x, y = self.points_array[:, 0], self.points_array[:, 1]
                 plt.fill(x, y, color=self.colour)
             else:
-                ax_n.plot(self.points_array[:, 0], self.points_array[:, 1], self.colour, lw=self.end_thickness)  # Plot all points as a single object
+            """
+            ax_n.plot(self.points_array[:, 0], self.points_array[:, 1], self.colour, lw=self.end_thickness)  # Plot all points as a single object
 
 
     def mutate(self, mutation_rate=0.05):

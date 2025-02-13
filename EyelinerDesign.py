@@ -1,7 +1,7 @@
 import copy
 import random
 from conda.common.configuration import raise_errors
-from AnalyseDesign import analyse_negative, check_overlaps, shape_overlaps, check_segment_overlaps, check_design_overlaps
+from AnalyseDesign import analyse_negative, check_overlaps, fix_overlaps_shape_overlaps, check_segment_overlaps, check_design_overlaps
 from Segments import *
 import cProfile
 from IrregularPolygonSegment import are_points_collinear
@@ -247,38 +247,41 @@ def random_lines_corners_list(n_of_corners):
     return sorted_corners, lines_list
 
 
-def random_random_shape():
-    new_shape_overlaps = 10
-    while new_shape_overlaps>max_shape_overlaps:
-        random_colour = random.choice(colour_options)
-        #Start not inside the eye:
-        segment_start=generate_valid_start()
-
-        n_of_corners = round(random_normal_within_range(5,1.5, num_points_range))
+def random_irregular_polygon(ax = None):
+    segment_start = generate_valid_start()
+    random_colour = random_segment_colour("blue")
+    new_shape_overlaps = max_shape_overlaps + 1
+    while new_shape_overlaps > max_shape_overlaps:
+        print("New shape:")
+        n_of_corners = round(random_normal_within_range(5, 1, num_points_range))
         corners, lines = random_lines_corners_list(n_of_corners)
+        bounding_size_x = random_normal_within_range(50, 30, random_shape_size_range)
         new_segment = create_segment(
             segment_type=SegmentType.IRREGULAR_POLYGON,
             start=segment_start,
-            start_mode=random.choice([StartMode.CONNECT, StartMode.JUMP]),
-            end_thickness=random_normal_within_range(1, 2, thickness_range),
+            start_mode=StartMode.CONNECT if random.random() < 0.3 else StartMode.JUMP,
+            end_thickness=random_normal_within_range(2, 2, thickness_range),
             relative_angle=random.uniform(*direction_range),
             colour=random_colour,
-            bounding_size=(random.uniform(*random_shape_size_range), random.uniform(*random_shape_size_range)),
+            bounding_size=(bounding_size_x, random_normal_within_range(bounding_size_x, 30, random_shape_size_range)),
             corners=corners,
-            lines_list= lines
+            lines_list=lines,
+            fill=random.choice([True, False]),
         )
         prev_array = np.array([new_segment.start])
         prev_angle = 0
         prev_colour = new_segment.colour
         prev_end_thickness = new_segment.end_thickness
         new_segment.render(prev_array, prev_angle, prev_colour, prev_end_thickness)
-        new_shape_overlaps = shape_overlaps(new_segment.lines_list)
+
+        new_shape_overlaps = fix_overlaps_shape_overlaps(new_segment.lines_list, ax)
+    print("new_shape_overlaps",new_shape_overlaps)
 
     return new_segment
 
-"""
+
 fig, ax_n = plt.subplots(figsize=(3, 3))
-shape = random_random_shape()
+shape = random_irregular_polygon(ax_n)
 prev_array = np.array([shape.start])
 prev_angle = 0
 prev_colour = shape.colour
@@ -286,7 +289,7 @@ prev_end_thickness= shape.end_thickness
 shape.render(prev_array, prev_angle, prev_colour, prev_end_thickness, ax_n)
 
 fig.show()
-"""
+
 
 """
 

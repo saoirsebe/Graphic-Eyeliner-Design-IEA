@@ -1,4 +1,4 @@
-from AnalyseDesign import shape_overlaps
+from AnalyseDesign import fix_overlaps_shape_overlaps, fix_overlaps_shape_overlaps
 import StarGeneration
 from ParentSegment import Segment, point_in_array
 from IrregularPolygonSegment import IrregularPolygonEdgeSegment, are_points_collinear, IrregularPolygonSegment
@@ -479,7 +479,7 @@ def make_eyeliner_wing(random_colour):
         prev_colour = new_segment.colour
         prev_end_thickness = new_segment.end_thickness
         new_segment.render(prev_array, prev_angle, prev_colour, prev_end_thickness)
-        new_shape_overlaps = shape_overlaps(new_segment.lines_list)
+        new_shape_overlaps = fix_overlaps_shape_overlaps(new_segment.lines_list)
         #print("Eyeliner shape overlaps:", new_shape_overlaps)
         if not new_shape_overlaps > max_shape_overlaps:
             return new_segment

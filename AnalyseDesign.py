@@ -1,4 +1,6 @@
 from scipy.spatial import cKDTree
+from seaborn import scatterplot
+
 from A import SegmentType, StartMode, min_fitness_score, max_shape_overlaps, upper_eyelid_x, lower_eyelid_x, \
     upper_eyelid_y, lower_eyelid_y, SegmentType
 from AestheticAnalysis import analyse_design_shapes
@@ -8,9 +10,9 @@ from ParentSegment import point_in_array
 
 
 def remove_ends_of_line(line1_array, line2_array):
-    first_2 = int(len(line1_array) * 0.02)
+    first_2 = int(len(line1_array) * 0.04)
     line1_array = line1_array[:-first_2]
-    first_2 = int(len(line2_array) * 0.02)
+    first_2 = int(len(line2_array) * 0.04)
     line2_array = line2_array[first_2:]
     return line1_array, line2_array
 
@@ -23,12 +25,12 @@ def check_overlaps(segment2_array, segment1_tree, tolerance=0.4):
 
     overlaps = len(overlapping_indices)
 
-    return overlaps
+    return overlaps , overlapping_indices
 
 def check_shape_edge_overlaps(segment1_array, segment2_array):
     segment1_tree = cKDTree(segment1_array)  # Build KD-tree for the first set of points
-    overlaps = check_overlaps(segment2_array, segment1_tree)
-    return overlaps
+    overlaps, indices_of_line_overlaps = check_overlaps(segment2_array, segment1_tree, 0.2)
+    return overlaps , indices_of_line_overlaps
 
 def check_segment_overlaps(segment1, segment2, segment1_tree = None):
     segment2_array = segment2.points_array
@@ -47,7 +49,7 @@ def check_segment_overlaps(segment1, segment2, segment1_tree = None):
             segment1_array = segment1_array[first_2:-first_2]
         segment1_tree = cKDTree(segment1_array)  # Build KD-tree for the first set of points
 
-    overlaps = check_overlaps(segment2_array, segment1_tree)
+    overlaps , overlap_indices = check_overlaps(segment2_array, segment1_tree)
     #if n_of_overlaps > 0:
     #    total_points = len(segment1_tree.data) + len(segment2_array)
     #    overlaps = int((n_of_overlaps / total_points) * 100)  # Calculate percentage overlap
@@ -153,40 +155,90 @@ def analyse_positive(design):
     return score
 
 
-def shape_overlaps(lines):
-    sorted_lines = sorted(lines, key=lambda line: line.curviness, reverse=True)
+def fix_overlaps_shape_overlaps(lines, ax=None):
+    """
+    Aims to fix shape overlaps between edges by reducing curviness of lines (in order of curviest to least curvey lines) and moving curve location away from overlap location
+    :param lines:
+    :return:
+    """
+
+    #sorted_lines = sorted(lines, key=lambda line: line.curviness, reverse=True)
+    len_lines = len(lines)
     #Tries to fix overlaps by making lines less curvey:
-    for i, line in enumerate(sorted_lines):
+    for i in range(len_lines):
+        if ax:
+            x_coords = lines[i].points_array[:, 0]
+            y_coords = lines[i].points_array[:, 1]
+            ax.scatter(x_coords, y_coords, color='red')
+
         try_again = True
         try_again_count = 0
-        while try_again and try_again_count < 8:
-            line_overlaps = 0
-            line_array = line.points_array
-            for j in range(0, len(lines)):
-                if i!=j:
-                    line_j_array = lines[j].points_array
-                    if j == (i + 1):
-                        remove_ends_of_line(line_array, line_j_array)
-                    line_overlaps += check_shape_edge_overlaps(line_array, line_j_array)
+        while try_again and try_again_count < 10:
+            n_of_line_overlaps = 0
+            indices_of_line_overlaps = []
+            line_array = lines[i].points_array
+            for j in range(len_lines):
+                line_j_array = lines[j].points_array
+                if i!=j and not np.array_equal(line_array, line_j_array) and not line_array is line_j_array:
+
+                    if j == (i + 1)%len_lines:
+                        line_array, line_j_array = remove_ends_of_line(line_array, line_j_array)
+                    if j == (i - 1)%len_lines:
+                        line_j_array, line_array = remove_ends_of_line(line_j_array, line_array)
+                    current_n_of_line_overlaps, set_indices_of_line_overlaps = check_shape_edge_overlaps(line_array, line_j_array)
+                    n_of_line_overlaps += current_n_of_line_overlaps
+                    indices_of_line_overlaps.extend(list(set_indices_of_line_overlaps))
+                    if current_n_of_line_overlaps >70:
+                        print("line_array",line_array)
+                        print("line_j_array",line_j_array)
+
             try_again = False
 
-            if line_overlaps>max_shape_overlaps:
-                if line.curviness >0.025:
-                    line.curviness -=0.025
+            if n_of_line_overlaps>0:
+                print("n_of_line_overlaps:", n_of_line_overlaps)
+                if lines[i].curviness >0.025:
+                    lines[i].curviness -=0.025
                     try_again = True
+                if len(indices_of_line_overlaps)>0:
+                    if len(indices_of_line_overlaps)>50:
+                        print("indices_of_line_overlaps", indices_of_line_overlaps)
+                    #Printing overlaps
+                    all_overlap_indices = np.array(list(indices_of_line_overlaps))
+                    overlapping_points = lines[i].points_array[all_overlap_indices]
+                    x_coords = overlapping_points[:, 0]
+                    y_coords = overlapping_points[:, 1]
+                    ax.scatter(x_coords, y_coords, color='black')
 
+
+                    sorted_indices = sorted(indices_of_line_overlaps)
+                    #If all indices are close together (only one overlap) then move curve location away from overlap point:
+                    if max(sorted_indices) - min(sorted_indices) <= 10:
+                        len_line_array = len(line_array)
+                        half_index = len_line_array * 0.5
+                        if lines[i].curve_location >0.5 and min(sorted_indices)>half_index:
+                            lines[i].curve_location -= 0.025
+                        elif lines[i].curve_location <0.5 and max(sorted_indices)<half_index:
+                            lines[i].curve_location += 0.025
+            """
+            if ax:
+                x_coords = line.points_array[:, 0]
+                y_coords = line.points_array[:, 1]
+
+                ax.scatter(x_coords, y_coords, color='red')
+            """
             try_again_count += 1
 
     overlaps = 0
     #Check final overlaps:
-    for i, line in enumerate(sorted_lines):
+    for i, line in enumerate(lines):
         line_overlaps = 0
         line_array = line.points_array
         for j in range(i + 1, len(lines)):
             line_j_array = lines[j].points_array
             if j == (i + 1):
                 remove_ends_of_line(line_array, line_j_array)
-            line_overlaps += check_shape_edge_overlaps(line_array, line_j_array)
+            n_overlaps, overlap_indices = check_shape_edge_overlaps(line_array, line_j_array)
+            line_overlaps += n_overlaps
             if line_overlaps > max_shape_overlaps:  # Return to save processing time
                 return overlaps
 
