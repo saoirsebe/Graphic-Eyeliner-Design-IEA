@@ -10,9 +10,9 @@ from ParentSegment import point_in_array
 
 
 def remove_ends_of_line(line1_array, line2_array):
-    first_2 = int(len(line1_array) * 0.04)
+    first_2 = int(len(line1_array) * 0.15)
     line1_array = line1_array[:-first_2]
-    first_2 = int(len(line2_array) * 0.04)
+    first_2 = int(len(line2_array) * 0.15)
     line2_array = line2_array[first_2:]
     return line1_array, line2_array
 
@@ -173,7 +173,7 @@ def fix_overlaps_shape_overlaps(lines, ax=None):
 
         try_again = True
         try_again_count = 0
-        while try_again and try_again_count < 10:
+        while try_again and try_again_count < 15:
             n_of_line_overlaps = 0
             indices_of_line_overlaps = []
             line_array = lines[i].points_array
@@ -188,21 +188,16 @@ def fix_overlaps_shape_overlaps(lines, ax=None):
                     current_n_of_line_overlaps, set_indices_of_line_overlaps = check_shape_edge_overlaps(line_array, line_j_array)
                     n_of_line_overlaps += current_n_of_line_overlaps
                     indices_of_line_overlaps.extend(list(set_indices_of_line_overlaps))
-                    if current_n_of_line_overlaps >70:
-                        print("line_array",line_array)
-                        print("line_j_array",line_j_array)
 
             try_again = False
 
             if n_of_line_overlaps>0:
-                print("n_of_line_overlaps:", n_of_line_overlaps)
-                if lines[i].curviness >0.025:
+                if lines[i].curviness >=0.025:
                     lines[i].curviness -=0.025
                     try_again = True
                 if len(indices_of_line_overlaps)>0:
-                    if len(indices_of_line_overlaps)>50:
-                        print("indices_of_line_overlaps", indices_of_line_overlaps)
-                    #Printing overlaps
+
+                    #Printing overlaps for testing
                     all_overlap_indices = np.array(list(indices_of_line_overlaps))
                     overlapping_points = lines[i].points_array[all_overlap_indices]
                     x_coords = overlapping_points[:, 0]
@@ -228,22 +223,22 @@ def fix_overlaps_shape_overlaps(lines, ax=None):
             """
             try_again_count += 1
 
+    if n_of_line_overlaps>0:
+        return n_of_line_overlaps
     overlaps = 0
     #Check final overlaps:
     for i, line in enumerate(lines):
-        line_overlaps = 0
         line_array = line.points_array
         for j in range(i + 1, len(lines)):
             line_j_array = lines[j].points_array
-            if j == (i + 1):
-                remove_ends_of_line(line_array, line_j_array)
+            if j == (i + 1) % len_lines:
+                line_array, line_j_array = remove_ends_of_line(line_array, line_j_array)
+            if j == (i - 1) % len_lines:
+                line_j_array, line_array = remove_ends_of_line(line_j_array, line_array)
             n_overlaps, overlap_indices = check_shape_edge_overlaps(line_array, line_j_array)
-            line_overlaps += n_overlaps
-            if line_overlaps > max_shape_overlaps:  # Return to save processing time
+            overlaps += n_overlaps
+            if overlaps > 0:  # Return to save processing time
                 return overlaps
 
-        overlaps += line_overlaps
-        if overlaps > max_shape_overlaps:  # Return to save processing time
-            return overlaps
 
     return overlaps

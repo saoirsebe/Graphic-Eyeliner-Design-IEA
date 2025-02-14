@@ -8,7 +8,7 @@ from A import StartMode, SegmentType, un_normalised_vector_direction, normalised
 from ParentSegment import Segment, point_in_array
 from StarGeneration import bezier_curve_t
 
-def are_points_collinear(points, tolerance=0.75):
+def are_points_collinear(points, tolerance=0.8):
     """
     Checks if a set of points are collinear within tolerance.
 
