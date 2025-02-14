@@ -35,7 +35,7 @@ class IrregularPolygonEdgeSegment:
         self.curve_location = curve_location
         self.points_array = []
 
-    def render(self,centroid, start_point, end_point, colour, thickness, ax_n=None):
+    def render(self, centroid, start_point, end_point):
         if self.curviness>0:
             t_values = np.linspace(0, 1, line_num_points)
             p0 = start_point
@@ -169,7 +169,7 @@ class IrregularPolygonSegment(Segment):
                 end_point = np.array(to_scale_corners[0])
                 #ax_n.scatter(end_point[0], end_point[1], color='blue',linewidth=3,  zorder=6)
 
-            section_points_array = self.lines_list[i].render(centroid,start_point, end_point, self.colour, self.end_thickness, ax_n)
+            section_points_array = self.lines_list[i].render(centroid, start_point, end_point)
             if self.points_array.size == 0:
                 self.points_array = section_points_array  # Directly assign if empty
             else:

@@ -247,11 +247,12 @@ def random_lines_corners_list(n_of_corners):
     return sorted_corners, lines_list
 
 
-def random_irregular_polygon(ax = None):
+def random_irregular_polygon(ax=None):
+
     segment_start = generate_valid_start()
     random_colour = random_segment_colour("blue")
-    new_shape_overlaps = max_shape_overlaps + 1
-    while new_shape_overlaps > 0:
+    new_shape_overlaps = max_shape_overlaps + 21
+    while new_shape_overlaps > 20:
         print("New shape:")
         n_of_corners = round(random_normal_within_range(5, 1, num_points_range))
         corners, lines = random_lines_corners_list(n_of_corners)
@@ -274,7 +275,7 @@ def random_irregular_polygon(ax = None):
         prev_end_thickness = new_segment.end_thickness
         new_segment.render(prev_array, prev_angle, prev_colour, prev_end_thickness)
 
-        new_shape_overlaps = fix_overlaps_shape_overlaps(new_segment.lines_list, ax)
+        new_shape_overlaps = fix_overlaps_shape_overlaps(new_segment, new_segment.lines_list, ax)
         print("new_shape_overlaps", new_shape_overlaps)
     print("new_shape_overlaps",new_shape_overlaps)
 

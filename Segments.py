@@ -479,7 +479,7 @@ def make_eyeliner_wing(random_colour):
         prev_colour = new_segment.colour
         prev_end_thickness = new_segment.end_thickness
         new_segment.render(prev_array, prev_angle, prev_colour, prev_end_thickness)
-        new_shape_overlaps = fix_overlaps_shape_overlaps(new_segment.lines_list)
+        new_shape_overlaps = fix_overlaps_shape_overlaps(new_segment, new_segment.lines_list)
         #print("Eyeliner shape overlaps:", new_shape_overlaps)
         if not new_shape_overlaps > max_shape_overlaps:
             return new_segment
@@ -594,7 +594,7 @@ def random_segment(prev_colour=None, segment_start=None):
             prev_colour = new_segment.colour
             prev_end_thickness = new_segment.end_thickness
             new_segment.render(prev_array, prev_angle, prev_colour, prev_end_thickness)
-            new_shape_overlaps = shape_overlaps(new_segment.lines_list)
+            new_shape_overlaps = fix_overlaps_shape_overlaps(new_segment.lines_list)
 
     return new_segment
 
