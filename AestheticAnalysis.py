@@ -1,6 +1,8 @@
+import math
+
 from matplotlib import pyplot as plt
 from A import SegmentType, StartMode, get_quadratic_points
-from EyelinerWingGeneration import generate_eye_curve_directions
+from EyelinerWingGeneration import  generate_eyeliner_curve_lines
 import numpy as np
 from scipy.interpolate import interp1d
 
@@ -164,6 +166,7 @@ def compare_with_eyelid_curves(bezier_points, eye_points, is_upper,num_samples=1
 
     Returns:
         dict: A dictionary containing shape similarity, direction similarity, and overall similarity.
+        directional and curvature similarity values have upper bounds of 1 if arrays are identical
     """
     def apply_upper_lower_condition(bezier_curve, quadratic_curve, is_upper, threshold=0.9):
         count_valid = 0
@@ -205,30 +208,32 @@ def compare_with_eyelid_curves(bezier_points, eye_points, is_upper,num_samples=1
     else:
         shape_similarity = 0
         direction_similarity = 0
-
+    overlap_length = math.sqrt((overlapping_points_segment[-1][0] - overlapping_points_segment[0][0]) ** 2 + (
+                    overlapping_points_segment[-1][1] - overlapping_points_segment[0][1]) ** 2)
     # Combine into overall similarity
     overall_similarity = (shape_similarity + direction_similarity) / 2
     return {
         "shape_similarity": shape_similarity,
         "direction_similarity": direction_similarity,
         "overall_similarity": overall_similarity
-    }
+    } ,overlap_length
 
 def score_segment_against_eyelid_shape(segment, upper_curve, lower_curve, tolerance=0.1):
-    """Runs compare_with_eyelid_curves for upper eyelid and lower eyelid curves, returning the score based on the overall similarity values returned"""
     points = segment.points_array
+    """Runs compare_with_eyelid_curves for upper eyelid and lower eyelid curves, returning the score based on the overall similarity values returned"""
+
     # Calculate curvature of the segment
-    upper_curve_results= compare_with_eyelid_curves(points,upper_curve,True, num_samples=100)
-    lower_curve_results= compare_with_eyelid_curves(points,lower_curve,False, num_samples=100)
+    upper_curve_results , overlap_length = compare_with_eyelid_curves(points,upper_curve,True, num_samples=100)
+    lower_curve_results , overlap_length = compare_with_eyelid_curves(points,lower_curve,False, num_samples=100)
     #print("upper_curve_match", upper_curve_results)
     #print("lower_curve_match", lower_curve_results)
 
     # Assign scores
     score = 0
     if upper_curve_results["overall_similarity"]>0.6:
-        score+= 2 * upper_curve_results["overall_similarity"]
+        score+= overlap_length * upper_curve_results["overall_similarity"]
     elif lower_curve_results["overall_similarity"]>0.6:
-        score += 2 * lower_curve_results["overall_similarity"]
+        score += overlap_length * lower_curve_results["overall_similarity"]
     else:
         score -= 0.25  # Penalty for deviating
 
@@ -250,7 +255,14 @@ def compair_segment_wing_shape(segment, curve1, curve2):
     best_overall = max(overall_similarity1, overall_similarity2)
 
     if best_overall>0.6:
-        best_overall+= 2 * best_overall
+        if best_overall == overall_similarity1:
+            length = math.sqrt((overlapping_points_segment_1[-1][0] - overlapping_points_segment_1[0][0]) ** 2 + (
+                    overlapping_points_segment_1[-1][1] - overlapping_points_segment_1[0][1]) ** 2)
+            best_overall=best_overall * length
+        if best_overall == overall_similarity2:
+            length = math.sqrt((overlapping_points_segment_2[-1][0] - overlapping_points_segment_2[0][0]) ** 2 + (
+                    overlapping_points_segment_2[-1][1] - overlapping_points_segment_2[0][1]) ** 2)
+            best_overall = best_overall * length
     else:
         best_overall = -0.25  # Penalty for deviating
     return best_overall
@@ -274,8 +286,27 @@ def analyse_design_shapes(design):
                 total_score += segment.length * score_segment_against_eyelid_shape(segment, upper_curve, lower_curve)
             elif check_points_left(segment.points_array,False):
                 # If 80% of segment is right of the eye corner then compare segment with wing shape curves
-                top_eye_curve, bottom_eye_curve = generate_eye_curve_directions()
-                total_score += segment.length * compair_segment_wing_shape(segment, top_eye_curve, bottom_eye_curve)
+                eyeliner_curve1, eyeliner_curve2 = generate_eyeliner_curve_lines()
+                total_score += segment.length * compair_segment_wing_shape(segment, eyeliner_curve1, eyeliner_curve2)
+
+        if segment.segment_type == SegmentType.IRREGULAR_POLYGON:
+            max_score = 0
+            #Adds score of line in polygon with the highest similarity with eyelid/eyeliner shape
+            for line in segment.lines_list:
+                points_array = line.points_array
+                alignment_score = 0
+                if check_points_left(points_array, True):
+                    # If 80% of segment is left of the eye corner then compare segment with eyelid curve
+                    alignment_score = score_segment_against_eyelid_shape(line, upper_curve,lower_curve)
+                elif check_points_left(points_array, False):
+                    # If 80% of segment is right of the eye corner then compare segment with wing shape curves
+                    eyeliner_curve1, eyeliner_curve2 = generate_eyeliner_curve_lines()
+                    alignment_score = compair_segment_wing_shape(line, eyeliner_curve1, eyeliner_curve2)
+
+                if alignment_score >  max_score:
+                    max_score = alignment_score
+            total_score += max_score
+
     return total_score
 
 

@@ -7,6 +7,8 @@ from BreedingMechanism import breed_new_designs
 from InitialiseGenePool import initialise_gene_pool
 from Page import Page
 
+
+
 class DesignPage(Page):
     def __init__(self, parent, controller):
         super().__init__(parent, controller)
@@ -32,6 +34,15 @@ class DesignPage(Page):
         self.start_button = tk.Button(self, text="Start designing", command=lambda: self.start_designing())
         self.start_button.grid(row=2, column=0, columnspan=2, pady=10)
 
+    def add_into_pool(self, the_gene, b):
+        if the_gene not in self.current_gene_pool:
+            self.current_gene_pool.append(the_gene)
+            self.start_designing()
+
+    def un_save(self, the_gene, b):
+        self.saved_genes.remove(the_gene)
+        self.show_saved_genes()
+
     def show_saved_genes(self):
         for widget in self.saved_gene_widgets.values():widget.destroy()
         self.saved_gene_widgets = {}
@@ -49,6 +60,15 @@ class DesignPage(Page):
 
             # Save the frame to the dictionary
             self.saved_gene_widgets[gene] = canvas_frame
+
+            into_pool_button = tk.Button(canvas_frame, text="Add back into gene pool")
+            into_pool_button.config(command=lambda the_gene=gene, b=into_pool_button: self.add_into_pool(the_gene, b))
+            into_pool_button.grid(row=1, column=0, columnspan=2, padx=5, pady=5, sticky="ew")  # Place button below canvas
+
+            un_save_button = tk.Button(canvas_frame, text="Un-save")
+            un_save_button.config(command=lambda the_gene=gene, b=un_save_button: self.un_save(the_gene, b))
+            un_save_button.grid(row=1, column=1, columnspan=2, padx=5, pady=5,
+                                  sticky="ew")  # Place button below canvas
 
     def re_generate(self):
         for fig in self.current_gene_pool_figures:
@@ -100,7 +120,7 @@ class DesignPage(Page):
                     relief="sunken"  # Change the button relief to give a "pressed" feel
                 )
 
-        def save_gene(index,button):
+        def save_gene(index, button):
             if index in self.saved_genes_indices:
                 self.saved_genes_indices.remove(index)  # Deselect the gene
                 button.config(
@@ -181,3 +201,4 @@ class DesignPage(Page):
             self.current_gene_pool = self.gene_pools_all[-2]
             self.gene_pools_all = self.gene_pools_all[:-2]
             self.start_designing()
+

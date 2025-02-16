@@ -1,9 +1,11 @@
+from PIL import Image, ImageTk
+
 import numpy as np
 import matplotlib.pyplot as plt
 import sympy as sp
 import random
 
-from A import eye_corner_start, normalised_vector_direction, get_quadratic_points, bezier_curve
+from A import eye_corner_start, normalised_vector_direction, get_quadratic_points, bezier_curve, draw_eye_shape
 
 
 def perpendicular_direction(start,end):
@@ -109,24 +111,28 @@ def generate_bezier_curve(P0,P1,P2,P3, num_points=100):
     y = (1 - t) ** 3 * P0[1] + 3 * (1 - t) ** 2 * t * P1[1] + 3 * (1 - t) * t ** 2 * P2[1] + t ** 3 * P3[1]
     return x, y
 
-def generate_eye_curve_directions(ax_n=None):
+def generate_eyeliner_curve_lines(ax_n=None):
     #plt.figure(figsize=(6, 6))
-    #draw_eye_shape(plt)
+    if ax_n:
+        draw_eye_shape(ax_n)
 
-    x_values = np.linspace(eye_corner_start[0], 10, 100)
-    y_values = np.linspace(eye_corner_start[1], 4.5, 100)
+    x_values = np.linspace(eye_corner_start[0], 160, 100)
+    y_values = np.linspace(eye_corner_start[1], 125, 100)
     top_eye_curve = np.column_stack((x_values, y_values))
     top_eye_curve -= 0.5
 
     #top_eye_curve = bezier_curve(P0,P1,P2)
     if ax_n:
+        flipped_img = np.flipud(Image.open("female-face-drawing-template-one-eye.jpg"))
+        ax_n.imshow(flipped_img)
+        ax_n.invert_yaxis()
         ax_n.plot(top_eye_curve[:,0], top_eye_curve[:,1], label="Upper Bezier")
 
     P0 = np.array(eye_corner_start)
-    P2 = np.array([8, 3])
+    P2 = np.array([160, 105])
     P1 = (P0 + P2) // 2
-    P1[1] -= 0.75
-    P1[0] -= 0.25
+    P1[1] -= 5
+    P1[0] += 5
 
     bottom_eye_curve = bezier_curve(P0,P1,P2)
     #bottom_eye_curve = np.column_stack((x, y))
@@ -158,3 +164,6 @@ plt.ylabel("Y-axis")
 plt.legend()
 plt.show()
 """
+#fig, ax_n = plt.subplots(figsize=(3, 3))
+#generate_eyeliner_curve_lines(ax_n)
+#fig.show()

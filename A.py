@@ -21,12 +21,12 @@ colour_options = [
 ]
 curviness_range = (0, 1)
 relative_location_range = (0, 1)
-radius_range = (0, 30)
-arm_length_range = (0, 30)
+radius_range = (0, 25)
+arm_length_range = (0, 25)
 num_points_range = (3, 8)
 asymmetry_range = (0, 10)
 corner_initialisation_range = (0,1)
-random_shape_size_range = (1,30)
+random_shape_size_range = (10,40)
 max_shape_overlaps = 0
 
 number_of_children_range= (0,3)
@@ -118,7 +118,7 @@ lower_eyelid_x, lower_eyelid_y = np.array(lower_x) * 3, np.array(lower_y) * 3
 lower_eyelid_coords = np.column_stack((lower_eyelid_x, lower_eyelid_y))
 """
 
-upper_eyelid_coords =  bezier_curve(np.array([28,82]), np.array([70,120]), np.array([118,93]))
+upper_eyelid_coords =  bezier_curve(np.array([28,82]), np.array([70,123]), np.array([118,93]))
 upper_eyelid_x = [coord[0] for coord in upper_eyelid_coords]
 upper_eyelid_y = [coord[1] for coord in upper_eyelid_coords]
 

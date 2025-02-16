@@ -1,11 +1,9 @@
 from scipy.spatial import cKDTree
 from seaborn import scatterplot
-
 from A import SegmentType, StartMode, min_fitness_score, max_shape_overlaps, upper_eyelid_x, lower_eyelid_x, \
     upper_eyelid_y, lower_eyelid_y, SegmentType
 from AestheticAnalysis import analyse_design_shapes
 import numpy as np
-
 from ParentSegment import point_in_array
 
 
@@ -32,6 +30,10 @@ def check_shape_edge_overlaps(segment1_array, segment2_array):
     overlaps, indices_of_line_overlaps = check_overlaps(segment2_array, segment1_tree, 0.2)
     return overlaps , indices_of_line_overlaps
 
+def remove_both_ends(the_segment_array):
+    first_25 = int(len(the_segment_array) * 0.025)
+    return the_segment_array[first_25:-first_25]
+
 def check_segment_overlaps(segment1, segment2, segment1_tree = None):
     segment2_array = segment2.points_array
     if segment2.segment_type == SegmentType.LINE:
@@ -39,14 +41,12 @@ def check_segment_overlaps(segment1, segment2, segment1_tree = None):
             #Remove the split point from array as it will overlap with the previous segment:
             split_point_point_index = point_in_array(segment2.points_array, segment2.split_point)
             segment2_array = np.delete(segment2_array, split_point_point_index, axis=0)
-        first_2 = int(len(segment2_array) * 0.02)
-        segment2_array = segment2_array[first_2:-first_2]
+        segment2_array = remove_both_ends(segment2_array)
 
     if segment1_tree is None:
         segment1_array = segment1.points_array
         if segment1.segment_type == SegmentType.LINE:
-            first_2 = int(len(segment1_array) * 0.02)
-            segment1_array = segment1_array[first_2:-first_2]
+            segment1_array = remove_both_ends(segment1_array)
         segment1_tree = cKDTree(segment1_array)  # Build KD-tree for the first set of points
 
     overlaps , overlap_indices = check_overlaps(segment2_array, segment1_tree)
@@ -129,7 +129,6 @@ def analyse_negative(design):
     # Compare each pair of segments for overlap
     print("N of segments = ",len(segments))
     for i in range(len(segments)):
-        print("Segment type:",segments[i].segment_type)
         eye_overlaps = is_in_eye(segments[i])
         if eye_overlaps>0:
             return min_fitness_score *2
@@ -151,7 +150,7 @@ def analyse_positive(design):
         score += wing_angle(design.root, child)
 
     score += analyse_design_shapes(design)
-    score = score + (len(segments) * 0.5)  # Higher score for designs with more segments
+    score = score + (len(segments) * 0.25)  # Higher score for designs with more segments
     return score
 
 
@@ -174,11 +173,6 @@ def fix_overlaps_shape_overlaps(shape, lines, ax=None):
     prev_end_thickness = shape.end_thickness
     #Tries to fix overlaps by making lines less curvey:
     for i in range(len_lines):
-        if ax:
-            x_coords = sorted_lines_with_indices[i][1].points_array[:, 0]
-            y_coords = sorted_lines_with_indices[i][1].points_array[:, 1]
-            ax.scatter(x_coords, y_coords, color='red')
-
         try_again = True
         try_again_count = 0
         while try_again and try_again_count < 16:
@@ -217,13 +211,7 @@ def fix_overlaps_shape_overlaps(shape, lines, ax=None):
                         elif lines[original_line_index].curve_location <0.5 and max(sorted_indices)<half_index:
                             lines[original_line_index].curve_location += 0.025
                             try_again = True
-            """
-            if ax:
-                x_coords = line.points_array[:, 0]
-                y_coords = line.points_array[:, 1]
 
-                ax.scatter(x_coords, y_coords, color='red')
-            """
             try_again_count += 1
             if try_again:
                 shape.render(prev_array, prev_angle, prev_colour,prev_end_thickness)  # Need to render to update points.array
@@ -245,15 +233,8 @@ def fix_overlaps_shape_overlaps(shape, lines, ax=None):
             final_indices_of_line_overlaps.extend(list(overlap_indices))
             overlaps += n_overlaps
 
-            #if overlaps > 0:  # Return to save processing time
-            #    return overlaps
-        if len(final_indices_of_line_overlaps) > 0:
-            print(f"line {i} overlaps")
-            # Printing overlaps for testing
-            final_overlap_indices = np.array(list(final_indices_of_line_overlaps))
-            overlapping_points = line_array[final_overlap_indices]
-            x_coords = overlapping_points[:, 0]
-            y_coords = overlapping_points[:, 1]
-            ax.scatter(x_coords, y_coords, color='black')
+            if overlaps > 0:  # Return to save processing time
+                return overlaps
+
 
     return overlaps

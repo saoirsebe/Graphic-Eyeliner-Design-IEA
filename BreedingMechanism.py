@@ -24,14 +24,14 @@ def crossover_designs(designs):
 
             # Find parents of the selected nodes
             offspring_parent = offspring.find_parent(offspring.root, offspring_node)
-            print("offspring_parent children before:", offspring_parent.children)
+           # print("offspring_parent children before:", offspring_parent.children)
 
             # Swap subtree with offspring
             if offspring_parent:
                 # Remove the nodes from their current parents
                 offspring_parent.remove_child_segment(offspring_node)
                 offspring_parent.add_child_segment(gene_to_breed_node)
-                print("offspring_parent children after:", offspring_parent.children)
+                #print("offspring_parent children after:", offspring_parent.children)
             else:
                 print("no offspring_parent")
 

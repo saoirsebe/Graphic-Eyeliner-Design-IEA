@@ -433,11 +433,13 @@ def random_eyeliner_lines_corners():
     upper_eyelid_coords_40 = int(0.4* len(upper_eyelid_coords))
     upper_eyelid_coords_10 = int(0.05 * len(upper_eyelid_coords))
     p2 = upper_eyelid_coords[random.randint(-upper_eyelid_coords_40, -upper_eyelid_coords_10)] +0.05
+    p2[1] = p2[1] + 0.1
     p0 = np.array(eye_corner_start)
+    p0[0] = p0[0] + 0.1
     # p1 = wing length in wing direction away from the corner of the eye:
     p1_angle = random_normal_within_range(22.5, 20, direction_range)
     p1_dir_radians = np.radians(p1_angle)
-    wing_length = random_normal_within_range(3, 2, (0.5,5))
+    wing_length = random_normal_within_range(30, 20, length_range)
     dx = wing_length * np.cos(p1_dir_radians)
     dy = wing_length * np.sin(p1_dir_radians)
     p1 = p0 + np.array([dx, dy])
@@ -445,8 +447,8 @@ def random_eyeliner_lines_corners():
     if start_at_corner:
         eyeliner_corners = np.array([p0, p1, p2])
         eyeliner_lines = [IrregularPolygonEdgeSegment(random_normal_within_range(-0.1, 0.1,(-0.2,0)),random_normal_within_range(0.5, 0.15,relative_location_range)),
-                          IrregularPolygonEdgeSegment(random_normal_within_range(0.2,0.2, curviness_range), random_normal_within_range(0.5, 0.15,relative_location_range)),
-                          IrregularPolygonEdgeSegment(0.3,0.4)]
+                          IrregularPolygonEdgeSegment(random_normal_within_range(0.2,0.1, curviness_range), random_normal_within_range(0.5, 0.15,relative_location_range)),
+                          IrregularPolygonEdgeSegment(0.2,0.4)]
     else:
         lower_eyelid_coords_section = int(0.1 * len(lower_eyelid_coords))
         p3 = lower_eyelid_coords[random.randint(-lower_eyelid_coords_section, -1)] -0.05
@@ -454,8 +456,8 @@ def random_eyeliner_lines_corners():
 
         eyeliner_lines = [IrregularPolygonEdgeSegment(0, 0.5),
                           IrregularPolygonEdgeSegment(random_normal_within_range(-0.1, 0.1,(-0.2,0)), random_normal_within_range(0.5, 0.15, relative_location_range)),
-                          IrregularPolygonEdgeSegment(random_normal_within_range(0.2,0.2, curviness_range), random_normal_within_range(0.5, 0.15,relative_location_range)),
-                          IrregularPolygonEdgeSegment(0.3,0.4)]
+                          IrregularPolygonEdgeSegment(random_normal_within_range(0.2,0.1, curviness_range), random_normal_within_range(0.5, 0.15,relative_location_range)),
+                          IrregularPolygonEdgeSegment(0.2,0.4)]
 
     return eyeliner_corners, eyeliner_lines, p0
 
@@ -472,7 +474,8 @@ def make_eyeliner_wing(random_colour):
             bounding_size=(1,1),
             corners=corners,
             lines_list=lines,
-            is_eyeliner_wing = True
+            is_eyeliner_wing = True,
+            fill = random.choice([True, False]),
         )
         prev_array = np.array([new_segment.start])
         prev_angle = 0
@@ -557,12 +560,13 @@ def random_segment(prev_colour=None, segment_start=None):
             split_point=random_normal_within_range(0.5,0.25,relative_location_range)
         )
     elif new_segment_type == SegmentType.STAR:
+        new_radius = random_normal_within_range(10, 20, radius_range)
         new_segment = create_segment(
             segment_type=SegmentType.STAR,
             start=segment_start,
             start_mode=random.choice([StartMode.CONNECT, StartMode.JUMP]),
-            radius=random_normal_within_range(10,20,radius_range),
-            arm_length=random_normal_within_range(15,20,arm_length_range),
+            radius=new_radius,
+            arm_length= random_normal_within_range(7,10,arm_length_range) if new_radius >20 else random_normal_within_range(15,20,arm_length_range),
             num_points=round(random_normal_within_range(5,2, num_points_range)),
             asymmetry=0 if random.random() < 0.6 else random_normal_within_range(2,2,asymmetry_range),
             star_type=random.choice([StarType.STRAIGHT, StarType.CURVED, StarType.FLOWER]),
@@ -571,7 +575,7 @@ def random_segment(prev_colour=None, segment_start=None):
             colour=random_colour,
             fill = random.choice([True, False]),
         )
-    else:
+    else: #IrregularPolygon
         new_shape_overlaps = max_shape_overlaps+1
         while new_shape_overlaps > max_shape_overlaps:
             n_of_corners = round(random_normal_within_range(5, 1, num_points_range))
@@ -581,7 +585,7 @@ def random_segment(prev_colour=None, segment_start=None):
                 segment_type=SegmentType.IRREGULAR_POLYGON,
                 start=segment_start,
                 start_mode= StartMode.CONNECT if random.random() <0.3 else StartMode.JUMP,
-                end_thickness=random_normal_within_range(2, 2, thickness_range),
+                end_thickness=random_normal_within_range(1, 2, thickness_range),
                 relative_angle=random.uniform(*direction_range),
                 colour=random_colour,
                 bounding_size=(bounding_size_x, random_normal_within_range(bounding_size_x, 30,random_shape_size_range)),
@@ -594,7 +598,7 @@ def random_segment(prev_colour=None, segment_start=None):
             prev_colour = new_segment.colour
             prev_end_thickness = new_segment.end_thickness
             new_segment.render(prev_array, prev_angle, prev_colour, prev_end_thickness)
-            new_shape_overlaps = fix_overlaps_shape_overlaps(new_segment.lines_list)
+            new_shape_overlaps = fix_overlaps_shape_overlaps(new_segment, new_segment.lines_list)
 
     return new_segment
 

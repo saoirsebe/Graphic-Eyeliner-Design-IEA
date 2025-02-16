@@ -1,7 +1,7 @@
 import copy
 import random
 from conda.common.configuration import raise_errors
-from AnalyseDesign import analyse_negative, check_overlaps, fix_overlaps_shape_overlaps, check_segment_overlaps, check_design_overlaps
+from AnalyseDesign import analyse_negative, analyse_positive, check_overlaps, fix_overlaps_shape_overlaps, check_segment_overlaps, check_design_overlaps
 from Segments import *
 import cProfile
 from IrregularPolygonSegment import are_points_collinear
@@ -152,7 +152,7 @@ class EyelinerDesign:   #Creates overall design, calculates start points, render
             ax_n.invert_yaxis()
 
             #fig, ax_n = plt.subplots(figsize=(3, 3))
-            draw_eye_shape(ax_n)
+            #draw_eye_shape(ax_n)
             self.render_node(root_node, prev_array, prev_angle, prev_colour, prev_end_thickness_array,ax_n)
             return fig
         else:
@@ -230,6 +230,7 @@ def angle_from_center(center, point):
     dy = point[1] - center[1]
     return math.atan2(dy, dx)  # atan2 returns the angle in radians
 
+
 def random_lines_corners_list(n_of_corners):
     collinear=True
     #Check if points are collinear within tolerance
@@ -253,7 +254,6 @@ def random_irregular_polygon(ax=None):
     random_colour = random_segment_colour("blue")
     new_shape_overlaps = max_shape_overlaps + 21
     while new_shape_overlaps > 20:
-        print("New shape:")
         n_of_corners = round(random_normal_within_range(5, 1, num_points_range))
         corners, lines = random_lines_corners_list(n_of_corners)
         bounding_size_x = random_normal_within_range(50, 30, random_shape_size_range)
@@ -276,12 +276,11 @@ def random_irregular_polygon(ax=None):
         new_segment.render(prev_array, prev_angle, prev_colour, prev_end_thickness)
 
         new_shape_overlaps = fix_overlaps_shape_overlaps(new_segment, new_segment.lines_list, ax)
-        print("new_shape_overlaps", new_shape_overlaps)
-    print("new_shape_overlaps",new_shape_overlaps)
+
 
     return new_segment
 
-
+"""
 fig, ax_n = plt.subplots(figsize=(3, 3))
 shape = random_irregular_polygon(ax_n)
 prev_array = np.array([shape.start])
@@ -291,7 +290,7 @@ prev_end_thickness= shape.end_thickness
 shape.render(prev_array, prev_angle, prev_colour, prev_end_thickness, ax_n)
 
 fig.show()
-
+"""
 
 """
 
@@ -327,8 +326,12 @@ negative_score = analyse_negative(design)
 print("negative_score:",negative_score)
 """
 """
-design = EyelinerDesign(random_random_shape())
+design = EyelinerDesign(random_irregular_polygon())
 fig, ax_n = plt.subplots(figsize=(3, 3))
 fig = design.render_design(ax_n)
 fig.show()
+positive_score = analyse_positive(design)
+negative_score = analyse_negative(design)
+print("analyse_negative score:", negative_score)
+print("Positive Score:", positive_score)
 """
