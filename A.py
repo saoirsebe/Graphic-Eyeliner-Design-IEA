@@ -4,7 +4,7 @@ import numpy as np
 
 min_fitness_score = -3
 min_segment_score = -2
-initial_gene_pool_size = 200
+initial_gene_pool_size = 10
 node_re_gen_max = 12
 #Parameter ranges:
 start_x_range = (20, 130)

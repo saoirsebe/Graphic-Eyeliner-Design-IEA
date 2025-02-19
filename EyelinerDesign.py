@@ -100,7 +100,7 @@ class EyelinerDesign:   #Creates overall design, calculates start points, render
             print("Not enough nodes to perform a move.")
             return
 
-        original_parent = find_parent(self.root, subtree_root)
+        original_parent = self.find_parent(self.root, subtree_root)
         original_parent.children.remove(subtree_root)
 
         # Randomly select a new parent node (cannot be the subtree root itself or any of its descendants)

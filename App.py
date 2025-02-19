@@ -1,35 +1,23 @@
-import tkinter as tk
-from tkinter import messagebox
+import customtkinter as ctk
+
 from DesignPage import DesignPage
 from HomePage import HomePage
-from LoginPage import LoginPage
-from LoginPage import SignUpPage
-from Page import Page
-import ttkbootstrap as ttk
+from LoginPage import LoginPage, SignUpPage
 
-class App(ttk.Window):
+
+class App(ctk.CTk):
     def __init__(self):
-        super().__init__(themename="darkly")
+        super().__init__()
+        ctk.set_appearance_mode("dark")  # Options: "System", "Dark", "Light"
+        ctk.set_default_color_theme("blue")  # Options: "blue", "green", "dark-blue"
+
         self.title("Eyeliner Design App")
-        self.geometry("1350x600")
+        self.geometry("1000x600")
+        self.configure(bg="#1E1E1E")
 
-        # Root Canvas and Scrollbars
-        self.rowconfigure(0, weight=1)
-        self.columnconfigure(0, weight=1)
-
-        # Set canvas size and scrolling region
-        w, h = self.winfo_screenwidth(), self.winfo_screenheight()
-        self.canvas = tk.Canvas(self, scrollregion=f"0 0 {w * 2} {h * 2}")
-        self.canvas.grid(row=0, column=0, sticky=tk.NSEW)
-
-        # Add vertical and horizontal scrollbars
-        self.makescroll(self, self.canvas)
-        self.bind_mousewheel()
-
-        # Create a container frame for all pages
-        self.container = tk.Frame(self.canvas)
-        self.container.bind("<Configure>", self.update_scrollregion)  # Dynamically update scroll region
-        self.canvas.create_window((0, 0), window=self.container, anchor="nw")
+        # Create a scrollable frame
+        self.scrollable_frame = ctk.CTkScrollableFrame(self, fg_color="#2A2A2A", corner_radius=10)
+        self.scrollable_frame.pack(fill="both", expand=True, padx=10, pady=10)
 
         self.page_classes = {
             "HomePage": HomePage,
@@ -38,48 +26,22 @@ class App(ttk.Window):
             "SignUpPage": SignUpPage,
         }
 
-        self.pages = {}  # Dictionary to store pages
+        self.pages = {}  # Store pages dynamically
         for PageClass in (HomePage, DesignPage, SignUpPage, LoginPage):
             page_name = PageClass.__name__
-            page = PageClass(parent=self.container, controller=self)  # Use page_frame instead of container
+            page = PageClass(parent=self.scrollable_frame, controller=self)
             self.pages[page_name] = page
-            page.grid(row=0, column=0, sticky="nsew")
+            page.pack(fill="both", expand=True)
 
-        # Initialize pages
         self.show_page("DesignPage")
 
-    def makescroll(self, parent, thing):
-        """Adds scrollbars to the given canvas"""
-        v = tk.Scrollbar(parent, orient=tk.VERTICAL, command=thing.yview)
-        v.grid(row=0, column=1, sticky=tk.NS)
-        thing.config(yscrollcommand=v.set)
-        h = tk.Scrollbar(parent, orient=tk.HORIZONTAL, command=thing.xview)
-        h.grid(row=1, column=0, sticky=tk.EW)
-        thing.config(xscrollcommand=h.set)
-
-    def update_scrollregion(self, event):
-        """Update canvas scroll region based on the container's size"""
-        self.canvas.configure(scrollregion=self.canvas.bbox("all"))
-
-    def bind_mousewheel(self):
-        """Enable mousewheel scrolling for the canvas."""
-        self.canvas.bind_all("<MouseWheel>", self.on_mousewheel)
-
-    def on_mousewheel(self, event):
-        """Scroll the canvas with the mousewheel."""
-        self.canvas.yview_scroll(-1 * (event.delta // 120), "units")
-
     def show_page(self, page_name):
-        """Show the given page"""
-        if page_name not in self.pages:
-            page_class = self.page_classes[page_name]
-            page = page_class(parent=self.container, controller=self)
-            self.pages[page_name] = page
-            page.grid(row=0, column=0, sticky="nsew")
+        """Show the selected page."""
+        for widget in self.scrollable_frame.winfo_children():
+            widget.pack_forget()
+        self.pages[page_name].pack(fill="both", expand=True)
 
-        # Hide all pages and show the selected one
-        for widget in self.container.winfo_children():
-            widget.grid_forget()
-        self.pages[page_name].grid(row=0, column=0, sticky="nsew")
 
-App().mainloop()
+if __name__ == "__main__":
+    app = App()
+    app.mainloop()

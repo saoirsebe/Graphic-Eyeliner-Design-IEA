@@ -199,24 +199,26 @@ def compare_with_eyelid_curves(bezier_points, eye_points, is_upper,num_samples=1
             "shape_similarity": 0,
             "direction_similarity": 0,
             "overall_similarity": 0
-        }
+        } , 0
 
     overlapping_points_segment, overlapping_points_eye_shape = get_overlapping_points(bezier_points, eye_points)
 
     if overlapping_points_segment.shape[0]>4 and overlapping_points_eye_shape.shape[0]>4:
         shape_similarity, direction_similarity= compair_overlapping_sections(overlapping_points_segment, overlapping_points_eye_shape)
+        overlap_length = math.sqrt((overlapping_points_segment[-1][0] - overlapping_points_segment[0][0]) ** 2 + (
+                overlapping_points_segment[-1][1] - overlapping_points_segment[0][1]) ** 2)
     else:
         shape_similarity = 0
         direction_similarity = 0
-    overlap_length = math.sqrt((overlapping_points_segment[-1][0] - overlapping_points_segment[0][0]) ** 2 + (
-                    overlapping_points_segment[-1][1] - overlapping_points_segment[0][1]) ** 2)
+        overlap_length = 0
+
     # Combine into overall similarity
     overall_similarity = (shape_similarity + direction_similarity) / 2
     return {
         "shape_similarity": shape_similarity,
         "direction_similarity": direction_similarity,
         "overall_similarity": overall_similarity
-    } ,overlap_length
+    } , overlap_length
 
 def score_segment_against_eyelid_shape(segment, upper_curve, lower_curve, tolerance=0.1):
     points = segment.points_array
