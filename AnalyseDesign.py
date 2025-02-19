@@ -1,7 +1,7 @@
 from scipy.spatial import cKDTree
 from seaborn import scatterplot
 from A import SegmentType, StartMode, min_fitness_score, max_shape_overlaps, upper_eyelid_x, lower_eyelid_x, \
-    upper_eyelid_y, lower_eyelid_y, SegmentType
+    upper_eyelid_y, lower_eyelid_y, SegmentType, face_end_x_values, face_end_y_values
 from AestheticAnalysis import analyse_design_shapes
 import numpy as np
 from ParentSegment import point_in_array
@@ -116,6 +116,28 @@ def is_in_eye(segment):
     else:
         return 0
 
+def is_outside_face_area(segment):
+    segment_array = segment.points_array
+    if segment.segment_type == SegmentType.LINE:
+        first_2 = int(len(segment_array) * 0.02)
+        segment_array = segment_array[first_2:-first_2]
+    x1 = face_end_x_values[0]
+    x2 = face_end_x_values[-1]
+    y1 = face_end_y_values[0]
+    y2 = face_end_y_values[-1]
+
+    for point in segment_array:
+        px, py = point
+
+        # Calculate cross product: (x2 - x1) * (py - y1) - (y2 - y1) * (px - x1)
+        cross_product = (x2 - x1) * (py - y1) - (y2 - y1) * (px - x1)
+
+        # If cross product is negative, the point is to the right
+        if cross_product < 0:
+            return True  # Return immediately if any point is found to the right
+
+    return False  # No point to the right
+
 def wing_angle(node1,node2):
     if node1.segment_type == SegmentType.LINE and node2.segment_type == SegmentType.LINE:
         if node2.start_mode == StartMode.CONNECT and (0 < node1.absolute_angle < 70) and (142.5 < node2.relative_angle < 172.5 or 187.5 < node2.relative_angle < 217.5):
@@ -134,6 +156,8 @@ def analyse_negative(design):
             return min_fitness_score *2
         else:
             score-=eye_overlaps
+        if is_outside_face_area(segments[i]):
+            return min_fitness_score * 2
         if score < min_fitness_score:
             return score
         if i!=len(segments)-1:

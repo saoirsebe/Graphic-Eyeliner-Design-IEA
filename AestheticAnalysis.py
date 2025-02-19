@@ -206,7 +206,7 @@ def compare_with_eyelid_curves(bezier_points, eye_points, is_upper,num_samples=1
     if overlapping_points_segment.shape[0]>4 and overlapping_points_eye_shape.shape[0]>4:
         overlap_length = math.sqrt((overlapping_points_segment[-1][0] - overlapping_points_segment[0][0]) ** 2 + (
                 overlapping_points_segment[-1][1] - overlapping_points_segment[0][1]) ** 2)
-        if overlap_length>5:
+        if overlap_length>10:
             shape_similarity, direction_similarity = compair_overlapping_sections(overlapping_points_segment,overlapping_points_eye_shape)
         else:
             shape_similarity = 0

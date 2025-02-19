@@ -7,11 +7,11 @@ min_segment_score = -2
 initial_gene_pool_size = 200
 node_re_gen_max = 12
 #Parameter ranges:
-start_x_range = (20, 130)
-start_y_range = (50, 150)
+start_x_range = (20, 140)
+start_y_range = (50, 130)
 #start_mode_options = list(StartMode)
 #Segment_type_options = list(SegmentType)
-length_range = (10, 50)
+length_range = (15, 50)
 direction_range = (0, 360)
 thickness_range = (0.5, 3)
 colour_options = [
@@ -121,3 +121,7 @@ def draw_eye_shape(ax_n):
 
 
 
+face_end_x_values = np.linspace(138, 180, line_num_points*2)
+face_end_y_values = np.linspace(0, 175, line_num_points*2)
+face_end = np.column_stack((face_end_x_values, face_end_y_values))
+face_end = np.round(face_end, 3)

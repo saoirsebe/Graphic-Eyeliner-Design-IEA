@@ -1,7 +1,7 @@
 import copy
 import random
 from conda.common.configuration import raise_errors
-from AnalyseDesign import analyse_negative, analyse_positive, check_overlaps, fix_overlaps_shape_overlaps, check_segment_overlaps, check_design_overlaps
+from AnalyseDesign import analyse_negative, analyse_positive, check_overlaps, fix_overlaps_shape_overlaps, check_segment_overlaps, check_design_overlaps, is_outside_face_area
 from Segments import *
 import cProfile
 from IrregularPolygonSegment import are_points_collinear
@@ -150,6 +150,7 @@ class EyelinerDesign:   #Creates overall design, calculates start points, render
             flipped_img = np.flipud(self.eye_image)
             ax_n.imshow(flipped_img)
             ax_n.invert_yaxis()
+            #ax_n.plot(face_end_x_values, face_end_y_values, label=f"$y = 0.5x^2$", color="b")
 
             #fig, ax_n = plt.subplots(figsize=(3, 3))
             #draw_eye_shape(ax_n)
@@ -320,12 +321,15 @@ design = EyelinerDesign(line)
 line.add_child_segment(line2)
 line2.add_child_segment(line3)
 fig = design.render_design(ax_n)
+
 fig.show()
 
 negative_score = analyse_negative(design)
 print("negative_score:",negative_score)
 positive_score = analyse_positive(design)
 print("positive_score:",positive_score)
+print(is_outside_face_area(line2))
+
 
 """
 """
