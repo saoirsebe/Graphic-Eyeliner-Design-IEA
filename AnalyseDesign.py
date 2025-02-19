@@ -150,7 +150,7 @@ def analyse_positive(design):
         score += wing_angle(design.root, child)
 
     score += analyse_design_shapes(design)
-    score = score + (len(segments) * 0.25)  # Higher score for designs with more segments
+    #score = score + (len(segments) * 0.25)  # Higher score for designs with more segments
     return score
 
 

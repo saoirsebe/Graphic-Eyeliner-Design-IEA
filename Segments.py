@@ -475,7 +475,7 @@ def make_eyeliner_wing(random_colour):
             corners=corners,
             lines_list=lines,
             is_eyeliner_wing = True,
-            fill = random.choice([True, False]),
+            fill = True if random.random() < 0.8 else False,
         )
         prev_array = np.array([new_segment.start])
         prev_angle = 0

@@ -1,3 +1,5 @@
+from tkinter import messagebox
+
 import customtkinter as ctk
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import matplotlib.pyplot as plt
@@ -173,11 +175,11 @@ class DesignPage(ctk.CTkFrame):
             self.current_gene_pool = breed_new_designs(selected_genes, self.mutation_rate)
             self.start_designing()
         else:
-            ctk.CTkMessageBox.show_warning("No Genes Selected", "No genes were selected.")
+            messagebox.showwarning("No Genes Selected", "No genes were selected.")
 
     def back_to_prev_designs(self):
         if len(self.gene_pools_all) < 2:
-            ctk.CTkMessageBox.show_warning("Back Error", "Cannot go back.")
+            messagebox.showwarning("Back Error", "Cannot go back.")
         else:
             self.current_gene_pool = self.gene_pools_all[-2]
             self.gene_pools_all = self.gene_pools_all[:-2]

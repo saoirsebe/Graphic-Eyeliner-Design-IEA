@@ -311,9 +311,9 @@ cProfile.run('random_random_shape()')
 """
 """
 fig, ax_n = plt.subplots(figsize=(3, 3))
-line = LineSegment(SegmentType.LINE, (20,10), StartMode.JUMP, 70, 90, 1, 1, 'red', 0.3, False, 0.5, 0, 0)
-line2 = LineSegment(SegmentType.LINE, (50,50), StartMode.CONNECT, 70, 200, 1, 2, 'blue', 0.3, False, 0.5, 0.5, 0)
-line3 = LineSegment(SegmentType.LINE, (80,30), StartMode.JUMP, 70, 90, 2, 4, 'red', 0.3, False, 0.5, 0, 0.5)
+line = LineSegment(SegmentType.LINE, (50,100), StartMode.JUMP, 70, 0, 2, 1, 'red', 0.3, True, 0.5, 0, 0)
+line2 = LineSegment(SegmentType.LINE, (50,50), StartMode.CONNECT, 70, 50, 1, 2, 'blue', 0.3, False, 0.5, 0.5, 0)
+line3 = LineSegment(SegmentType.LINE, (80,30), StartMode.JUMP, 20, 90, 2, 4, 'green', 0.3, False, 0.5, 0, 0.5)
 
 
 design = EyelinerDesign(line)
@@ -324,6 +324,9 @@ fig.show()
 
 negative_score = analyse_negative(design)
 print("negative_score:",negative_score)
+positive_score = analyse_positive(design)
+print("positive_score:",positive_score)
+
 """
 """
 design = EyelinerDesign(random_irregular_polygon())

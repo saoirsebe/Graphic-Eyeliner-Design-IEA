@@ -122,9 +122,9 @@ def random_gene(gene_n):
             prev_end_thickness_array = root_node.end_thickness
             root_node.render(np.array([root_node.start]), 0, prev_colour, prev_end_thickness_array)
             root_score = -is_in_eye(root_node)
-            if initial_gene_pool_size/3 < gene_n <= 2* (initial_gene_pool_size / 3):
-                print("root_score", root_score)
-                root_score = 0 #FOR EYELINER WINGS - FIX!!!!!!
+            #if initial_gene_pool_size/3 < gene_n <= 2* (initial_gene_pool_size / 3):
+            #    print("root_score", root_score)
+            #    root_score = 0 #FOR EYELINER WINGS - FIX!!!!!!
         total_score = root_score
         for i in range(n_of_children):
             segment_number +=1
@@ -142,7 +142,7 @@ def random_gene(gene_n):
 
 """
 #design = random_gene(1)
-design = random_gene(68)
+design = random_gene(4)
 #design = random_gene(190)
 fig = design.render_design()
 fig.show()

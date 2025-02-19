@@ -4,7 +4,7 @@ import numpy as np
 
 min_fitness_score = -3
 min_segment_score = -2
-initial_gene_pool_size = 10
+initial_gene_pool_size = 200
 node_re_gen_max = 12
 #Parameter ranges:
 start_x_range = (20, 130)
@@ -105,18 +105,6 @@ def random_from_two_distributions(mean1, stddev1, mean2, stddev2, value_range, p
         if value_range[0] <= value <= value_range[1]:
             return value
 
-#upper_x, upper_y = get_quadratic_points(0.0121,-9.1205, -1575.91,  320, 435)
-#upper_eyelid_x, upper_eyelid_y = np.array(upper_x) * 3, np.array(upper_y) * 3
-#upper_eyelid_coords = np.column_stack((upper_eyelid_x, upper_eyelid_y))
-"""
-upper_x, upper_y = get_quadratic_points(-0.5, 0, 1, -1, 1)
-upper_eyelid_x, upper_eyelid_y = np.array(upper_x) * 3, np.array(upper_y) * 3
-upper_eyelid_coords = np.column_stack((upper_eyelid_x, upper_eyelid_y))
-
-lower_x, lower_y = get_quadratic_points(0.5, 0, 0, -1, 1)
-lower_eyelid_x, lower_eyelid_y = np.array(lower_x) * 3, np.array(lower_y) * 3
-lower_eyelid_coords = np.column_stack((lower_eyelid_x, lower_eyelid_y))
-"""
 
 upper_eyelid_coords =  bezier_curve(np.array([28,82]), np.array([70,123]), np.array([118,93]))
 upper_eyelid_x = [coord[0] for coord in upper_eyelid_coords]
@@ -125,20 +113,7 @@ upper_eyelid_y = [coord[1] for coord in upper_eyelid_coords]
 lower_eyelid_coords =  bezier_curve(np.array([28,82]), np.array([100,60]), np.array([118,93]))
 lower_eyelid_x = [coord[0] for coord in lower_eyelid_coords]
 lower_eyelid_y = [coord[1] for coord in lower_eyelid_coords]
-"""
 
-lower_x, lower_y = get_quadratic_points(-0.0121, 9.1205, -1576.91,  320, 435)
-lower_eyelid_x, lower_eyelid_y = np.array(lower_x) * 3, np.array(lower_y) * 3
-lower_eyelid_coords = np.column_stack((lower_eyelid_x, lower_eyelid_y))
-
-upper_x_left, upper_y_left = get_quadratic_points(0.000185,-0.240, 99.69, 5, 221)
-upper_eyelid_x_left, upper_eyelid_y_left = np.array(upper_x) * 3, np.array(upper_y) * 3
-upper_eyelid_coords_left = np.column_stack((upper_eyelid_x, upper_eyelid_y))
-
-lower_x_left, lower_y_left = get_quadratic_points(0.00133, -0.351, 106.58, 5, 221)
-lower_eyelid_x_left, lower_eyelid_y_left = np.array(lower_x) * 3, np.array(lower_y) * 3
-lower_eyelid_coords_left = np.column_stack((lower_eyelid_x, lower_eyelid_y))
-"""
 def draw_eye_shape(ax_n):
     ax_n.plot(lower_eyelid_x, lower_eyelid_y, label=f"$y = 0.5x^2$", color="b")
     #ax_n.plot(upper_x, upper_y, label=f"$y = -0.5x^2 + 1$", color="red")
