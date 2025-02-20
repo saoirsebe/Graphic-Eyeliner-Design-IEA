@@ -111,37 +111,7 @@ def generate_bezier_curve(P0,P1,P2,P3, num_points=100):
     y = (1 - t) ** 3 * P0[1] + 3 * (1 - t) ** 2 * t * P1[1] + 3 * (1 - t) * t ** 2 * P2[1] + t ** 3 * P3[1]
     return x, y
 
-def generate_eyeliner_curve_lines(ax_n=None):
-    #plt.figure(figsize=(6, 6))
-    if ax_n:
-        draw_eye_shape(ax_n)
 
-    x_values = np.linspace(eye_corner_start[0], 160, 100)
-    y_values = np.linspace(eye_corner_start[1], 125, 100)
-    top_eye_curve = np.column_stack((x_values, y_values))
-    top_eye_curve -= 0.5
-
-    #top_eye_curve = bezier_curve(P0,P1,P2)
-    if ax_n:
-        flipped_img = np.flipud(Image.open("female-face-drawing-template-one-eye.jpg"))
-        ax_n.imshow(flipped_img)
-        ax_n.invert_yaxis()
-        ax_n.plot(top_eye_curve[:,0], top_eye_curve[:,1], label="Upper Bezier")
-
-    P0 = np.array(eye_corner_start)
-    P2 = np.array([160, 105])
-    P1 = (P0 + P2) // 2
-    P1[1] -= 5
-    P1[0] += 5
-
-    bottom_eye_curve = bezier_curve(P0,P1,P2)
-    #bottom_eye_curve = np.column_stack((x, y))
-    if ax_n:
-        ax_n.plot(bottom_eye_curve[:,0], bottom_eye_curve[:,1], label="Lower Bezier")
-    #ax = plt.gca()
-    #ax.set_aspect('equal')
-    #plt.show()
-    return top_eye_curve, bottom_eye_curve
 
 """
 # Plotting

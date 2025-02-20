@@ -3,21 +3,23 @@ import numpy as np
 from A import *
 from AnalyseDesign import check_design_overlaps, check_overlaps, analyse_negative, \
     analyse_positive, \
-    check_segment_overlaps, is_in_eye
+    check_segment_overlaps, is_in_eye, is_outside_face_area
 from EyelinerDesign import EyelinerDesign
 from Segments import create_segment, random_segment, set_prev_end_thickness_array, make_eyeliner_wing, \
     random_segment_colour
 
 
 def check_new_segments_negative_score(design, new_segment):
-    segments = design.get_all_nodes()
+    if is_outside_face_area(new_segment):
+        return min_fitness_score * 2
     eye_overlaps = is_in_eye(new_segment)
     if eye_overlaps > 5:
         return min_fitness_score * 2
     else:
         score = -eye_overlaps
 
-    for segment in segments:
+    current_segments = design.get_all_nodes()
+    for segment in current_segments:
         score -= check_segment_overlaps(segment,new_segment)
         if score < min_fitness_score:
             return score
@@ -43,10 +45,11 @@ def n_of_children_decreasing_likelihood(segment_number, branch_length, max_segme
     - n_of_children: The calculated number of children.
     """
     # Global decay: Reduce likelihood of children based on the segment number
-    global_decay_factor = max(0, 1 - (segment_number / max_segments))  # Reduces from 1 to 0
+    global_decay_power = 1.2  # Adjust this to control how quickly the number of children drops
+    global_decay_factor = max(0, (1 - (segment_number / max_segments)) ** global_decay_power)  # Reduces from 1 to 0
 
     # Branch decay: Reduce likelihood of children as branch depth increases
-    branch_decay_factor = max(0, 1 - (branch_length / average_branch_length))  # Target average branch length ~3
+    branch_decay_factor = max(0, 1 - (branch_length / average_branch_length))  # Target average branch length ~3.5
 
     # Combined decay: Both global and branch decay affect the mean
     decay_factor = global_decay_factor * branch_decay_factor
@@ -86,7 +89,7 @@ def random_gene_node(design, parent, prev_colour, segment_number=1, depth=0):
         return False, min_fitness_score *2
 
     parent.children.append(new_node)
-    n_of_children = n_of_children_decreasing_likelihood(segment_number, depth, max_segments, 1,0.6, number_of_children_range)
+    n_of_children = n_of_children_decreasing_likelihood(segment_number, depth, max_segments, 1.6,0.6, number_of_children_range)
     prev_colour = new_node.colour
     depth+=1
 
@@ -121,10 +124,11 @@ def random_gene(gene_n):
             segment_number = 0
             prev_end_thickness_array = root_node.end_thickness
             root_node.render(np.array([root_node.start]), 0, prev_colour, prev_end_thickness_array)
-            root_score = -is_in_eye(root_node)
-            #if initial_gene_pool_size/3 < gene_n <= 2* (initial_gene_pool_size / 3):
-            #    print("root_score", root_score)
-            #    root_score = 0 #FOR EYELINER WINGS - FIX!!!!!!
+            if is_outside_face_area(root_node):
+                root_score = 2*min_fitness_score
+            else:
+                root_score = -is_in_eye(root_node)
+
         total_score = root_score
         for i in range(n_of_children):
             segment_number +=1
@@ -140,7 +144,7 @@ def random_gene(gene_n):
             #print("Score:",total_score)
             return design
 
-"""
+
 #design = random_gene(1)
 design = random_gene(4)
 #design = random_gene(190)
@@ -153,4 +157,4 @@ print("Positive Score:", positive_score)
 
 negative_score = analyse_negative(design)
 print("analyse_negative score:", negative_score)
-"""
+""""""

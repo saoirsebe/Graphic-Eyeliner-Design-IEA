@@ -500,9 +500,9 @@ def random_segment(prev_colour=None, segment_start=None):
 
     random_colour = random_segment_colour(prev_colour)
 
-    if r < 0.65:
+    if r < 0.7:
         new_segment_type = SegmentType.LINE
-    elif r<0.8:
+    elif r<0.925:
         new_segment_type = SegmentType.STAR
     else:
         new_segment_type = SegmentType.IRREGULAR_POLYGON
@@ -560,13 +560,13 @@ def random_segment(prev_colour=None, segment_start=None):
             split_point=random_normal_within_range(0.5,0.25,relative_location_range)
         )
     elif new_segment_type == SegmentType.STAR:
-        new_radius = random_normal_within_range(10, 20, radius_range)
+        new_radius = random_normal_within_range(7, 20, radius_range)
         new_segment = create_segment(
             segment_type=SegmentType.STAR,
             start=segment_start,
             start_mode=random.choice([StartMode.CONNECT, StartMode.JUMP]),
             radius=new_radius,
-            arm_length= random_normal_within_range(7,10,arm_length_range) if new_radius >20 else random_normal_within_range(15,20,arm_length_range),
+            arm_length= random_normal_within_range(5,10,arm_length_range) if new_radius >20 else random_normal_within_range(12,20,arm_length_range),
             num_points=round(random_normal_within_range(5,2, num_points_range)),
             asymmetry=0 if random.random() < 0.6 else random_normal_within_range(2,2,asymmetry_range),
             star_type=random.choice([StarType.STRAIGHT, StarType.CURVED, StarType.FLOWER]),

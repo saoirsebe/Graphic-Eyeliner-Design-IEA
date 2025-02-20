@@ -147,6 +147,7 @@ class EyelinerDesign:   #Creates overall design, calculates start points, render
 
         if show:
             fig, ax_n = plt.subplots(figsize=(self.eye_image.width / 100, self.eye_image.height / 100), dpi=100)
+
             flipped_img = np.flipud(self.eye_image)
             ax_n.imshow(flipped_img)
             ax_n.invert_yaxis()
@@ -313,7 +314,7 @@ cProfile.run('random_random_shape()')
 """
 fig, ax_n = plt.subplots(figsize=(3, 3))
 line = LineSegment(SegmentType.LINE, (50,100), StartMode.JUMP, 70, 0, 2, 1, 'red', 0.3, True, 0.5, 0, 0)
-line2 = LineSegment(SegmentType.LINE, (50,50), StartMode.CONNECT, 70, 50, 1, 2, 'blue', 0.3, False, 0.5, 0.5, 0)
+line2 = LineSegment(SegmentType.LINE, eye_corner_start, StartMode.JUMP, 40, 20, 1, 2, 'blue', 0, False, 0.5, 0.5, 0)
 line3 = LineSegment(SegmentType.LINE, (80,30), StartMode.JUMP, 20, 90, 2, 4, 'green', 0.3, False, 0.5, 0, 0.5)
 
 
@@ -342,3 +343,4 @@ negative_score = analyse_negative(design)
 print("analyse_negative score:", negative_score)
 print("Positive Score:", positive_score)
 """
+

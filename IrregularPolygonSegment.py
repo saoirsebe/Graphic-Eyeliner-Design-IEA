@@ -34,6 +34,7 @@ class IrregularPolygonEdgeSegment:
         self.curviness = curviness
         self.curve_location = curve_location
         self.points_array = []
+        self.colour = "polygon edge"
 
     def render(self, centroid, start_point, end_point):
         if self.curviness>0:

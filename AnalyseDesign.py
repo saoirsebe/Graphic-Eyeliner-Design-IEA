@@ -74,10 +74,10 @@ def check_design_overlaps(i, segments):
     for j in range(i + 1, len(segments)):
         segment_j = segments[j]
         overlaps += check_segment_overlaps(segment, segment_j, segment_tree)
-        if overlaps > 0:
-            print("segment.segment_type:",segment.segment_type)
-            print("segment_j.segment_type:",segment_j.segment_type)
-            print("overlaps:", overlaps)
+        #if overlaps > 0:
+            #print("segment.segment_type:",segment.segment_type)
+            #print("segment_j.segment_type:",segment_j.segment_type)
+            #print("overlaps:", overlaps)
         if -overlaps < min_fitness_score: #Return if less than min_fitness_score to save processing time
             return overlaps
 

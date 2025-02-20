@@ -1,6 +1,8 @@
 import random
 from enum import Enum
 import numpy as np
+from matplotlib import pyplot as plt
+from PIL import Image, ImageTk
 
 min_fitness_score = -3
 min_segment_score = -2
@@ -120,8 +122,44 @@ def draw_eye_shape(ax_n):
     ax_n.plot(upper_eyelid_x, upper_eyelid_y, label=f"$y = -0.5x^2 + 1$", color="green")
 
 
-
 face_end_x_values = np.linspace(138, 180, line_num_points*2)
 face_end_y_values = np.linspace(0, 175, line_num_points*2)
 face_end = np.column_stack((face_end_x_values, face_end_y_values))
 face_end = np.round(face_end, 3)
+
+def generate_eyeliner_curve_lines(ax_n=None):
+    #plt.figure(figsize=(6, 6))
+    if ax_n:
+        draw_eye_shape(ax_n)
+
+    x_values = np.linspace(eye_corner_start[0], 160, 100)
+    y_values = np.linspace(eye_corner_start[1], 125, 100)
+    top_eye_curve = np.column_stack((x_values, y_values))
+    top_eye_curve -= 0.5
+
+    #top_eye_curve = bezier_curve(P0,P1,P2)
+    if ax_n:
+        flipped_img = np.flipud(Image.open("female-face-drawing-template-one-eye.jpg"))
+        ax_n.imshow(flipped_img)
+        ax_n.invert_yaxis()
+        ax_n.plot(top_eye_curve[:,0], top_eye_curve[:,1], label="Upper Bezier")
+
+    P0 = np.array(eye_corner_start)
+    P2 = np.array([160, 105])
+    P1 = (P0 + P2) // 2
+    P1[1] -= 5
+    P1[0] += 5
+
+    bottom_eye_curve = bezier_curve(P0,P1,P2)
+    #bottom_eye_curve = np.column_stack((x, y))
+    if ax_n:
+        ax_n.plot(bottom_eye_curve[:,0], bottom_eye_curve[:,1], label="Lower Bezier")
+    #ax = plt.gca()
+    #ax.set_aspect('equal')
+    #plt.show()
+    return top_eye_curve, bottom_eye_curve
+
+fig, ax = plt.subplots()
+eyeliner_curve1, eyeliner_curve2 = generate_eyeliner_curve_lines(ax)
+fig.show()
+
