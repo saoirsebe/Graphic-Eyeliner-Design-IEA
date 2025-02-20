@@ -343,26 +343,30 @@ def analyse_design_shapes(design):
             print(f"polygon colour:{segment.colour} curve shape score:", max_score)
             total_score += max_score
 
-            # Score polygon based on size (bigger preferred on outside of eye and smaller nearer the inner corner)
-            x_values = segment.points_array[:, 0]
-            average_x = np.mean(x_values)
-            shape_size = (segment.bounding_size[0] + segment.bounding_size[1])//2
-            k = 0.35
-            deviation = abs(shape_size - k * average_x)
-            print("polygon_shape_size =", shape_size)
-            print("shape_x =", average_x)
-            print("deviation =", deviation)
-            #size_score = math.exp(-2 * deviation)
-            size_score = 1 / (math.log(deviation + 1))
-            print("size_score: ", size_score)
-            if size_score > 0.38:
-                size_score = 5 * size_score
-                print(f"colour:{segment.colour} star_size_score =", size_score)
-                total_score += size_score
-            elif size_score < 0.3:
-                negative_score = 2 * (math.log(deviation + 1))
-                print(f"colour:{segment.colour} star_size_score =", negative_score)
-                total_score -= negative_score
+            if segment.is_eyeliner_wing:
+                #Size of eyeliner wing polygon is 1 so size will be penalised
+                total_score +=2
+            else:
+                # Score polygon based on size (bigger preferred on outside of eye and smaller nearer the inner corner)
+                x_values = segment.points_array[:, 0]
+                average_x = np.mean(x_values)
+                shape_size = (segment.bounding_size[0] + segment.bounding_size[1])//2
+                k = 0.35
+                deviation = abs(shape_size - k * average_x)
+                print("polygon_shape_size =", shape_size)
+                print("shape_x =", average_x)
+                print("deviation =", deviation)
+                #size_score = math.exp(-2 * deviation)
+                size_score = 1 / (math.log(deviation + 1))
+                print("size_score: ", size_score)
+                if size_score > 0.38:
+                    size_score = 5 * size_score
+                    print(f"colour:{segment.colour} polygon positive size_score =", size_score)
+                    total_score += size_score
+                elif size_score < 0.3:
+                    negative_score = 2 * (math.log(deviation + 1))
+                    print(f"colour:{segment.colour} polygon negative size_score =", -negative_score)
+                    total_score -= negative_score
         elif segment.segment_type == SegmentType.STAR:
             #Score a star based on size (bigger preferred on outside of eye and smaller nearer the inner corner)
             x_values = segment.points_array[:, 0]
@@ -382,7 +386,7 @@ def analyse_design_shapes(design):
                 total_score += size_score
             elif size_score < 0.3:
                 negative_score =2 * (math.log(deviation + 1))
-                print(f"colour:{segment.colour} star_size_score =", negative_score)
+                print(f"colour:{segment.colour} star_size_score =", -negative_score)
                 total_score -= negative_score
 
     return total_score
