@@ -159,7 +159,7 @@ def generate_eyeliner_curve_lines(ax_n=None):
     #plt.show()
     return top_eye_curve, bottom_eye_curve
 
-fig, ax = plt.subplots()
-eyeliner_curve1, eyeliner_curve2 = generate_eyeliner_curve_lines(ax)
-fig.show()
+#fig, ax = plt.subplots()
+eyeliner_curve1, eyeliner_curve2 = generate_eyeliner_curve_lines()
+#fig.show()
 

@@ -3,7 +3,6 @@ import math
 from matplotlib import pyplot as plt
 from A import SegmentType, StartMode, get_quadratic_points, eye_corner_start, upper_eyelid_coords, lower_eyelid_coords, \
     eyeliner_curve1, eyeliner_curve2
-from EyelinerWingGeneration import  generate_eyeliner_curve_lines
 import numpy as np
 from scipy.interpolate import interp1d
 
@@ -303,6 +302,11 @@ def analyse_design_shapes(design):
     total_score = 0
     segments = design.get_all_nodes()
     for segment in segments:
+        x_values = segment.points_array[:, 0]
+        average_x = np.mean(x_values)
+        if average_x <0:
+            total_score -=2
+
         if segment.segment_type == SegmentType.LINE:
             if segment.start_mode == StartMode.JUMP:
                 total_score -=0.5
@@ -350,10 +354,15 @@ def analyse_design_shapes(design):
             print("deviation =", deviation)
             #size_score = math.exp(-2 * deviation)
             size_score = 1 / (math.log(deviation + 1))
-            if size_score > 0.4:
+            print("size_score: ", size_score)
+            if size_score > 0.38:
                 size_score = 5 * size_score
                 print(f"colour:{segment.colour} star_size_score =", size_score)
                 total_score += size_score
+            elif size_score < 0.3:
+                negative_score = 2 * (math.log(deviation + 1))
+                print(f"colour:{segment.colour} star_size_score =", negative_score)
+                total_score -= negative_score
         elif segment.segment_type == SegmentType.STAR:
             #Score a star based on size (bigger preferred on outside of eye and smaller nearer the inner corner)
             x_values = segment.points_array[:, 0]
@@ -366,10 +375,15 @@ def analyse_design_shapes(design):
             print("star_deviation =", deviation)
             #size_score = math.exp(-2 * deviation)
             size_score = 1 / (math.log(deviation + 1))
-            if size_score > 0.4:
+            print("size_score: ",size_score)
+            if size_score > 0.38:
                 size_score = 5 * size_score
                 print(f"colour:{segment.colour} star_size_score =", size_score)
                 total_score += size_score
+            elif size_score < 0.3:
+                negative_score =2 * (math.log(deviation + 1))
+                print(f"colour:{segment.colour} star_size_score =", negative_score)
+                total_score -= negative_score
 
     return total_score
 
