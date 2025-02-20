@@ -159,7 +159,40 @@ def generate_eyeliner_curve_lines(ax_n=None):
     #plt.show()
     return top_eye_curve, bottom_eye_curve
 
+def generate_middle_curve_lines(ax_n=None):
+    #plt.figure(figsize=(6, 6))
+    if ax_n:
+        draw_eye_shape(ax_n)
+
+    p0 = np.array([100,115])
+    p2 = np.array([140, 125])
+    p1 = (p0 + p2) // 2
+    p1[1] -= 5
+    p1[0] += 5
+
+    curve_upper = bezier_curve(p0, p1, p2)
+
+    if ax_n:
+        ax_n.plot(curve_upper[:,0], curve_upper[:,1], label="Lower Bezier")
+
+    P0 = np.array([100, 60])
+    P2 = np.array([140, 75])
+    P1 = (P0 + P2) // 2
+    P1[1] -= 5
+    #P1[0] += 5
+
+    curve_lower = bezier_curve(P0,P1,P2)
+
+    if ax_n:
+        ax_n.plot(curve_lower[:,0], curve_lower[:,1], label="Lower Bezier")
+    #ax = plt.gca()
+    #ax.set_aspect('equal')
+    #plt.show()
+    return curve_upper, curve_lower
+
 #fig, ax = plt.subplots()
 eyeliner_curve1, eyeliner_curve2 = generate_eyeliner_curve_lines()
-#fig.show()
 
+middle_curve_upper , middle_curve_lower = generate_middle_curve_lines()
+
+#fig.show()

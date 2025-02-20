@@ -315,7 +315,7 @@ cProfile.run('random_random_shape()')
 fig, ax_n = plt.subplots(figsize=(3, 3))
 line = LineSegment(SegmentType.LINE, (50,100), StartMode.JUMP, 70, 0, 2, 1, 'red', 0.3, True, 0.5, 0, 0)
 line2 = LineSegment(SegmentType.LINE, eye_corner_start, StartMode.JUMP, 40, 20, 1, 2, 'blue', 0, False, 0.5, 0.5, 0)
-line3 = LineSegment(SegmentType.LINE, (80,30), StartMode.JUMP, 20, 90, 2, 4, 'green', 0.3, False, 0.5, 0, 0.5)
+line3 = LineSegment(SegmentType.LINE, (102,105), StartMode.JUMP, 30, 20, 2, 4, 'green', 0.3, False, 0.5, 0, 0.5)
 
 
 design = EyelinerDesign(line)
@@ -323,6 +323,8 @@ line.add_child_segment(line2)
 line2.add_child_segment(line3)
 fig = design.render_design(ax_n)
 
+a,b = generate_eyeliner_curve_lines(ax_n)
+b,c = generate_middle_curve_lines(ax_n)
 fig.show()
 
 negative_score = analyse_negative(design)

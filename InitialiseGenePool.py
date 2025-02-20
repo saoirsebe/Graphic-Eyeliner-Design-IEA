@@ -23,10 +23,11 @@ def initialise_gene_pool():
     for i, (gene, score) in enumerate(scored_genes):
         if i >= 6:
             break
-        #print(f"Score: {score}")
+        print(f"Score: {score}")
 
     gene_pool = [gene for gene, score in scored_genes[:6]]
 
+    """
     #FOR TESTING!!!:
     top_3_genes = [gene for gene, _ in scored_genes[:3]]
     bottom_3_genes = [gene for gene, _ in scored_genes[-3:]]
@@ -35,10 +36,11 @@ def initialise_gene_pool():
     top_3_genes = scored_genes[:3]
     bottom_3_genes = scored_genes[-3:]
     gene_pool_scored =  top_3_genes + bottom_3_genes
+    
 
     for i, (gene, score) in enumerate(gene_pool_scored):
         print(f"Score: {score} for gene: {i}")
-
+    """
 
     return gene_pool
 
