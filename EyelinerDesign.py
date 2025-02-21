@@ -116,7 +116,13 @@ class EyelinerDesign:   #Creates overall design, calculates start points, render
         new_parent.add_child_segment(subtree_root)
 
     def render_node(self, node, prev_array, prev_angle, prev_colour, prev_end_thickness_array, ax_n=None):
-        node.render(prev_array, prev_angle,prev_colour,prev_end_thickness_array,ax_n)
+
+        try:
+            node.render(prev_array, prev_angle, prev_colour, prev_end_thickness_array, ax_n)
+        except AttributeError as e:
+            print(f"AttributeError occurred: {e}")
+            print(f"node object: {node}")
+
         prev_segment = node
 
         if prev_segment.segment_type == SegmentType.LINE:

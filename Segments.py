@@ -532,15 +532,16 @@ def random_segment(prev_colour=None, segment_start=None):
         return sorted_corners, lines_list
 
     if new_segment_type == SegmentType.LINE:
-        random_start_mode = random.choice(list(StartMode))
+        #random_start_mode = random.choice(list(StartMode))
+        random_start_mode = random.choice([StartMode.CONNECT, StartMode.SPLIT, StartMode.CONNECT_MID]) if random.random() < 0.9 else StartMode.JUMP
         if segment_start == eye_corner_start:
             random_relative_angle = random_normal_within_range(22.5, 20, direction_range)
         elif random_start_mode == StartMode.CONNECT:
             random_relative_angle = random_from_two_distributions(135, 60, 225, 60, direction_range)
         elif random_start_mode == StartMode.CONNECT_MID:
-            random_relative_angle = random_from_two_distributions(90,50,270,50, direction_range)
+            random_relative_angle = random_from_two_distributions(90,40,270,40, direction_range)
         elif random_start_mode == StartMode.SPLIT:
-            random_relative_angle = random_from_two_distributions(90,50,270,50, direction_range)
+            random_relative_angle = random_from_two_distributions(90,40,270,40, direction_range)
         else:
             random_relative_angle = random.uniform(*direction_range)
 
@@ -548,7 +549,7 @@ def random_segment(prev_colour=None, segment_start=None):
             segment_type=SegmentType.LINE,
             start=segment_start,
             start_mode=random_start_mode,
-            length=random.uniform(*length_range),
+            length=random_normal_within_range(30,20,length_range),
             relative_angle=random_relative_angle,
             start_thickness=random_normal_within_range(1,2,thickness_range),
             end_thickness=random_normal_within_range(1.5,2,thickness_range),

@@ -237,12 +237,16 @@ def score_segment_against_eyelid_shape(segment, tolerance=0.1):
 
     # Assign scores
     score = 0
-    if upper_curve_results["overall_similarity"]>0.6:
+    if upper_curve_results["overall_similarity"]>0.6:# and upper_curve_results["direction_similarity"]>0.5:
         print(f"for colour: {segment.colour} similarity to upper eyelid:", upper_curve_results["overall_similarity"])
+        print("upper_curve_results[direction_similarity]", upper_curve_results["direction_similarity"])
+        print("upper_curve_results[shape_similarity]", upper_curve_results["shape_similarity"])
         print("overlap_length:", upper_overlap_length)
         score+= 2 * math.log(upper_overlap_length) * upper_curve_results["overall_similarity"]
     elif lower_curve_results["overall_similarity"]>0.6:
         print(f"for colour: {segment.colour} similarity to lower eyelid:", lower_curve_results["overall_similarity"])
+        print("lower_curve_results[direction_similarity]", lower_curve_results["direction_similarity"])
+        print("lower_curve_results[shape_similarity]", lower_curve_results["shape_similarity"])
         print("overlap_length:", lower_overlap_length)
         score += 2 * math.log(lower_overlap_length) * lower_curve_results["overall_similarity"]
     elif upper_curve_results["overall_similarity"] < 0.5 and lower_curve_results["overall_similarity"] < 0.4:
@@ -421,7 +425,7 @@ def analyse_design_shapes(design):
                 size_score = 1 / (math.log(deviation + 1))
                 #print("size_score: ", size_score)
                 if size_score > 0.35:
-                    size_score = 5 * size_score
+                    size_score = (5//n_of_polygons) * size_score
                     if size_score > 4:
                         size_score = 4
                     print(f"colour:{segment.colour} polygon positive size_score =", size_score)
@@ -445,12 +449,12 @@ def analyse_design_shapes(design):
             size_score = 1 / (math.log(deviation + 1))
             #print("size_score: ",size_score)
             if size_score > 0.35:
-                size_score = 5 * size_score
+                size_score = (5//n_of_stars) * size_score
                 if size_score >4:
                     size_score = 4
                 print(f"colour:{segment.colour} star_size_score =", size_score)
                 total_score += size_score
-            elif size_score < 0.3 and average_x<90:
+            elif size_score < 0.3 and average_x<95:
                 negative_score =2 * (math.log(deviation + 1))
                 print(f"colour:{segment.colour} star_size_score =", -negative_score)
                 total_score -= negative_score
