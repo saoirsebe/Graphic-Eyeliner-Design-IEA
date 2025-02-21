@@ -97,11 +97,11 @@ def get_overlapping_points(curve1, curve2, tolerance=0.1):
     return np.array(overlapping_points_curve1), np.array(overlapping_points_curve2)
 
 def direction_between_points(point1,point2):
-    tangent = np.diff((point1, point2), axis=0)
-    # Prevent division by zero when normalizing
-    norms = np.linalg.norm(tangent, axis=1, keepdims=True)
-    norms[norms == 0] = 1e-8  # Prevent zero vectors by setting a small value
-    return tangent / norms
+    tangent = np.array(point2) - np.array(point1)
+    norm = np.linalg.norm(tangent)  # Compute magnitude
+    if norm == 0:  # Prevent division by zero
+        return np.zeros_like(tangent)
+    return tangent / norm
 
 def compute_directions(points):
     directions = []
@@ -121,6 +121,17 @@ def compute_directions(points):
                     distance_from_next_point = np.linalg.norm(np.array(points[val]) - np.array(next_val))
         directions.append(direction_between_points(points[val], points[next_val]))
     return np.array(directions)
+
+def cosine_similarity(v1, v2):
+    return np.dot(v1, v2) / (np.linalg.norm(v1) * np.linalg.norm(v2))
+
+def angle_between_vectors(v1, v2):
+    """Compute the angle in radians between two vectors."""
+    dot_product = np.dot(v1, v2)
+    norms = np.linalg.norm(v1) * np.linalg.norm(v2)
+    if norms == 0:
+        return 0  # Avoid division by zero
+    return np.arccos(np.clip(dot_product / norms, -1.0, 1.0))
 
 def compair_overlapping_sections(overlapping_points_segment, overlapping_points_eye_shape):
     """Calculates curvature and direction similarities between two sections (points arrays)"""
@@ -154,10 +165,24 @@ def compair_overlapping_sections(overlapping_points_segment, overlapping_points_
                                                                         num_resize)
         eye_directions_resampled = resample_directions_or_curvatures(eye_curve_directions, overlapping_points_eye_shape,
                                                                      num_resize)
-        # print("eye_directions_resampled",eye_directions_resampled)
-        # Compute direction similarity (angle between normalized tangent vectors)
-        dot_products = np.sum(bezier_directions_resampled * eye_directions_resampled, axis=1)
-        direction_similarity = np.mean(dot_products)
+
+        # Compute direction similarity
+        similarities = [angle_between_vectors(v1, v2) for v1, v2 in zip(bezier_directions_resampled, eye_directions_resampled)]
+        mean_angle_difference  = np.mean(similarities)
+        direction_similarity = 1 - (mean_angle_difference / np.pi)
+        def total_deflection(vectors):
+            """Compute total angle change across a vector sequence."""
+            vectors = np.squeeze(vectors)  # Remove extra dimensions
+            angle_changes = [angle_between_vectors(vectors[i], vectors[i + 1])
+                             for i in range(len(vectors) - 1)]
+            return np.sum(angle_changes)  # Sum total angle changes
+
+        #eye_deflection = total_deflection(eye_directions_resampled)
+        #bezier_deflection = total_deflection(bezier_directions_resampled)
+        #print("eye_deflection:", eye_deflection)
+        #print("bezier_deflection:", bezier_deflection)
+        #direction_similarity = 1 - abs(eye_deflection - bezier_deflection) / max(eye_deflection, bezier_deflection)
+
     return shape_similarity, direction_similarity
 
 def compare_with_eyelid_curves(bezier_points, eye_points, is_upper,num_samples=100):
@@ -237,19 +262,21 @@ def score_segment_against_eyelid_shape(segment, tolerance=0.1):
 
     # Assign scores
     score = 0
-    if upper_curve_results["overall_similarity"]>0.6:# and upper_curve_results["direction_similarity"]>0.5:
+    if upper_curve_results["overall_similarity"]>0.7:# and upper_curve_results["direction_similarity"]>0.5:
         print(f"for colour: {segment.colour} similarity to upper eyelid:", upper_curve_results["overall_similarity"])
         print("upper_curve_results[direction_similarity]", upper_curve_results["direction_similarity"])
         print("upper_curve_results[shape_similarity]", upper_curve_results["shape_similarity"])
         print("overlap_length:", upper_overlap_length)
         score+= 2 * math.log(upper_overlap_length) * upper_curve_results["overall_similarity"]
-    elif lower_curve_results["overall_similarity"]>0.6:
+    elif lower_curve_results["overall_similarity"]>0.7:
         print(f"for colour: {segment.colour} similarity to lower eyelid:", lower_curve_results["overall_similarity"])
         print("lower_curve_results[direction_similarity]", lower_curve_results["direction_similarity"])
         print("lower_curve_results[shape_similarity]", lower_curve_results["shape_similarity"])
         print("overlap_length:", lower_overlap_length)
         score += 2 * math.log(lower_overlap_length) * lower_curve_results["overall_similarity"]
-    elif upper_curve_results["overall_similarity"] < 0.5 and lower_curve_results["overall_similarity"] < 0.4:
+    elif upper_curve_results["overall_similarity"] < 0.5 or lower_curve_results["direction_similarity"] < 0.4:
+        print("upper_curve_results[direction_similarity]", upper_curve_results["direction_similarity"])
+        print("upper_curve_results[shape_similarity]", upper_curve_results["shape_similarity"])
         seg_array = segment.points_array
         seg_length = math.sqrt((seg_array[-1][0] - seg_array[0][0]) ** 2 + (seg_array[-1][1] - seg_array[0][1]) ** 2)
         score += -0.035 * seg_length  # Penalty for deviating
@@ -264,6 +291,8 @@ def check_overlap_length_then_similarity(overlapping_points_segment, overlapping
 
         if segment_overlap_length>5:
             shape_similarity1, direction_similarity1 = compair_overlapping_sections(overlapping_points_segment, overlapping_points_curve)
+            print("shape_similarity1", shape_similarity1)
+            print("direction_similarity1", direction_similarity1)
             overall_similarity = (shape_similarity1 + direction_similarity1) / 2
     else:
         segment_overlap_length = 0
@@ -317,8 +346,7 @@ def compair_segment_wing_shape(segment, curve1, curve2):
             best_overall = 2 * best_overall * math.log(segment_2_overlap_length)
     else:
         seg_array = segment.points_array
-        seg_length = math.sqrt((seg_array[-1][0] - seg_array[0][0]) ** 2 + (
-                seg_array[-1][1] - seg_array[0][1]) ** 2)
+        seg_length = math.sqrt((seg_array[-1][0] - seg_array[0][0]) ** 2 + (seg_array[-1][1] - seg_array[0][1]) ** 2)
         best_overall = -0.02 * seg_length  # Penalty for deviating
     return best_overall
 

@@ -45,7 +45,7 @@ def n_of_children_decreasing_likelihood(segment_number, branch_length, max_segme
     - n_of_children: The calculated number of children.
     """
     # Global decay: Reduce likelihood of children based on the segment number
-    global_decay_power = 1.3  # Adjust this to control how quickly the number of children drops
+    global_decay_power = 1.4  # Adjust this to control how quickly the number of children drops
     global_decay_factor = max(0, (1 - (segment_number / max_segments)) ** global_decay_power)  # Reduces from 1 to 0
 
     # Branch decay: Reduce likelihood of children as branch depth increases
@@ -144,7 +144,7 @@ def random_gene(gene_n):
             #print("Score:",total_score)
             return design
 
-
+"""
 #design = random_gene(1)
 design = random_gene(10)
 #design = random_gene(190)
@@ -157,4 +157,4 @@ print("Positive Score:", positive_score)
 
 negative_score = analyse_negative(design)
 print("analyse_negative score:", negative_score)
-""""""
+"""

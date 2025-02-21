@@ -33,7 +33,7 @@ max_shape_overlaps = 0
 
 number_of_children_range= (0,3)
 max_segments = 20
-average_branch_length = 3.5
+average_branch_length = 5
 eye_corner_start = (118.1,93)
 
 line_num_points = 100
@@ -117,9 +117,9 @@ lower_eyelid_x = [coord[0] for coord in lower_eyelid_coords]
 lower_eyelid_y = [coord[1] for coord in lower_eyelid_coords]
 
 def draw_eye_shape(ax_n):
-    ax_n.plot(lower_eyelid_x, lower_eyelid_y, label=f"$y = 0.5x^2$", color="b")
+    ax_n.plot(lower_eyelid_x, lower_eyelid_y, label=f"$y = 0.5x^2$", color="black")
     #ax_n.plot(upper_x, upper_y, label=f"$y = -0.5x^2 + 1$", color="red")
-    ax_n.plot(upper_eyelid_x, upper_eyelid_y, label=f"$y = -0.5x^2 + 1$", color="green")
+    ax_n.plot(upper_eyelid_x, upper_eyelid_y, label=f"$y = -0.5x^2 + 1$", color="black")
 
 
 face_end_x_values = np.linspace(138, 180, line_num_points*2)
@@ -142,7 +142,7 @@ def generate_eyeliner_curve_lines(ax_n=None):
         flipped_img = np.flipud(Image.open("female-face-drawing-template-one-eye.jpg"))
         ax_n.imshow(flipped_img)
         ax_n.invert_yaxis()
-        ax_n.plot(top_eye_curve[:,0], top_eye_curve[:,1], label="Upper Bezier")
+        ax_n.plot(top_eye_curve[:,0], top_eye_curve[:,1], color='black',label="Upper Bezier")
 
     P0 = np.array(eye_corner_start)
     P2 = np.array([160, 105])
@@ -153,7 +153,7 @@ def generate_eyeliner_curve_lines(ax_n=None):
     bottom_eye_curve = bezier_curve(P0,P1,P2)
     #bottom_eye_curve = np.column_stack((x, y))
     if ax_n:
-        ax_n.plot(bottom_eye_curve[:,0], bottom_eye_curve[:,1], label="Lower Bezier")
+        ax_n.plot(bottom_eye_curve[:,0], bottom_eye_curve[:,1], color='black', label="Lower Bezier")
     #ax = plt.gca()
     #ax.set_aspect('equal')
     #plt.show()
@@ -173,7 +173,7 @@ def generate_middle_curve_lines(ax_n=None):
     curve_upper = bezier_curve(p0, p1, p2)
 
     if ax_n:
-        ax_n.plot(curve_upper[:,0], curve_upper[:,1], label="Lower Bezier")
+        ax_n.plot(curve_upper[:,0], curve_upper[:,1],color='black', label="Lower Bezier")
 
     P0 = np.array([100, 60])
     P2 = np.array([140, 75])
@@ -184,7 +184,7 @@ def generate_middle_curve_lines(ax_n=None):
     curve_lower = bezier_curve(P0,P1,P2)
 
     if ax_n:
-        ax_n.plot(curve_lower[:,0], curve_lower[:,1], label="Lower Bezier")
+        ax_n.plot(curve_lower[:,0], curve_lower[:,1],color='black', label="Lower Bezier")
     #ax = plt.gca()
     #ax.set_aspect('equal')
     #plt.show()
