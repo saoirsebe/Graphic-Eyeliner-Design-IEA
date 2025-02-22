@@ -59,18 +59,19 @@ class LineSegment(Segment):
 
     def render(self, prev_array, prev_angle, prev_colour, prev_thickness_array, ax_n=None):
         new_array = []
-        if self.start_mode == StartMode.CONNECT and len(prev_array)>15 or self.start_mode == StartMode.SPLIT and len(prev_array)>15:
+        len_prev_array = len(prev_array)
+        if self.start_mode == StartMode.CONNECT and len_prev_array>15 or self.start_mode == StartMode.SPLIT and len_prev_array>15:
             self.start = (prev_array[-1][0], prev_array[-1][1])
             if prev_thickness_array.size == 1:
                 print("prev_thickness_array:",prev_thickness_array)
                 print("prev_array:",prev_array)
-            self.start_thickness = prev_thickness_array[len(prev_array) - 1]
-        elif self.start_mode == StartMode.CONNECT and len(prev_array)<=15 or self.start_mode == StartMode.SPLIT and len(prev_array)<=15:
+            self.start_thickness = prev_thickness_array[len_prev_array - 1]
+        elif self.start_mode == StartMode.CONNECT and len_prev_array<=15 or self.start_mode == StartMode.SPLIT and len_prev_array<=15:
             end_index = point_in_array(prev_array, 0.5)
             self.start = (prev_array[end_index][0], prev_array[end_index][1])
         elif len(prev_array)<=0:
             raise ValueError("len(prev_array)<=0....")
-        elif self.start_mode == StartMode.CONNECT_MID and len(prev_array)>0:
+        elif self.start_mode == StartMode.CONNECT_MID and len_prev_array>0:
             start_array_point_index = point_in_array(prev_array, self.start_location)
             start_array_point = prev_array[start_array_point_index]
             self.start = (start_array_point[0], start_array_point[1])
@@ -109,7 +110,7 @@ class LineSegment(Segment):
             self.points_array = np.array([(point[0] + transformation_vector[0], point[1] + transformation_vector[1]) for point in self.points_array])
             x_values, y_values = self.points_array[:, 0], self.points_array[:, 1]
 
-            len_prev_array = len(prev_array)
+            #len_prev_array = len(prev_array)
             """Add curve from 10% from end of prev line to split point"""
             if ax_n and len_prev_array > num_points_range[1]: #If prev array is a line
                 percent_30_prev = int(len_prev_array * 0.3)

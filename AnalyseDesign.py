@@ -61,17 +61,19 @@ def check_segment_overlaps(segment1, segment2, segment1_tree = None):
 def check_design_overlaps(i, segments):
     segment = segments[i]
     segment_array = segment.points_array
-    if len(segments)==0:
+    len_segments = len(segments)
+    len_segment_array = len(segment_array)
+    if len_segments==0:
         print("len(segments)==0")
-    if len(segment_array) <50:
-        print(f"segment {segment.segment_type} is length", len(segment_array))
+    if len_segment_array <50:
+        print(f"segment {segment.segment_type} is length", len_segment_array)
         print("segment_array:", segment_array)
     if segment.segment_type == SegmentType.LINE:
-        first_2 = int(len(segment_array) * 0.02)
+        first_2 = int(len_segment_array * 0.02)
         segment_array = segment_array[first_2:-first_2]
     segment_tree = cKDTree(segment_array)
     overlaps = 0
-    for j in range(i + 1, len(segments)):
+    for j in range(i + 1, len_segments):
         segment_j = segments[j]
         overlaps += check_segment_overlaps(segment, segment_j, segment_tree)
         #if overlaps > 0:
@@ -85,9 +87,10 @@ def check_design_overlaps(i, segments):
 
 def is_in_eye(segment):
     segment_array = segment.points_array
+    len_segment_array = len(segment_array)
     #Remove ends so segment can touch eye but not go in
     if segment.segment_type == SegmentType.LINE:
-        first_2 = int(len(segment_array) * 0.02)
+        first_2 = int(len_segment_array * 0.02)
         segment_array = segment_array[first_2:-first_2]
 
     if not isinstance(segment_array, np.ndarray):
@@ -100,8 +103,8 @@ def is_in_eye(segment):
 
     if len(segment_array) == 0:
         print("Segment Array is empty")
-        print("len(segment_array)", len(segment_array))
-        print("first2:",first_2)
+        print("len(segment_array)", len_segment_array)
+        print("first2:", first_2)
         print("Segment", segment)
 
     tolerance = 0.01
@@ -149,8 +152,9 @@ def analyse_negative(design):
     segments = design.get_all_nodes()
     score = 0  # Count how many overlaps there are in this gene
     # Compare each pair of segments for overlap
-    print("N of segments = ",len(segments))
-    for i in range(len(segments)):
+    len_segments = len(segments)
+    print("N of segments = ",len_segments)
+    for i in range(len_segments):
         eye_overlaps = is_in_eye(segments[i])
         if eye_overlaps>0:
             return min_fitness_score *2
@@ -160,7 +164,7 @@ def analyse_negative(design):
             return min_fitness_score * 2
         if score < min_fitness_score:
             return score
-        if i!=len(segments)-1:
+        if i!=len_segments-1:
             score = score - check_design_overlaps(i, segments)
         if score < min_fitness_score:
             return score

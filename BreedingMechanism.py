@@ -55,7 +55,7 @@ def breed_new_designs(selected_genes, mutation_rate):
             num_to_select = random.randint(2, len(selected_genes))
             to_breed = random.sample(selected_genes, num_to_select)
             new_design = crossover_designs(to_breed)
-            new_design.mutate(mutation_rate)
+            new_design.mutate_self(mutation_rate)
             new_gene_pool.append(new_design)
 
     return new_gene_pool
