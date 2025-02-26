@@ -24,7 +24,7 @@ colour_options = [
 curviness_range = (0, 1)
 relative_location_range = (0, 1)
 radius_range = (0, 25)
-arm_length_range = (0, 25)
+arm_length_range = (5, 25)
 num_points_range = (3, 8)
 asymmetry_range = (0, 10)
 corner_initialisation_range = (0,1)
@@ -45,10 +45,11 @@ def bezier_curve(P0, P1, P2):
 
 # Function to create a quadratic Bézier curve with three control points
 def bezier_curve_t(t, P0, P1, P2):
-    """The Bézier curve formulas used in the function calculate the x-coordinate and y-coordinate of a point at a given tt on the curve using the quadratic Bézier formula:"""
-    x = (1 - t) ** 2 * P0[0] + 2 * (1 - t) * t * P1[0] + t ** 2 * P2[0]
-    y = (1 - t) ** 2 * P0[1] + 2 * (1 - t) * t * P1[1] + t ** 2 * P2[1]
-
+    u = 1 - t
+    u2 = u * u
+    t2 = t * t
+    x = u2 * P0[0] + 2 * u * t * P1[0] + t2 * P2[0]
+    y = u2 * P0[1] + 2 * u * t * P1[1] + t2 * P2[1]
     return [round(x, 3), round(y, 3)]
 
 class StarType(Enum):

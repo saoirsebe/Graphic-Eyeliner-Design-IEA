@@ -59,8 +59,6 @@ def create_star_arm(center, radius, arm_length, num_points, start_angle, asymmet
 
 def create_star(num_points, center, radius, arm_length , asymmetry, star_type, star_direction, fill):
     star_points = []
-    end_point = (0,0) #Starts at (0,0) and changed to P2 after each arm creation
-    start_point = (0,0)
     star_arm_points =[]
     # Generate and plot each arm of the star using Bézier curves
     for i in range(num_points):

@@ -376,9 +376,6 @@ def check_points_middle(points_array):
     x_values = points_array[:, 0]
     in_range = (x_values >= x_min) & (x_values <= x_max)
 
-    #How many points are in the range:
-    points_in_range = np.sum(in_range)
-
     return np.sum(in_range) >= len(points_array) * 0.8 #Return if 80% of points are within this range
 
 

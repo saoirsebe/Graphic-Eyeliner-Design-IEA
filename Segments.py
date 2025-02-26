@@ -488,6 +488,25 @@ def make_eyeliner_wing(random_colour):
         if not new_shape_overlaps > max_shape_overlaps:
             return new_segment
 
+
+def generate_radius_arm_lengths(new_star_type):
+    if new_star_type == StarType.STRAIGHT or new_star_type == StarType.FLOWER:
+        new_radius = random_normal_within_range(7, 15, radius_range)
+        new_arm_length = random_normal_within_range(5, 10, arm_length_range) if new_radius > 15 else random_normal_within_range(
+            12, 15, arm_length_range)
+        if new_arm_length<5:
+            new_arm_length =5
+            if new_arm_length >30:
+                new_arm_length-=5
+    else:
+        new_radius = random_normal_within_range(5, 10, radius_range)
+        new_arm_length = random_normal_within_range(5, 10,
+                                                    arm_length_range) if new_radius > 20 else random_normal_within_range(15, 15, arm_length_range)
+        if new_radius > new_arm_length*1.5 and new_radius>5:
+            new_radius -=5
+    return new_radius , new_arm_length
+
+
 def random_segment(prev_colour=None, segment_start=None):
     def random_curviness(mean=0.3, stddev=0.15):
         return random_normal_within_range(mean, stddev, curviness_range)
@@ -503,7 +522,7 @@ def random_segment(prev_colour=None, segment_start=None):
 
     if r < 0.7:
         new_segment_type = SegmentType.LINE
-    elif r<0.925:
+    elif r<0.95:
         new_segment_type = SegmentType.STAR
     else:
         new_segment_type = SegmentType.IRREGULAR_POLYGON
@@ -562,16 +581,18 @@ def random_segment(prev_colour=None, segment_start=None):
             split_point=random_normal_within_range(0.5,0.25,relative_location_range)
         )
     elif new_segment_type == SegmentType.STAR:
-        new_radius = random_normal_within_range(7, 20, radius_range)
+        new_star_type = random.choice([StarType.STRAIGHT, StarType.CURVED, StarType.FLOWER])
+        new_radius , new_arm_length = generate_radius_arm_lengths(new_star_type)
+
         new_segment = create_segment(
             segment_type=SegmentType.STAR,
             start=segment_start,
             start_mode=random.choice([StartMode.CONNECT, StartMode.JUMP]),
             radius=new_radius,
-            arm_length= random_normal_within_range(5,10,arm_length_range) if new_radius >20 else random_normal_within_range(12,20,arm_length_range),
+            arm_length= new_arm_length,
             num_points=round(random_normal_within_range(5,2, num_points_range)),
             asymmetry=0 if random.random() < 0.6 else random_normal_within_range(2,2,asymmetry_range),
-            star_type=random.choice([StarType.STRAIGHT, StarType.CURVED, StarType.FLOWER]),
+            star_type=new_star_type,
             end_thickness=random_normal_within_range(2,2,thickness_range),
             relative_angle=random.uniform(*direction_range),
             colour=random_colour,

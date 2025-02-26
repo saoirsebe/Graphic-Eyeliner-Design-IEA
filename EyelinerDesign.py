@@ -55,9 +55,9 @@ class EyelinerDesign:   #Creates overall design, calculates start points, render
         if is_branch:
             parent_node.add_child_segment(segment)
         else:
-            parent_children = parent_node.children#parent_node.get_children
+            parent_children = parent_node.children #parent_node.get_children
             parent_node.children = [segment]
-            segment.children.append(parent_children)
+            segment.children.extend(parent_children)
 
     def is_descendant(self, node, potential_descendant):
         """
@@ -77,14 +77,14 @@ class EyelinerDesign:   #Creates overall design, calculates start points, render
                 return True
         return False
 
-    def find_parent(self, node, target_node):
+    def find_the_parent(self, node, target_node):
         """
         Finds the parent of a given node in the tree.
         """
         for child in node.children:
             if child == target_node:
                 return node
-            result = self.find_parent(child, target_node)
+            result = self.find_the_parent(child, target_node)
             if result:
                 return result
         return None
@@ -100,7 +100,7 @@ class EyelinerDesign:   #Creates overall design, calculates start points, render
             print("Not enough nodes to perform a move.")
             return
 
-        original_parent = self.find_parent(self.root, subtree_root)
+        original_parent = self.find_the_parent(self.root, subtree_root)
         original_parent.children.remove(subtree_root)
 
         # Randomly select a new parent node (cannot be the subtree root itself or any of its descendants)
@@ -202,20 +202,21 @@ class EyelinerDesign:   #Creates overall design, calculates start points, render
             self.add_segment_at(new_segment, np.random.randint(0, len(nodes_list)-1),is_branch)
 
         #Random chance of swapping a subtree position:
+
         if np.random.random() < mutation_rate and len(self.get_all_nodes())>2:
             nodes_list = self.get_all_nodes()
             self.move_subtree(random.choice(nodes_list[1:]))
+
         return self
 
     def mutate(self,mutation_rate=0.05):
-        new_gene = copy.deepcopy(self)
-        new_gene= new_gene.mutate_self(mutation_rate)
+        old_gene = copy.deepcopy(self)
+        new_gene= old_gene.mutate_self(mutation_rate)
         new_gene.render_design(show=False)
         overlap_score = analyse_negative(new_gene)
         print("overlap_score", overlap_score)
         while overlap_score<=min_fitness_score:
-            new_gene = copy.deepcopy(self)
-            new_gene = new_gene.mutate_self(mutation_rate)
+            new_gene = old_gene.mutate_self(mutation_rate)
             new_gene.render_design(show=False)
             overlap_score = analyse_negative(new_gene)
             print("overlap_score", overlap_score)

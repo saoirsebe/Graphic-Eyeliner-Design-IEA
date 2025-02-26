@@ -1,3 +1,5 @@
+from itertools import chain
+
 from scipy.spatial import cKDTree
 from seaborn import scatterplot
 from A import SegmentType, StartMode, min_fitness_score, max_shape_overlaps, upper_eyelid_x, lower_eyelid_x, \
@@ -14,6 +16,7 @@ def remove_ends_of_line(line1_array, line2_array):
     line2_array = line2_array[first_2:]
     return line1_array, line2_array
 
+"""
 def check_overlaps(segment2_array, segment1_tree, tolerance=0.4):
     overlapping_indices = set()
 
@@ -24,6 +27,11 @@ def check_overlaps(segment2_array, segment1_tree, tolerance=0.4):
     overlaps = len(overlapping_indices)
 
     return overlaps , overlapping_indices
+"""
+def check_overlaps(segment2_array, segment1_tree, tolerance=0.4):
+    indices_lists = segment1_tree.query_ball_point(segment2_array, tolerance)
+    overlapping_indices = set(chain.from_iterable(indices_lists))
+    return len(overlapping_indices), overlapping_indices
 
 def check_shape_edge_overlaps(segment1_array, segment2_array):
     segment1_tree = cKDTree(segment1_array)  # Build KD-tree for the first set of points
