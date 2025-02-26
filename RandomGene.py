@@ -17,6 +17,14 @@ def check_new_segments_negative_score(design, new_segment):
         return min_fitness_score * 2
     else:
         score = -eye_overlaps
+    average_x = np.mean(new_segment.points_array[:, 0])
+    if average_x < 10:
+        score -= 0.5
+    average_y = np.mean(new_segment.points_array[:, 1])
+    if average_y > 150:
+        score -= 1.5
+    elif average_y < 50:
+        score -= 0.5
 
     current_segments = design.get_all_nodes()
     for segment in current_segments:
@@ -45,7 +53,7 @@ def n_of_children_decreasing_likelihood(segment_number, branch_length, max_segme
     - n_of_children: The calculated number of children.
     """
     # Global decay: Reduce likelihood of children based on the segment number
-    global_decay_power = 1.4  # Adjust this to control how quickly the number of children drops
+    global_decay_power = 1.6  # Adjust this to control how quickly the number of children drops
     global_decay_factor = max(0, (1 - (segment_number / max_segments)) ** global_decay_power)  # Reduces from 1 to 0
 
     # Branch decay: Reduce likelihood of children as branch depth increases
@@ -117,7 +125,7 @@ def random_gene(gene_n):
             else:
                 design = EyelinerDesign(random_segment())
 
-            n_of_children = round(random_normal_within_range(1,0.5,number_of_children_range))
+            n_of_children = round(random_normal_within_range(1.2,0.2,number_of_children_range))
 
             root_node = design.root
             prev_colour = root_node.colour

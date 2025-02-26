@@ -155,6 +155,16 @@ def analyse_negative(design):
     len_segments = len(segments)
     print("N of segments = ",len_segments)
     for i in range(len_segments):
+        average_x = np.mean(segments[i].points_array[:, 0])
+        if average_x < 10:
+            score -= 0.5
+        average_y = np.mean(segments[i].points_array[:, 1])
+
+        if average_y > 150:
+            score -= 1.5
+        elif average_y < 50:
+            score -= 0.5
+
         eye_overlaps = is_in_eye(segments[i])
         if eye_overlaps>0:
             return min_fitness_score *2
@@ -165,7 +175,7 @@ def analyse_negative(design):
         if score < min_fitness_score:
             return score
         if i!=len_segments-1:
-            score = score - check_design_overlaps(i, segments)
+            score  -= check_design_overlaps(i, segments)
         if score < min_fitness_score:
             return score
     return score

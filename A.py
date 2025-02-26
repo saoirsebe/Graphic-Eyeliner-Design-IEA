@@ -10,7 +10,7 @@ initial_gene_pool_size = 200
 node_re_gen_max = 12
 #Parameter ranges:
 start_x_range = (20, 140)
-start_y_range = (50, 130)
+start_y_range = (55, 130)
 #start_mode_options = list(StartMode)
 #Segment_type_options = list(SegmentType)
 length_range = (15, 60)

@@ -328,18 +328,18 @@ def compair_middle_curve_shapes(segment):
             overlapping_points_segment_2, overlapping_points_curve2 = get_overlapping_points(points, curve2)
             overall_similarity, segment_overlap_length = check_overlap_length_then_similarity(overlapping_points_segment_2, overlapping_points_curve2)
 
-    if overall_similarity > 0.6:
+    if overall_similarity > 0.7:
         score_overall = 2 * overall_similarity * math.log(segment_overlap_length)
-    else:
+    elif overall_similarity < 0.6:
         seg_length = math.sqrt((points[-1][0] - points[0][0]) ** 2 + (
                 points[-1][1] - points[0][1]) ** 2)
         score_overall = -0.02 * seg_length  # Penalty for deviating
+    else:
+        score_overall = 0
     return score_overall
 
 def compair_segment_wing_shape(segment, curve1, curve2):
     points = segment.points_array
-    overall_similarity1 = 0
-    overall_similarity2 = 0
 
     overlapping_points_segment_1, overlapping_points_curve1 = get_overlapping_points(points, curve1)
     overlapping_points_segment_2, overlapping_points_curve2 = get_overlapping_points(points, curve2)
@@ -348,17 +348,21 @@ def compair_segment_wing_shape(segment, curve1, curve2):
     overall_similarity2 , segment_2_overlap_length= check_overlap_length_then_similarity(overlapping_points_segment_2, overlapping_points_curve2)
     best_overall = max(overall_similarity1, overall_similarity2)
 
-    if best_overall>0.6:
+    if best_overall>0.7:
         if best_overall == overall_similarity1:
-            best_overall= 2 * best_overall *  math.log(segment_1_overlap_length)
+            score= 2 * best_overall *  math.log(segment_1_overlap_length)
         elif best_overall == overall_similarity2:
 
-            best_overall = 2 * best_overall * math.log(segment_2_overlap_length)
-    else:
+            score = 2 * best_overall * math.log(segment_2_overlap_length)
+        else:
+            score = 0
+    elif best_overall < 0.6:
         seg_array = segment.points_array
         seg_length = math.sqrt((seg_array[-1][0] - seg_array[0][0]) ** 2 + (seg_array[-1][1] - seg_array[0][1]) ** 2)
-        best_overall = -0.02 * seg_length  # Penalty for deviating
-    return best_overall
+        score = -0.02 * seg_length  # Penalty for deviating
+    else:
+        score = 0
+    return score
 
 
 def check_points_middle(points_array):
@@ -388,10 +392,13 @@ def analyse_design_shapes(design):
     total_score = 0
     segments = design.get_all_nodes()
     for segment in segments:
-        x_values = segment.points_array[:, 0]
-        average_x = np.mean(x_values)
+        average_x = np.mean(segment.points_array[:, 0])
         if average_x <0:
-            total_score -=3
+            total_score -=5
+
+        average_y = np.mean(segment.points_array[:, 1])
+        if average_y < 50:
+            total_score -= 2
 
         if segment.start_mode == StartMode.JUMP:
             n_of_jumps += 1
@@ -523,7 +530,7 @@ def analyse_design_shapes(design):
                 total_score -=2
 
         if n_of_jumps >4:
-            total_score -=4
+            total_score -=5
 
     return total_score
 
