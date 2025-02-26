@@ -17,7 +17,7 @@ def initialise_gene_pool():
 
     scored_genes = []
     for idx, gene in enumerate(gene_pool):
-        scored_genes.append((gene, analyse_positive(gene))) #overlap_score +
+        scored_genes.append((gene, analyse_positive(gene, True))) #overlap_score +
 
     scored_genes.sort(key=lambda x: x[1], reverse=True)  # Sort by the gene score
     for i, (gene, score) in enumerate(scored_genes):

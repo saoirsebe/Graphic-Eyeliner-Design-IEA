@@ -260,7 +260,7 @@ def compare_with_eyelid_curves(bezier_points, eye_points, is_upper,num_samples=1
         "overall_similarity": overall_similarity
     } , overlap_length
 
-def score_segment_against_eyelid_shape(segment, tolerance=0.1):
+def score_segment_against_eyelid_shape(segment, tolerance=0.1, to_print = False):
     upper_curve = upper_eyelid_coords
     lower_curve = lower_eyelid_coords
     points = segment.points_array
@@ -273,27 +273,30 @@ def score_segment_against_eyelid_shape(segment, tolerance=0.1):
     # Assign scores
     score = 0
     if upper_curve_results["overall_similarity"]>0.7:# and upper_curve_results["direction_similarity"]>0.5:
-        print(f"for colour: {segment.colour} similarity to upper eyelid:", upper_curve_results["overall_similarity"])
-        print("upper_curve_results[direction_similarity]", upper_curve_results["direction_similarity"])
-        print("upper_curve_results[shape_similarity]", upper_curve_results["shape_similarity"])
-        print("overlap_length:", upper_overlap_length)
+        if to_print:
+            print(f"for colour: {segment.colour} similarity to upper eyelid:", upper_curve_results["overall_similarity"])
+            print("upper_curve_results[direction_similarity]", upper_curve_results["direction_similarity"])
+            print("upper_curve_results[shape_similarity]", upper_curve_results["shape_similarity"])
+        #print("overlap_length:", upper_overlap_length)
         score+= 2 * math.log(upper_overlap_length) * upper_curve_results["overall_similarity"]
     elif lower_curve_results["overall_similarity"]>0.7:
-        print(f"for colour: {segment.colour} similarity to lower eyelid:", lower_curve_results["overall_similarity"])
-        print("lower_curve_results[direction_similarity]", lower_curve_results["direction_similarity"])
-        print("lower_curve_results[shape_similarity]", lower_curve_results["shape_similarity"])
-        print("overlap_length:", lower_overlap_length)
+        if to_print:
+            print(f"for colour: {segment.colour} similarity to lower eyelid:", lower_curve_results["overall_similarity"])
+            print("lower_curve_results[direction_similarity]", lower_curve_results["direction_similarity"])
+            print("lower_curve_results[shape_similarity]", lower_curve_results["shape_similarity"])
+        #print("overlap_length:", lower_overlap_length)
         score += 2 * math.log(lower_overlap_length) * lower_curve_results["overall_similarity"]
     elif upper_curve_results["overall_similarity"] < 0.5 or lower_curve_results["direction_similarity"] < 0.4:
-        print("upper_curve_results[direction_similarity]", upper_curve_results["direction_similarity"])
-        print("upper_curve_results[shape_similarity]", upper_curve_results["shape_similarity"])
+        if to_print:
+            print("upper_curve_results[direction_similarity]", upper_curve_results["direction_similarity"])
+            print("upper_curve_results[shape_similarity]", upper_curve_results["shape_similarity"])
         seg_array = segment.points_array
         seg_length = math.sqrt((seg_array[-1][0] - seg_array[0][0]) ** 2 + (seg_array[-1][1] - seg_array[0][1]) ** 2)
         score += -0.035 * seg_length  # Penalty for deviating
 
     return score
 
-def check_overlap_length_then_similarity(overlapping_points_segment, overlapping_points_curve):
+def check_overlap_length_then_similarity(overlapping_points_segment, overlapping_points_curve, to_print = False):
     overall_similarity = 0
     if overlapping_points_segment.shape[0] > 4 and overlapping_points_curve.shape[0] > 4:
         segment_overlap_length = math.sqrt((overlapping_points_segment[-1][0] - overlapping_points_segment[0][0]) ** 2 + (
@@ -301,15 +304,16 @@ def check_overlap_length_then_similarity(overlapping_points_segment, overlapping
 
         if segment_overlap_length>5:
             shape_similarity1, direction_similarity1 = compair_overlapping_sections(overlapping_points_segment, overlapping_points_curve)
-            print("shape_similarity1", shape_similarity1)
-            print("direction_similarity1", direction_similarity1)
+            if to_print:
+                print("shape_similarity1", shape_similarity1)
+                print("direction_similarity1", direction_similarity1)
             overall_similarity = (shape_similarity1 + direction_similarity1) / 2
     else:
         segment_overlap_length = 0
     return overall_similarity , segment_overlap_length
 
 
-def compair_middle_curve_shapes(segment):
+def compair_middle_curve_shapes(segment, to_print = False):
     curve1 = middle_curve_upper
     curve2 = middle_curve_lower
     points = segment.points_array
@@ -320,7 +324,7 @@ def compair_middle_curve_shapes(segment):
     all_above_n = np.all(y_values > eye_corner_start[1])
     if all_above_n:
         overlapping_points_segment_1, overlapping_points_curve1 = get_overlapping_points(points, curve1)
-        overall_similarity , segment_overlap_length = check_overlap_length_then_similarity(overlapping_points_segment_1, overlapping_points_curve1)
+        overall_similarity , segment_overlap_length = check_overlap_length_then_similarity(overlapping_points_segment_1, overlapping_points_curve1, to_print)
     else:
         # Check if all y values are below n
         all_below_n = np.all(y_values < eye_corner_start[1])
@@ -338,14 +342,14 @@ def compair_middle_curve_shapes(segment):
         score_overall = 0
     return score_overall
 
-def compair_segment_wing_shape(segment, curve1, curve2):
+def compair_segment_wing_shape(segment, curve1, curve2, to_print=False):
     points = segment.points_array
 
     overlapping_points_segment_1, overlapping_points_curve1 = get_overlapping_points(points, curve1)
     overlapping_points_segment_2, overlapping_points_curve2 = get_overlapping_points(points, curve2)
-    overall_similarity1 , segment_1_overlap_length= check_overlap_length_then_similarity(overlapping_points_segment_1, overlapping_points_curve1)
+    overall_similarity1 , segment_1_overlap_length= check_overlap_length_then_similarity(overlapping_points_segment_1, overlapping_points_curve1, to_print = to_print)
 
-    overall_similarity2 , segment_2_overlap_length= check_overlap_length_then_similarity(overlapping_points_segment_2, overlapping_points_curve2)
+    overall_similarity2 , segment_2_overlap_length= check_overlap_length_then_similarity(overlapping_points_segment_2, overlapping_points_curve2, to_print=to_print)
     best_overall = max(overall_similarity1, overall_similarity2)
 
     if best_overall>0.7:
@@ -375,14 +379,10 @@ def check_points_middle(points_array):
     #How many points are in the range:
     points_in_range = np.sum(in_range)
 
-    # Calculate if at least 80% of the points are in the range
-    if points_in_range >= len(points_array) * 0.8:
-        return True
-    else:
-        return False
+    return np.sum(in_range) >= len(points_array) * 0.8 #Return if 80% of points are within this range
 
 
-def analyse_design_shapes(design):
+def analyse_design_shapes(design, to_print = False):
     """
     Analyse the entire design and calculate a total score.
     """
@@ -414,35 +414,45 @@ def analyse_design_shapes(design):
             if check_points_left(segment.points_array,True):
                 #If 80% of segment is left of the eye corner then compare segment with eyelid curve
                 #print("checking against eyelid shape")
-                line_score=score_segment_against_eyelid_shape(segment)
-                print(f"line colour:{segment.colour} score_segment_against_eyelid_shape:",line_score)
+                line_score=score_segment_against_eyelid_shape(segment,to_print=to_print)
                 left_score = line_score
-                middle_score = 0
                 if check_points_middle(segment.points_array):
                     middle_score = compair_middle_curve_shapes(segment)
-                    print(f"line colour:{segment.colour} middle_score:", middle_score)
 
-                if middle_score > left_score:
-                    total_score += middle_score
+                    if middle_score > left_score:
+                        if to_print:
+                            print(f"line colour:{segment.colour} middle_score:", middle_score)
+                        total_score += middle_score
+                    else:
+                        if to_print:
+                            print(f"line colour:{segment.colour} score_segment_against_eyelid_shape:", line_score)
+                        total_score += left_score
                 else:
+                    if to_print:
+                        print(f"line colour:{segment.colour} score_segment_against_eyelid_shape:", line_score)
                     total_score += left_score
+
             elif check_points_left(segment.points_array,False):
                 # If 80% of segment is right of the eye corner then compare segment with wing shape curves
                 #print("checking against eyeliner shape")
 
-                line_score = compair_segment_wing_shape(segment, eyeliner_curve1, eyeliner_curve2)
-                print(f"line colour:{segment.colour} compair_segment_wing_shape:",line_score)
+                line_score = compair_segment_wing_shape(segment, eyeliner_curve1, eyeliner_curve2 )
                 right_score = line_score
-                middle_score = 0
                 if check_points_middle(segment.points_array):
                     middle_score = compair_middle_curve_shapes(segment)
-                    print(f"line colour:{segment.colour} middle_score:", middle_score)
                     middle_score = middle_score
-                if middle_score > right_score:
-                    total_score += middle_score
+                    if middle_score > right_score:
+                        if to_print:
+                            print(f"line colour:{segment.colour} middle_score:", middle_score)
+                        total_score += middle_score
+                    else:
+                        if to_print:
+                            print(f"line colour:{segment.colour} compair_segment_wing_shape:", line_score)
+                        total_score += right_score
                 else:
+                    if to_print:
+                        print(f"line colour:{segment.colour} compair_segment_wing_shape:", line_score)
                     total_score += right_score
-
 
 
 

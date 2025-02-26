@@ -180,14 +180,14 @@ def analyse_negative(design):
             return score
     return score
 
-def analyse_positive(design):
-    segments = design.get_all_nodes()
+def analyse_positive(design, to_print = False):
+    #segments = design.get_all_nodes()
     score=0
     #If starts with a wing angle
     for child in design.root.children:
         score += wing_angle(design.root, child)
 
-    score += analyse_design_shapes(design)
+    score += analyse_design_shapes(design, to_print)
     #score = score + (len(segments) * 0.25)  # Higher score for designs with more segments
     return score
 
