@@ -156,12 +156,12 @@ def wing_angle(node1,node2):
     return 0
 
 def analyse_negative(design):
-    print("design:")
+    #print("design:")
     segments = design.get_all_nodes()
     score = 0  # Count how many overlaps there are in this gene
     # Compare each pair of segments for overlap
     len_segments = len(segments)
-    print("N of segments = ",len_segments)
+    #print("N of segments = ",len_segments)
     for i in range(len_segments):
         average_x = np.mean(segments[i].points_array[:, 0])
         if average_x < 10:

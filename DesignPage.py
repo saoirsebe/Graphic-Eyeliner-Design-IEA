@@ -43,7 +43,9 @@ class DesignPage(ctk.CTkFrame):
 
     def add_into_pool(self, the_gene):
         if the_gene not in self.current_gene_pool:
+            self.gene_pools_all.remove(self.current_gene_pool)
             self.current_gene_pool.append(the_gene)
+            self.gene_pools_all.append(self.current_gene_pool)
             self.start_designing()
 
     def un_save(self, the_gene):
@@ -77,11 +79,12 @@ class DesignPage(ctk.CTkFrame):
         for fig in self.current_gene_pool_figures:
             plt.close(fig)
         self.current_gene_pool = initialise_gene_pool()
+        self.gene_pools_all.append(self.current_gene_pool)
+        self.selected_gene_indices.clear()
+        self.saved_genes_indices.clear()
         self.start_designing()
 
     def start_designing(self):
-        self.selected_gene_indices.clear()
-        self.saved_genes_indices.clear()
         self.start_button.grid_forget()
         self.current_gene_pool_figures = []
 
@@ -89,8 +92,8 @@ class DesignPage(ctk.CTkFrame):
 
         if not self.current_gene_pool:
             self.current_gene_pool = initialise_gene_pool()
+            self.gene_pools_all.append(self.current_gene_pool)
 
-        self.gene_pools_all.append(self.current_gene_pool)
 
         # Mutation rate selection
         ctk.CTkLabel(self, text="Select Mutation Rate:", font=("Arial", 12)).grid(row=3, column=0, pady=10)
@@ -104,12 +107,15 @@ class DesignPage(ctk.CTkFrame):
             frame.grid(row=(i // 3) + 5, column=i % 3, padx=10, pady=10, sticky="nsew")
 
             fig = gene.render_design()
-            self.current_gene_pool_figures.append(fig)
 
             canvas = FigureCanvasTkAgg(fig, master=frame)
             canvas.draw()
             canvas_widget = canvas.get_tk_widget()
             canvas_widget.pack(padx=5, pady=5)
+            self.current_gene_pool_figures.append((fig, canvas_widget))
+
+            #Bind the canvas widget so clicking it shows the design in a popup
+            canvas_widget.bind("<Button-1>", lambda event, index=i: self.show_design_popup(index))
 
             toggle_button = ctk.CTkButton(frame, text="Toggle Selection")
             toggle_button.configure(command=lambda index=i, b=toggle_button: self.toggle_gene(index, b))
@@ -167,12 +173,16 @@ class DesignPage(ctk.CTkFrame):
         self.show_saved_genes()
 
     def submit_selection(self):
-        for fig in self.current_gene_pool_figures:
+        for fig , widget in self.current_gene_pool_figures:
             plt.close(fig)
+            widget.destroy()
 
         if self.selected_gene_indices:
             selected_genes = [self.current_gene_pool[i] for i in self.selected_gene_indices]
             self.current_gene_pool = breed_new_designs(selected_genes, self.mutation_rate)
+            self.gene_pools_all.append(self.current_gene_pool)
+            self.selected_gene_indices.clear()
+            self.saved_genes_indices.clear()
             self.start_designing()
         else:
             messagebox.showwarning("No Genes Selected", "No genes were selected.")
@@ -184,3 +194,24 @@ class DesignPage(ctk.CTkFrame):
             self.current_gene_pool = self.gene_pools_all[-2]
             self.gene_pools_all = self.gene_pools_all[:-2]
             self.start_designing()
+
+    def show_design_popup(self, index):
+        # Create a popup window
+        popup = ctk.CTkToplevel(self)
+        popup.title("Design Preview")
+        popup.geometry("800x600")  # Adjust the size as needed
+
+        # Create a frame for the content
+        content_frame = ctk.CTkFrame(popup)
+        content_frame.pack(expand=True, fill="both", padx=10, pady=10)
+
+        # Render a larger version of the design. You might want to adjust gene.render_design()
+        # to account for the new size if necessary.
+        large_fig = self.current_gene_pool[index].render_design()
+        large_canvas = FigureCanvasTkAgg(large_fig, master=content_frame)
+        large_canvas.draw()
+        large_canvas.get_tk_widget().pack(expand=True, fill="both", padx=5, pady=5)
+
+        # Create a close button to dismiss the popup
+        close_button = ctk.CTkButton(content_frame, text="Close", command=popup.destroy)
+        close_button.pack(pady=5)

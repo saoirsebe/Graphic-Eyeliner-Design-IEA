@@ -16,11 +16,35 @@ start_y_range = (55, 130)
 length_range = (15, 60)
 direction_range = (0, 360)
 thickness_range = (0.5, 3)
+
 colour_options = [
-    "red", "green", "blue", "cyan", "magenta", "black", "orange", "purple",
-    "pink", "brown", "gray", "lime", "navy",
-    "teal", "maroon", "gold", "olive"
+    "red", "orange", "yellow", "green", "blue", "indigo", "violet",
+    "lightblue", "pink", "purple", "brown", "grey", "black", "white", "cyan", "magenta"
 ]
+
+# Define similar colours for each option
+similar_colours = {
+    "red": ["orange", "magenta", "pink","black"],
+    "orange": ["red", "yellow","black"],
+    "yellow": ["orange", "green","black"],
+    "green": ["yellow", "blue", "cyan","black"],
+    "blue": ["green", "indigo", "lightblue", "cyan","black"],
+    "indigo": ["blue", "violet","black"],
+    "violet": ["indigo", "purple", "magenta","black"],
+    "light blue": ["blue", "cyan","black"],
+    "pink": ["red", "magenta", "purple","black"],
+    "purple": ["violet", "pink", "indigo","black"],
+    "brown": ["red", "orange","black"],
+    "grey": ["black", "white","black"],
+    "white": ["grey","black"],
+    "cyan": ["blue", "lightblue", "green","black"],
+    "magenta": ["red", "pink", "violet","black"],
+    "black": [
+    "red", "orange", "yellow", "green", "blue", "indigo", "violet",
+    "lightblue", "pink", "purple", "brown", "grey", "black", "white", "cyan", "magenta"]
+}
+
+
 curviness_range = (0, 1)
 relative_location_range = (0, 1)
 radius_range = (0, 25)

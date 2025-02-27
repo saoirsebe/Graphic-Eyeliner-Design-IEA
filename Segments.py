@@ -196,6 +196,11 @@ class LineSegment(Segment):
             new_array = self.curve_between_lines(p0, p1, p2, p3, p4, self.colour)
             x_values, y_values = new_array[:, 0], new_array[:, 1]
 
+        #TESTING:
+        if self.colour == False:
+            print("prev_colour: ", prev_colour)
+            print("self.points_array:", self.points_array)
+
         # Plot each segment with the varying thickness
         if len(new_array) > 0 and ax_n:
             # Plot the first 40 points as one segment (blend lines)
@@ -251,7 +256,7 @@ class LineSegment(Segment):
     def mutate(self, mutation_rate=0.05):
         """Randomly mutate properties of the line segment within a mutation rate."""
         # mutation rate chance of changing:
-        self.mutate_choice(self.start_mode, [StartMode.CONNECT, StartMode.JUMP, StartMode.SPLIT, StartMode.CONNECT_MID], mutation_rate)
+        self.start_mode = self.mutate_choice(self.start_mode, [StartMode.CONNECT, StartMode.JUMP, StartMode.SPLIT, StartMode.CONNECT_MID], mutation_rate)
 
         if self.start_mode == StartMode.JUMP:
             self.start = (self.mutate_val(self.start[0],start_x_range,mutation_rate),self.mutate_val(self.start[1],start_y_range, mutation_rate))
@@ -268,7 +273,13 @@ class LineSegment(Segment):
 
         self.end_thickness = self.mutate_val(self.end_thickness,thickness_range,mutation_rate)
         self.relative_angle =  self.mutate_val(self.relative_angle,direction_range,mutation_rate)
+        if not self.colour or self.colour not in colour_options:
+            print("aaaa self.colour == False")
+            print(self.colour)
         self.colour = self.mutate_choice(self.colour, colour_options, mutation_rate)
+        if not self.colour or self.colour not in colour_options:
+            print("aaaa self.colour == False after mutation")
+            print(self.colour)
         self.length = self.mutate_val(self.length,length_range,mutation_rate)
         self.start_thickness = self.mutate_val(self.start_thickness, thickness_range, mutation_rate)
 
@@ -424,9 +435,16 @@ def random_segment_colour(prev_colour = None):
     if prev_colour is None:
         random_colour = random.choice(colour_options)
     else:
-        # weights = [0.6 if colour == prev_colour else 0.1 for colour in colour_options]
-        # random_colour = random.choices(colour_options, weights=weights, k=1)[0]
-        random_colour = prev_colour if random.random() < 0.6 else random.choice(colour_options)
+        weights = []
+        for colour in colour_options:
+            if colour == prev_colour:
+                weights.append(0.8)  #Highest chance to be the same colour as previous segment
+            elif colour in similar_colours.get(prev_colour, []):
+                weights.append(0.3)  #High chance to be a similar colours as previous segment
+            else:
+                weights.append(0.1)  #Others are less likely
+
+        random_colour = random.choices(colour_options, weights=weights, k=1)[0]
     return random_colour
 
 def random_eyeliner_lines_corners():

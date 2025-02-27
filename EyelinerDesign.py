@@ -172,40 +172,43 @@ class EyelinerDesign:   #Creates overall design, calculates start points, render
         if random.random() < mutation_rate:
             node.mutate(mutation_rate)
 
-        #Random chance of loosing a child
-        len_node_children = len(node.children)
-        if len_node_children > 1:
-            delete_child_chance = mutation_rate
-        elif len_node_children == 1:
-            delete_child_chance = mutation_rate //2
-        else:
-            delete_child_chance = 0
-
-        if random.random() < delete_child_chance:
-            delete_child_index = random.randint(0,len_node_children-1)
-            node.children.pop(delete_child_index)
-
         for child in node.children:
             self.mutate_node(child, mutation_rate)
 
+
     def mutate_self(self, mutation_rate=0.05):
+        nodes_list = self.get_all_nodes()
+        # Random chance of deleting a segment:
+        if len(nodes_list) >1 and np.random.random() < mutation_rate:
+            #Assign higher weight to later nodes:
+            delete_node = random.choices(nodes_list[1:], weights=range(1, len(nodes_list)), k=1)[0]
+            original_parent = self.find_the_parent(self.root, delete_node)
+            original_parent.children.remove(delete_node)
+            if len(delete_node.children) > 0:
+                original_parent.children.extend(delete_node.children)
+
+            nodes_list = self.get_all_nodes()
+
+        #Random chance of swapping a subtree position:
+        if np.random.random() < mutation_rate and len(nodes_list)>2:
+            self.move_subtree(random.choice(nodes_list[1:]))
+            nodes_list = self.get_all_nodes()
+
         node = self.root
         self.mutate_node(node,mutation_rate)
         for child in node.children:
             self.mutate_node(child,mutation_rate)
 
-        # Random chance of adding in a new segment:
-        if np.random.random() < mutation_rate:
+        len_nodes_list = len(nodes_list)
+        #Random chance of adding in a new segment:
+        if len_nodes_list <max_segments and np.random.random() < mutation_rate:
             new_segment = random_segment(False)
             nodes_list = self.get_all_nodes()
             is_branch = False if random.random() < 0.7 else True #If the new segment branches off a segment or is placed in-between segments
-            self.add_segment_at(new_segment, np.random.randint(0, len(nodes_list)-1),is_branch)
-
-        #Random chance of swapping a subtree position:
-
-        if np.random.random() < mutation_rate and len(self.get_all_nodes())>2:
-            nodes_list = self.get_all_nodes()
-            self.move_subtree(random.choice(nodes_list[1:]))
+            if len_nodes_list>1:
+                self.add_segment_at(new_segment, np.random.randint(0, len_nodes_list-1),is_branch)
+            else:
+                self.add_segment_at(new_segment,0,is_branch)
 
         return self
 
@@ -214,12 +217,12 @@ class EyelinerDesign:   #Creates overall design, calculates start points, render
         new_gene= old_gene.mutate_self(mutation_rate)
         new_gene.render_design(show=False)
         overlap_score = analyse_negative(new_gene)
-        print("overlap_score", overlap_score)
+        #print("overlap_score", overlap_score)
         while overlap_score<=min_fitness_score:
             new_gene = old_gene.mutate_self(mutation_rate)
             new_gene.render_design(show=False)
             overlap_score = analyse_negative(new_gene)
-            print("overlap_score", overlap_score)
+            #print("overlap_score", overlap_score)
         return new_gene
 
 

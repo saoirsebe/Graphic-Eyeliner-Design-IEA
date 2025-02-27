@@ -161,7 +161,7 @@ def compair_overlapping_sections(overlapping_points_segment, overlapping_points_
     segment_direction = compute_global_direction(overlapping_points_segment)#compute_directions(overlapping_points_segment)
     eye_curve_direction = compute_global_direction(overlapping_points_eye_shape)#compute_directions(overlapping_points_eye_shape)
     direction_difference = 1 - np.abs(segment_direction - eye_curve_direction)
-    print("direction_difference",direction_difference)
+    #print("direction_difference",direction_difference)
     """
     if segment_directions.size == 0:
         print("bezier_directions.size == 0")
