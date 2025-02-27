@@ -42,20 +42,23 @@ class LineSegment(Segment):
         self.end = (end_x, end_y)
 
 
-    def curve_between_lines(self, p0, p1, p2, p3, p4, colour):
+    def curve_between_lines(self, p0, p1, p2, p3, p4, colour,connecting_array):
         t_values = np.linspace(0, 1, 20)
         left_curve = np.array([bezier_curve_t(t, p0, p1, p2) for t in t_values])
         # np.array((prev_array[start_array_point_index+2]) - np.array(self.points_array[2]))/2
         right_curve = np.array([bezier_curve_t(t, p2, p3, p4) for t in t_values])
-        left_x, left_y = left_curve[:, 0], left_curve[:, 1]
-        right_x, right_y = right_curve[:, 0], right_curve[:, 1]
+        #left_x, left_y = left_curve[:, 0], left_curve[:, 1]
+        #right_x, right_y = right_curve[:, 0], right_curve[:, 1]
 
         # Combine the points to form a closed boundary
-        boundary_x = np.concatenate([left_x, right_x[::1]])  # Combine left and reversed right x
-        boundary_y = np.concatenate([left_y, right_y[::1]])  # Combine left and reversed right y
-        plt.fill(boundary_x, boundary_y, color=colour, alpha=1)
-        return np.concatenate((left_curve, right_curve, self.points_array), axis=0)
+        #boundary_x = np.concatenate([left_x, right_x[::1]])  # Combine left and reversed right x
+        #boundary_y = np.concatenate([left_y, right_y[::1]])  # Combine left and reversed right y
+        #plt.fill(boundary_x, boundary_y, color=colour, alpha=1)
+        #return np.concatenate((left_curve, right_curve, self.points_array), axis=0)
+        boundary = np.concatenate([left_curve, right_curve, connecting_array], axis=0)
+        plt.fill(boundary[:, 0], boundary[:, 1], color=colour, alpha=1)
 
+        return boundary
 
     def render(self, prev_array, prev_angle, prev_colour, prev_thickness_array, ax_n=None):
         new_array = []
@@ -125,7 +128,7 @@ class LineSegment(Segment):
                     curve_start_point = split_point_point_index - percent_30_current
                 p0 = np.array(self.points_array[curve_start_point])
 
-                # p1 is 5% of average line length in direction half way from  point
+                # p1 is 5% of average line length in direction half-way from  point
                 average_line_length_25 = int(((len_prev_array + len_self_array) // 2)*0.015)
                 c = (self.absolute_angle - prev_angle) % 360
                 p1_angle = self.absolute_angle + (180 - c//2)
@@ -135,12 +138,12 @@ class LineSegment(Segment):
                 p1 = np.array(self.start)
                 p1 = p1 + np.array([dx, dy])
 
-                # p4 index is +10% from connect point or ond of current line:
+                # p4 index is +30% from connect point or ond of current line:
                 if len_self_array <= (split_point_point_index + percent_30_current):
-                    curve_start_point = len_prev_array - 1
+                    curve_end_point = len_prev_array - 1
                 else:
-                    curve_start_point = split_point_point_index + percent_30_current
-                p4 = np.array(self.points_array[curve_start_point])
+                    curve_end_point = split_point_point_index + percent_30_current
+                p4 = np.array(self.points_array[curve_end_point])
 
                 # p3 is 5% of average line length in direction half w
                 p3_angle = self.absolute_angle + ((180 - c) // 2)
@@ -150,7 +153,8 @@ class LineSegment(Segment):
                 p3 = np.array(self.start)
                 p3 = p3 + np.array([dx, dy])
 
-                new_array = self.curve_between_lines(p0, p1, p2, p3, p4, prev_colour)
+                connecting_array = self.points_array[curve_start_point: curve_end_point+1]
+                new_array = self.curve_between_lines(p0, p1, p2, p3, p4, prev_colour, connecting_array)
                 x_values, y_values = new_array[:, 0], new_array[:, 1]
 
         self.thickness_array = np.linspace(self.start_thickness, self.end_thickness, line_num_points) #Render a line segment with thickness tapering from start to end
@@ -181,19 +185,21 @@ class LineSegment(Segment):
 
             # p4 index is +10% from connect point or end of the previous line:
             if len(prev_array) <= (start_array_point_index + percent_30_prev):
-                curve_start_point = len(prev_array) - 1
+                curve_end_point = len(prev_array) - 1
             else:
-                curve_start_point = start_array_point_index + percent_30_prev
-            p4 = np.array(prev_array[curve_start_point])
+                curve_end_point = start_array_point_index + percent_30_prev
+            p4 = np.array(prev_array[curve_end_point])
 
-            # p1 is 5% of average line length in direction half way from previous line to current line, away from the connect point
+            # p1 is 5% of average line length in direction half-way from previous line to current line, away from the connect point
             p3_angle = prev_angle + c//2
             p3_dir_radians = np.radians(p3_angle)
             dx = average_line_length_25 * np.cos(p3_dir_radians)
             dy = average_line_length_25 * np.sin(p3_dir_radians)
             p3 = np.array(self.start)
             p3 = p3 + np.array([dx, dy])
-            new_array = self.curve_between_lines(p0, p1, p2, p3, p4, self.colour)
+
+            connecting_array = prev_array[curve_start_point: curve_end_point + 1]
+            new_array = self.curve_between_lines(p0, p1, p2, p3, p4, self.colour,connecting_array)
             x_values, y_values = new_array[:, 0], new_array[:, 1]
 
         #TESTING:
