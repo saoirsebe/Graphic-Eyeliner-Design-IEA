@@ -76,7 +76,7 @@ def breed_new_designs(selected_genes, mutation_rate):
             num_to_select = random.randint(2, len(selected_genes))
             to_breed = random.sample(selected_genes, num_to_select)
             new_design = produce_correct_crossover(to_breed)
-            print("# crossed")
+            #print("# crossed")
             new_design = new_design.mutate_design(mutation_rate)
             new_gene_pool.append(new_design)
 

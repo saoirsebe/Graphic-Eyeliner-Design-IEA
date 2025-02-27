@@ -438,19 +438,35 @@ def generate_valid_start():
 
 def random_segment_colour(prev_colour = None):
     if prev_colour is None:
-        random_colour = random.choice(colour_options)
+        return random.choice(colour_options)
     else:
+        """
         weights = []
         for colour in colour_options:
             if colour == prev_colour:
                 weights.append(0.8)  #Highest chance to be the same colour as previous segment
             elif colour in similar_colours.get(prev_colour, []):
-                weights.append(0.3)  #High chance to be a similar colours as previous segment
+                weights.append(0.4)  #High chance to be a similar colours as previous segment
             else:
                 weights.append(0.1)  #Others are less likely
-
+    
         random_colour = random.choices(colour_options, weights=weights, k=1)[0]
-    return random_colour
+        """
+        r = random.random()
+        if r < 0.5:
+            # 50% chance: choose the same colour
+            return prev_colour
+        elif r < 0.9:
+            # 40% chance: choose a similar colour
+            similar = similar_colours.get(prev_colour, [])
+            if similar:
+                return random.choice(similar)
+            else:
+                # If no similar colours are defined, fall back to prev_colour
+                return prev_colour
+        else:
+            return random.choice(colour_options)
+
 
 def random_eyeliner_lines_corners():
     start_at_corner = random.choice([True, False])

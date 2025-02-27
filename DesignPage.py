@@ -13,7 +13,7 @@ class DesignPage(ctk.CTkFrame):
         self.controller = controller
         self.current_gene_pool = []
         self.selected_gene_indices = []
-        self.mutation_rate = 0.05
+        self.mutation_rate = 0.1
         self.saved_genes = []
         self.saved_genes_indices = []
         self.saved_gene_widgets = {}
@@ -98,7 +98,7 @@ class DesignPage(ctk.CTkFrame):
 
         # Mutation rate selection
         ctk.CTkLabel(self, text="Select Mutation Rate:", font=("Arial", 12)).grid(row=3, column=0, pady=10)
-        mutation_rate_values = [0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.1]
+        mutation_rate_values = [0.05, 0.06, 0.07, 0.08, 0.09, 0.1, 0.11,0.12,0.13,0.14,0.15]
         mutation_rate_dropdown = ctk.CTkOptionMenu(self, values=[str(x) for x in mutation_rate_values],command=lambda val: self.set_mutation_rate(val))
         mutation_rate_dropdown.set(str(self.mutation_rate))
         mutation_rate_dropdown.grid(row=3, column=1, pady=10)

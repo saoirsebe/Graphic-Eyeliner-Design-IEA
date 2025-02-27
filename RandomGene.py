@@ -118,7 +118,7 @@ def random_gene(gene_n):
         while root_score < 0:
             #The first 2 thirds of the initial population start at the corner of the eye, the second third starts as an eyeliner wing, last 1/3 is random
             if initial_gene_pool_size/3 < gene_n <= 2* (initial_gene_pool_size / 3):
-                random_colour = random_segment_colour()
+                random_colour = "black" if random.random() < 0.6 else random_segment_colour()
                 design = EyelinerDesign(make_eyeliner_wing(random_colour))
             elif gene_n <= 2 *(initial_gene_pool_size/3):
                 design = EyelinerDesign(random_segment(segment_start=eye_corner_start))
