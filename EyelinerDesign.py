@@ -212,13 +212,14 @@ class EyelinerDesign:   #Creates overall design, calculates start points, render
 
         return self
 
-    def mutate(self,mutation_rate=0.05):
+    def mutate_design(self,mutation_rate=0.05):
         old_gene = copy.deepcopy(self)
         new_gene= old_gene.mutate_self(mutation_rate)
         new_gene.render_design(show=False)
         overlap_score = analyse_negative(new_gene)
         #print("overlap_score", overlap_score)
         while overlap_score<=min_fitness_score:
+            old_gene = copy.deepcopy(self)
             new_gene = old_gene.mutate_self(mutation_rate)
             new_gene.render_design(show=False)
             overlap_score = analyse_negative(new_gene)
@@ -261,7 +262,7 @@ def random_lines_corners_list(n_of_corners):
 
     return sorted_corners, lines_list
 
-
+"""
 def random_irregular_polygon(ax=None):
 
     segment_start = generate_valid_start()
@@ -293,7 +294,7 @@ def random_irregular_polygon(ax=None):
 
 
     return new_segment
-
+"""
 """
 fig, ax_n = plt.subplots(figsize=(3, 3))
 shape = random_irregular_polygon(ax_n)

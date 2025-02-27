@@ -276,6 +276,11 @@ class LineSegment(Segment):
         if not self.colour or self.colour not in colour_options:
             print("aaaa self.colour == False")
             print(self.colour)
+        #current_colour = self.colour
+        #if not current_colour or current_colour not in colour_options:
+        #    print("aaaa current_colour == False")
+        #    print(current_colour)
+        #self.colour = self.mutate_choice(value = current_colour, options = colour_options, mutation_rate =  mutation_rate)
         self.colour = self.mutate_choice(self.colour, colour_options, mutation_rate)
         if not self.colour or self.colour not in colour_options:
             print("aaaa self.colour == False after mutation")

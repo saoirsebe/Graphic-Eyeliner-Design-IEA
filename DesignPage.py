@@ -76,8 +76,9 @@ class DesignPage(ctk.CTkFrame):
             self.saved_gene_widgets[gene] = frame
 
     def re_generate(self):
-        for fig in self.current_gene_pool_figures:
+        for fig, widget in self.current_gene_pool_figures:
             plt.close(fig)
+            widget.destroy()
         self.current_gene_pool = initialise_gene_pool()
         self.gene_pools_all.append(self.current_gene_pool)
         self.selected_gene_indices.clear()
@@ -112,7 +113,7 @@ class DesignPage(ctk.CTkFrame):
             canvas.draw()
             canvas_widget = canvas.get_tk_widget()
             canvas_widget.pack(padx=5, pady=5)
-            self.current_gene_pool_figures.append((fig, canvas_widget))
+            self.current_gene_pool_figures.append((fig, frame))
 
             #Bind the canvas widget so clicking it shows the design in a popup
             canvas_widget.bind("<Button-1>", lambda event, index=i: self.show_design_popup(index))

@@ -44,15 +44,16 @@ class Segment:
         else:
             return value
 
-    def mutate_choice(self, value, options, mutation_rate):
-        if not value or value not in options:
-            print("value is already False before mutation :(")
-            print(self.colour)
+    def mutate_choice(self, the_value, options, mutation_rate):
+        if not the_value or the_value not in options:
+            print("the_value is already False before mutation :(")
+            print("the_value:",the_value)
+            print("self.colour:",self.colour)
             return np.random.choice(options)
         if np.random.random() < mutation_rate:
             return np.random.choice(options)
         else:
-            return value
+            return the_value
 
 def point_in_array(array,location_in_array):
     num_points = len(array)
