@@ -64,6 +64,7 @@ class LineSegment(Segment):
         # TESTING:
         if self.colour == False:
             print("1) self.colour == False prev_colour: ", prev_colour)
+            self.colour = prev_colour
         new_array = []
         len_prev_array = len(prev_array)
         if self.start_mode == StartMode.CONNECT and len_prev_array>15 or self.start_mode == StartMode.SPLIT and len_prev_array>15:
@@ -287,14 +288,9 @@ class LineSegment(Segment):
         self.end_thickness = self.mutate_val(self.end_thickness,thickness_range,mutation_rate)
         self.relative_angle =  self.mutate_val(self.relative_angle,direction_range,mutation_rate)
         if not self.colour or self.colour not in colour_options:
-            print("aaaa self.colour == False")
+            print("aaaa self.colour == False before mutation")
             print(self.colour)
-        #current_colour = self.colour
-        #if not current_colour or current_colour not in colour_options:
-        #    print("aaaa current_colour == False")
-        #    print(current_colour)
-        #self.colour = self.mutate_choice(value = current_colour, options = colour_options, mutation_rate =  mutation_rate)
-        self.colour = self.mutate_choice(self.colour, colour_options, mutation_rate)
+        self.colour = self.mutate_colour(self.colour, mutation_rate)
         if not self.colour or self.colour not in colour_options:
             print("aaaa self.colour == False after mutation")
             print(self.colour)
@@ -370,7 +366,7 @@ class StarSegment(Segment):
 
         self.end_thickness = self.mutate_val(self.end_thickness, thickness_range, mutation_rate)
         self.relative_angle = self.mutate_val(self.relative_angle, direction_range, mutation_rate)
-        self.colour = self.mutate_choice(self.colour, colour_options, mutation_rate)
+        self.colour = self.mutate_colour(self.colour, mutation_rate)
         self.radius = self.mutate_val(self.radius,radius_range, mutation_rate)
         self.arm_length = self.mutate_val(self.arm_length,arm_length_range, mutation_rate)
         self.fill = self.mutate_choice(self.fill, [True, False], mutation_rate)

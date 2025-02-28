@@ -1,5 +1,6 @@
 import numpy as np
-from A import StartMode
+from A import StartMode, colour_options
+
 
 class Segment:
     """Base class for all segments."""
@@ -44,12 +45,16 @@ class Segment:
         else:
             return value
 
+    def mutate_colour(self, colour, mutation_rate):
+        if not colour or colour not in colour_options:
+            colour = self.colour
+            print("colour == False in mutate_colour")
+        if np.random.random() < mutation_rate:
+            return np.random.choice(colour_options)
+        else:
+            return colour
+
     def mutate_choice(self, the_value, options, mutation_rate):
-        if not the_value or the_value not in options:
-            print("the_value is already False before mutation :(")
-            print("the_value:",the_value)
-            print("self.colour:",self.colour)
-            return np.random.choice(options)
         if np.random.random() < mutation_rate:
             return np.random.choice(options)
         else:

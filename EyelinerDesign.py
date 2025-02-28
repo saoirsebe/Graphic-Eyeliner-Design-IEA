@@ -135,6 +135,8 @@ class EyelinerDesign:   #Creates overall design, calculates start points, render
 
         prev_angle = prev_segment.absolute_angle
         prev_colour = prev_segment.colour
+        if prev_colour == False:
+            print("prev_colour == False")
         if prev_segment.segment_type == SegmentType.LINE:
             prev_end_thickness_array = prev_segment.thickness_array
         else:
@@ -149,6 +151,8 @@ class EyelinerDesign:   #Creates overall design, calculates start points, render
         prev_array = np.array([root_node.start])
         prev_angle = 0
         prev_colour = root_node.colour
+        if prev_colour == False:
+            print("root colour == False")
         prev_end_thickness_array = root_node.end_thickness
 
         if show:

@@ -178,12 +178,10 @@ class IrregularPolygonSegment(Segment):
             start_point = end_point
 
         if ax_n:
-            """ #FOR TETSING!!
             if self.fill == True:
                 x, y = self.points_array[:, 0], self.points_array[:, 1]
                 plt.fill(x, y, color=self.colour)
-            else:
-            """
+        else:
             ax_n.plot(self.points_array[:, 0], self.points_array[:, 1], self.colour, lw=self.end_thickness * scale)  # Plot all points as a single object
 
 
