@@ -15,7 +15,6 @@ def crossover_designs(designs):
     else:
         offspring_choice = None
 
-
     if offspring_choice:
         offspring = copy.deepcopy(offspring_choice)
         for design in designs:
@@ -43,7 +42,7 @@ def crossover_designs(designs):
                     else:
                         print("no offspring_parent")
     else:
-        return copy.deepcopy(random.choice(designs))
+        return random.choice(designs)
 
     return offspring
 
@@ -76,7 +75,11 @@ def breed_new_designs(selected_genes, mutation_rate):
             num_to_select = random.randint(2, len(selected_genes))
             to_breed = random.sample(selected_genes, num_to_select)
             new_design = produce_correct_crossover(to_breed)
-            #print("# crossed")
+            try_unique = 0
+            while new_design in selected_genes and try_unique<4:
+                new_design = produce_correct_crossover(to_breed)
+                try_unique+=1
+
             new_design = new_design.mutate_design(mutation_rate)
             new_gene_pool.append(new_design)
 

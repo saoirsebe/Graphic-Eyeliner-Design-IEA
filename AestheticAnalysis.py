@@ -479,7 +479,7 @@ def analyse_design_shapes(design, to_print = False):
 
             if segment.is_eyeliner_wing:
                 #Size of eyeliner wing polygon is 1 so size will be penalised
-                total_score +=5
+                total_score +=6.5
             else:
                 # Score polygon based on size (bigger preferred on outside of eye and smaller nearer the inner corner)
                 x_values = segment.points_array[:, 0]
@@ -539,6 +539,11 @@ def analyse_design_shapes(design, to_print = False):
         if n_of_jumps >4:
             total_score -=5
 
+    divisor = len(segments) / 4
+    if divisor < 1:
+        #So score doesn't get bigger with smaller n of segments
+        divisor = 1
+    total_score = total_score / divisor
     return total_score
 
 

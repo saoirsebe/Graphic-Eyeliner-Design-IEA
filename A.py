@@ -3,6 +3,7 @@ from enum import Enum
 import numpy as np
 from matplotlib import pyplot as plt
 from PIL import Image, ImageTk
+from numba import njit
 
 min_fitness_score = -3
 min_segment_score = -2
@@ -19,7 +20,7 @@ thickness_range = (0.5, 3)
 
 colour_options = [
     "red", "orange", "yellow", "green", "blue", "indigo", "violet",
-    "lightblue", "pink", "purple", "brown", "grey", "black", "white", "cyan", "magenta"
+    "lightblue", "pink", "purple", "brown", "grey", "black", "cyan", "magenta"
 ]
 
 # Define similar colours for each option
@@ -35,13 +36,12 @@ similar_colours = {
     "pink": ["red", "magenta", "purple","black"],
     "purple": ["violet", "pink", "indigo","black"],
     "brown": ["red", "orange","black"],
-    "grey": ["black", "white","black"],
-    "white": ["grey","black"],
+    "grey": ["black"],
     "cyan": ["blue", "lightblue", "green","black"],
     "magenta": ["red", "pink", "violet","black"],
     "black": [
     "red", "orange", "yellow", "green", "blue", "indigo", "violet",
-    "lightblue", "pink", "purple", "brown", "grey", "black", "white", "cyan", "magenta"]
+    "lightblue", "pink", "purple", "brown", "grey", "black", "cyan", "magenta"]
 }
 
 
@@ -67,6 +67,7 @@ def bezier_curve(P0, P1, P2):
     t = np.linspace(0, 1, 100).reshape(-1, 1)
     return (1 - t) ** 2 * P0 + 2 * (1 - t) * t * P1 + t ** 2 * P2
 
+"""
 # Function to create a quadratic Bézier curve with three control points
 def bezier_curve_t(t, P0, P1, P2):
     u = 1 - t
@@ -75,6 +76,27 @@ def bezier_curve_t(t, P0, P1, P2):
     x = u2 * P0[0] + 2 * u * t * P1[0] + t2 * P2[0]
     y = u2 * P0[1] + 2 * u * t * P1[1] + t2 * P2[1]
     return [round(x, 3), round(y, 3)]
+
+def bezier_curve_t(t_values, p0, p1, p2):
+    t = np.array(t_values)
+    u = 1 - t
+    u2 = u * u
+    t2 = t * t
+    x = u2 * p0[0] + 2 * u * t * p1[0] + t2 * p2[0]
+    y = u2 * p0[1] + 2 * u * t * p1[1] + t2 * p2[1]
+    return [round(x, 3), round(y, 3)]
+"""
+@njit
+def bezier_curve_t(t_array, P0, P1, P2):
+    n = t_array.shape[0]
+    d = P0.shape[0]
+    result = np.empty((n, d))
+    for i in range(n):
+        t = t_array[i]
+        u = 1 - t
+        for j in range(d):
+            result[i, j] = u*u * P0[j] + 2*u*t * P1[j] + t*t * P2[j]
+    return np.round(result, 3)
 
 class StarType(Enum):
     STRAIGHT = 'STRAIGHT'

@@ -44,9 +44,9 @@ class LineSegment(Segment):
 
     def curve_between_lines(self, p0, p1, p2, p3, p4, colour,connecting_array):
         t_values = np.linspace(0, 1, 20)
-        left_curve = np.array([bezier_curve_t(t, p0, p1, p2) for t in t_values])
+        left_curve = bezier_curve_t(t_values, p0, p1, p2)
         # np.array((prev_array[start_array_point_index+2]) - np.array(self.points_array[2]))/2
-        right_curve = np.array([bezier_curve_t(t, p2, p3, p4) for t in t_values])
+        right_curve = bezier_curve_t(t_values, p2, p3, p4)
         #left_x, left_y = left_curve[:, 0], left_curve[:, 1]
         #right_x, right_y = right_curve[:, 0], right_curve[:, 1]
 
@@ -55,12 +55,15 @@ class LineSegment(Segment):
         #boundary_y = np.concatenate([left_y, right_y[::1]])  # Combine left and reversed right y
         #plt.fill(boundary_x, boundary_y, color=colour, alpha=1)
         #return np.concatenate((left_curve, right_curve, self.points_array), axis=0)
-        boundary = np.concatenate([left_curve, right_curve, connecting_array], axis=0)
+        boundary = np.concatenate([connecting_array[::-1], left_curve, right_curve], axis=0)
         plt.fill(boundary[:, 0], boundary[:, 1], color=colour, alpha=1)
 
-        return boundary
+        return np.concatenate((left_curve, right_curve[::1], self.points_array), axis=0)
 
-    def render(self, prev_array, prev_angle, prev_colour, prev_thickness_array, ax_n=None):
+    def render(self, prev_array, prev_angle, prev_colour, prev_thickness_array, scale = 1, ax_n=None):
+        # TESTING:
+        if self.colour == False:
+            print("1) self.colour == False prev_colour: ", prev_colour)
         new_array = []
         len_prev_array = len(prev_array)
         if self.start_mode == StartMode.CONNECT and len_prev_array>15 or self.start_mode == StartMode.SPLIT and len_prev_array>15:
@@ -82,7 +85,6 @@ class LineSegment(Segment):
         self.calculate_end(prev_angle)  # Calculate the endpoint
 
         if self.curviness>0:
-            t_values = np.linspace(0, 1, line_num_points)
             p0 = np.array(self.start)
             p2 = np.array(self.end)
             p1 = p0 + (self.curve_location * un_normalised_vector_direction(p0,p2)) #moves curve_location away from P0 towards P2 relative to length of curve segment
@@ -96,7 +98,8 @@ class LineSegment(Segment):
             dx = self.length * self.curviness * np.cos(curve_dir_radians)
             dy = self.length * self.curviness * np.sin(curve_dir_radians)
             p1 = p1 + np.array([dx, dy])
-            self.points_array = np.array([bezier_curve_t(t, p0, p1, p2) for t in t_values])
+            t_values = np.linspace(0, 1, line_num_points)
+            self.points_array = bezier_curve_t(t_values, p0, p1, p2 )
             x_values, y_values = self.points_array[:, 0], self.points_array[:, 1]
         else:
             x_values = np.linspace(self.start[0], self.end[0], line_num_points)
@@ -155,7 +158,7 @@ class LineSegment(Segment):
 
                 connecting_array = self.points_array[curve_start_point: curve_end_point+1]
                 new_array = self.curve_between_lines(p0, p1, p2, p3, p4, prev_colour, connecting_array)
-                x_values, y_values = new_array[:, 0], new_array[:, 1]
+                #x_values, y_values = new_array[:, 0], new_array[:, 1]
 
         self.thickness_array = np.linspace(self.start_thickness, self.end_thickness, line_num_points) #Render a line segment with thickness tapering from start to end
         """Add curve from 10% from each side of connect (start) point on previous line to 10% up current line"""
@@ -200,15 +203,16 @@ class LineSegment(Segment):
 
             connecting_array = prev_array[curve_start_point: curve_end_point + 1]
             new_array = self.curve_between_lines(p0, p1, p2, p3, p4, self.colour,connecting_array)
-            x_values, y_values = new_array[:, 0], new_array[:, 1]
+            #x_values, y_values = new_array[:, 0], new_array[:, 1]
 
         #TESTING:
         if self.colour == False:
-            print("prev_colour: ", prev_colour)
-            print("self.points_array:", self.points_array)
+            print("2) self.colour == False prev_colour: ", prev_colour)
 
+        #len_new_array=len(new_array)
+        len_new_array = 0
         # Plot each segment with the varying thickness
-        if len(new_array) > 0 and ax_n:
+        if len_new_array > 0 and ax_n:
             # Plot the first 40 points as one segment (blend lines)
             if self.start_mode == StartMode.CONNECT_MID:
                 blend_thicknesses = np.linspace(prev_thickness_array[start_array_point_index], self.thickness_array[percent_30_current], 20)
@@ -228,8 +232,9 @@ class LineSegment(Segment):
                 ax_n.plot(
                     [x_values[i], x_values[i + 1]], [y_values[i], y_values[i + 1]],
                     color=this_colour,
-                    linewidth=thickness,
+                    linewidth=thickness * scale,
                     solid_capstyle='butt',
+                    alpha = 1
                 )
 
             # Plot remaining points (segment)
@@ -243,8 +248,9 @@ class LineSegment(Segment):
                     ax_n.plot(
                         [x_values[i], x_values[i + 1]], [y_values[i], y_values[i + 1]],
                         color=self.colour,
-                        linewidth=thickness,
+                        linewidth=thickness * scale,
                         solid_capstyle='butt',
+                        alpha=1
                     )
         else:
             # Plot normally if no new_array exists (Start type is jump or connect so no blend between lines needed)
@@ -254,8 +260,9 @@ class LineSegment(Segment):
                     ax_n.plot(
                         [x_values[i], x_values[i + 1]], [y_values[i], y_values[i + 1]],
                         color=self.colour,
-                        linewidth=thickness,
+                        linewidth=thickness * scale,
                         solid_capstyle='butt',
+                        alpha=1
                     )
 
 
@@ -320,7 +327,7 @@ class StarSegment(Segment):
         self.arm_points_array = []
         self.fill = fill
 
-    def render(self, prev_array, prev_angle, prev_colour, prev_end_thickness, ax_n=None):
+    def render(self, prev_array, prev_angle, prev_colour, prev_end_thickness,  scale = 1, ax_n=None):
         if self.start_mode == StartMode.CONNECT and len(prev_array)>15:
             self.start = (prev_array[-1][0], prev_array[-1][1])
             self.center = self.start
@@ -346,7 +353,7 @@ class StarSegment(Segment):
                 x, y = transformed_star_points[:, 0], transformed_star_points[:, 1]
                 plt.fill(x, y, color=self.colour)
             else:
-                ax_n.plot(transformed_star_points[:, 0], transformed_star_points[:, 1], self.colour, lw=self.end_thickness)  # Plot all points as a single object
+                ax_n.plot(transformed_star_points[:, 0], transformed_star_points[:, 1], self.colour, lw=self.end_thickness * scale)  # Plot all points as a single object
 
         transformed_arm_points = np.array([(point[0] + transformation_vector[0], point[1] + transformation_vector[1]) for point in star_arm_points])
         self.arm_points_array = transformed_arm_points
@@ -521,7 +528,7 @@ def make_eyeliner_wing(random_colour):
             corners=corners,
             lines_list=lines,
             is_eyeliner_wing = True,
-            fill = True if random.random() < 0.8 else False,
+            fill = True if random.random() < 0.85 else False,
         )
         prev_array = np.array([new_segment.start])
         prev_angle = 0
@@ -544,7 +551,7 @@ def generate_radius_arm_lengths(new_star_type):
             if new_arm_length >30:
                 new_arm_length-=5
     else:
-        new_radius = random_normal_within_range(5, 10, radius_range)
+        new_radius = random_normal_within_range(3, 10, radius_range)
         new_arm_length = random_normal_within_range(5, 10,
                                                     arm_length_range) if new_radius > 20 else random_normal_within_range(15, 15, arm_length_range)
         if new_radius > new_arm_length*1.5 and new_radius>5:

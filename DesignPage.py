@@ -208,7 +208,7 @@ class DesignPage(ctk.CTkFrame):
 
         # Render a larger version of the design. You might want to adjust gene.render_design()
         # to account for the new size if necessary.
-        large_fig = self.current_gene_pool[index].render_design()
+        large_fig = self.current_gene_pool[index].render_design(scale = 2)
         large_canvas = FigureCanvasTkAgg(large_fig, master=content_frame)
         large_canvas.draw()
         large_canvas.get_tk_widget().pack(expand=True, fill="both", padx=5, pady=5)

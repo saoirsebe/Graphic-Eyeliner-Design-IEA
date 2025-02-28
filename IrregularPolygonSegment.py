@@ -64,7 +64,7 @@ class IrregularPolygonEdgeSegment:
             dx = length * self.curviness * np.cos(curve_dir_radians)
             dy = length * self.curviness * np.sin(curve_dir_radians)
             p1 = p1 + np.array([dx, dy])
-            self.points_array = np.array([bezier_curve_t(t, p0, p1, p2) for t in t_values])
+            self.points_array = bezier_curve_t(t_values, p0, p1, p2)
             x_values, y_values = self.points_array[:, 0], self.points_array[:, 1]
         else:
             x_values = np.linspace(start_point[0], end_point[0], line_num_points)
@@ -137,7 +137,7 @@ class IrregularPolygonSegment(Segment):
             corner[1] += movement[1]
         return corners
 
-    def render(self, prev_array, prev_angle, prev_colour, prev_end_thickness, ax_n=None):
+    def render(self, prev_array, prev_angle, prev_colour, prev_end_thickness, scale = 1, ax_n=None):
         self.points_array = np.array([])
         if self.start_mode == StartMode.CONNECT and len(prev_array) > 15:
             self.start = (prev_array[-1][0], prev_array[-1][1])
@@ -184,7 +184,7 @@ class IrregularPolygonSegment(Segment):
                 plt.fill(x, y, color=self.colour)
             else:
             """
-            ax_n.plot(self.points_array[:, 0], self.points_array[:, 1], self.colour, lw=self.end_thickness)  # Plot all points as a single object
+            ax_n.plot(self.points_array[:, 0], self.points_array[:, 1], self.colour, lw=self.end_thickness * scale)  # Plot all points as a single object
 
 
     def mutate(self, mutation_rate=0.05):

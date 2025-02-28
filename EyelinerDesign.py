@@ -115,10 +115,10 @@ class EyelinerDesign:   #Creates overall design, calculates start points, render
         # Attach the subtree to the new parent
         new_parent.add_child_segment(subtree_root)
 
-    def render_node(self, node, prev_array, prev_angle, prev_colour, prev_end_thickness_array, ax_n=None):
+    def render_node(self, node, prev_array, prev_angle, prev_colour, prev_end_thickness_array, scale = 1, ax_n=None):
 
         try:
-            node.render(prev_array, prev_angle, prev_colour, prev_end_thickness_array, ax_n)
+            node.render(prev_array, prev_angle, prev_colour, prev_end_thickness_array, scale = scale, ax_n=ax_n)
         except AttributeError as e:
             print(f"AttributeError occurred: {e}")
             print(f"node object: {node}")
@@ -141,9 +141,9 @@ class EyelinerDesign:   #Creates overall design, calculates start points, render
             prev_end_thickness_array = np.array(prev_segment.end_thickness)
 
         for child in node.children:
-            self.render_node( child, prev_array, prev_angle, prev_colour, prev_end_thickness_array,ax_n)
+            self.render_node( child, prev_array, prev_angle, prev_colour, prev_end_thickness_array, scale = scale,ax_n = ax_n)
 
-    def render_design(self, show = True):
+    def render_design(self, scale = 1, show = True):
         """Render the eyeliner design"""
         root_node = self.root  # Start from the root
         prev_array = np.array([root_node.start])
@@ -162,10 +162,10 @@ class EyelinerDesign:   #Creates overall design, calculates start points, render
             #generate_eyeliner_curve_lines(ax_n)
             #fig, ax_n = plt.subplots(figsize=(3, 3))
             #draw_eye_shape(ax_n)
-            self.render_node(root_node, prev_array, prev_angle, prev_colour, prev_end_thickness_array,ax_n)
+            self.render_node(root_node, prev_array, prev_angle, prev_colour, prev_end_thickness_array, scale = scale, ax_n = ax_n)
             return fig
         else:
-            self.render_node(root_node, prev_array, prev_angle, prev_colour, prev_end_thickness_array)
+            self.render_node(root_node, prev_array, prev_angle, prev_colour, prev_end_thickness_array, scale = scale)
             return
 
     def mutate_node(self,node,mutation_rate=0.05):
@@ -326,18 +326,18 @@ cProfile.run('random_random_shape()')
 """
 """
 fig, ax_n = plt.subplots(figsize=(3, 3))
-line = LineSegment(SegmentType.LINE, (50,100), StartMode.JUMP, 70, 10, 2, 1, 'red', 0.7, True, 0.4, 0, 0)
-line2 = LineSegment(SegmentType.LINE, eye_corner_start, StartMode.JUMP, 40, 100, 1, 2, 'blue', 0, False, 0.5, 0.5, 0)
-line3 = LineSegment(SegmentType.LINE, (102,105), StartMode.JUMP, 30, 20, 2, 4, 'green', 0.3, False, 0.5, 0, 0.5)
+line = LineSegment(SegmentType.LINE, (50,100), StartMode.JUMP, 70, 0, 2, 1, 'red', 0.7, True, 0.4, 0, 0)
+line2 = LineSegment(SegmentType.LINE, eye_corner_start, StartMode.CONNECT_MID, 30, 90, 1, 2, 'blue', 0, False, 0.5, 0.5, 0)
+line3 = LineSegment(SegmentType.LINE, (102,105), StartMode.SPLIT, 50, 90, 2, 4, 'green', 0.3, False, 0.5, 0, 0.5)
 
 
 design = EyelinerDesign(line)
 line.add_child_segment(line2)
 line2.add_child_segment(line3)
-fig = design.render_design(ax_n)
+fig = design.render_design()
 
-a,b = generate_eyeliner_curve_lines(ax_n)
-b,c = generate_middle_curve_lines(ax_n)
+#a,b = generate_eyeliner_curve_lines()
+#b,c = generate_middle_curve_lines()
 fig.show()
 
 negative_score = analyse_negative(design)
