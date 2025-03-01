@@ -27,11 +27,12 @@ def check_password(stored_hash, password):
     """Check if the entered password matches the stored hash."""
     return bcrypt.checkpw(password.encode('utf-8'), stored_hash.encode('utf-8'))
 
-class LoginPage(Page):
+class LoginPage(ctk.CTkFrame):
     def __init__(self, parent, controller):
-        super().__init__(parent, controller)
+        super().__init__(parent)
         self.create_widgets()
         self.users = load_users()
+        self.controller = controller
 
     def create_widgets(self):
         # Configure grid for the LoginPage layout.
@@ -79,9 +80,10 @@ class LoginPage(Page):
             .grid(row=4, column=0, columnspan=2, pady=5)
 
 
-class SignUpPage(Page):
+class SignUpPage(ctk.CTkFrame):
     def __init__(self, parent, controller):
-        super().__init__(parent, controller)
+        super().__init__(parent)
+        self.controller = controller
         self.users = load_users()
         self.create_widgets()
 

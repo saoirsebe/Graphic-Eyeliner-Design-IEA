@@ -4,7 +4,7 @@ from matplotlib import pyplot as plt
 
 from A import StartMode, SegmentType, un_normalised_vector_direction, normalised_vector_direction, start_x_range, \
     start_y_range, curviness_range, relative_location_range, random_shape_size_range, corner_initialisation_range, \
-    line_num_points
+    line_num_points, thickness_range, direction_range, eye_corner_start
 from ParentSegment import Segment, point_in_array
 from StarGeneration import bezier_curve_t
 
@@ -185,15 +185,33 @@ class IrregularPolygonSegment(Segment):
                 ax_n.plot(self.points_array[:, 0], self.points_array[:, 1], self.colour, lw=self.end_thickness * scale)  # Plot all points as a single object
 
 
-    def mutate(self, mutation_rate=0.05):
-        if self.start_mode == StartMode.JUMP:
-            self.start = (self.mutate_val(self.start[0], start_x_range, mutation_rate),
-                          self.mutate_val(self.start[1], start_y_range, mutation_rate))
+    def mutate(self, mutation_rate=0.1):
+        #start, end_thickness, relative_angle
+        if not self.is_eyeliner_wing:
+            if self.start_mode == StartMode.JUMP:
+                self.start = (self.mutate_val(self.start[0], start_x_range, mutation_rate),
+                              self.mutate_val(self.start[1], start_y_range, mutation_rate))
 
-        self.bounding_size = (self.mutate_val(self.bounding_size[0], random_shape_size_range, mutation_rate),
-                          self.mutate_val(self.bounding_size[1], random_shape_size_range, mutation_rate))
-        for i , corner in enumerate(self.corners):
-            self.corners[i] = (self.mutate_val(corner[0], corner_initialisation_range, mutation_rate),
-                          self.mutate_val(corner[1], corner_initialisation_range, mutation_rate))
-        for line in self.lines_list:
-            line.mutate(mutation_rate)
+            self.bounding_size = (self.mutate_val(self.bounding_size[0], random_shape_size_range, mutation_rate),
+                              self.mutate_val(self.bounding_size[1], random_shape_size_range, mutation_rate))
+            for i , corner in enumerate(self.corners):
+                self.corners[i] = (self.mutate_val(corner[0], corner_initialisation_range, mutation_rate),
+                              self.mutate_val(corner[1], corner_initialisation_range, mutation_rate))
+            for line in self.lines_list:
+                line.mutate(mutation_rate)
+            self.relative_angle = self.mutate_val(self.relative_angle, direction_range, mutation_rate)
+
+        else:
+            if len(self.corners) == 4:
+                self.corners[2] = (self.mutate_val(self.corners[2][0], (eye_corner_start[0],170), mutation_rate),
+                                   self.mutate_val(self.corners[2][1], (eye_corner_start[1],170), mutation_rate))
+            elif len(self.corners) == 3:
+                self.corners[1] = (self.mutate_val(self.corners[1][0], (eye_corner_start[0],170), mutation_rate),
+                                   self.mutate_val(self.corners[1][1], (eye_corner_start[1],170), mutation_rate))
+
+            for line in self.lines_list:
+                line.mutate(mutation_rate)
+
+        self.colour = self.mutate_colour(self.colour, mutation_rate)
+        self.fill = self.mutate_choice(self.fill, [True, False], mutation_rate)
+        self.end_thickness = self.mutate_val(self.end_thickness, thickness_range, mutation_rate)

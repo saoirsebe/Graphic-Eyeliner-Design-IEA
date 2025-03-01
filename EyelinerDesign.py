@@ -167,6 +167,7 @@ class EyelinerDesign:   #Creates overall design, calculates start points, render
             #fig, ax_n = plt.subplots(figsize=(3, 3))
             #draw_eye_shape(ax_n)
             self.render_node(root_node, prev_array, prev_angle, prev_colour, prev_end_thickness_array, scale = scale, ax_n = ax_n)
+            ax_n.grid(False)
             return fig
         else:
             self.render_node(root_node, prev_array, prev_angle, prev_colour, prev_end_thickness_array, scale = scale)

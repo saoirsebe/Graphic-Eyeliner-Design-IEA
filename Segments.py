@@ -354,7 +354,7 @@ class StarSegment(Segment):
         transformed_arm_points = np.array([(point[0] + transformation_vector[0], point[1] + transformation_vector[1]) for point in star_arm_points])
         self.arm_points_array = transformed_arm_points
 
-    def mutate(self,mutation_rate=0.05):
+    def mutate(self,mutation_rate=0.1):
         #(self, segment_type, start, colour, star_type, radius, arm_length, num_points, asymmetry, start_mode, end_thickness, relative_angle)
         # mutation rate chance of changing:
         self.star_type = self.mutate_choice(self.star_type, [StarType.STRAIGHT, StarType.FLOWER, StarType.CURVED], mutation_rate)
@@ -478,6 +478,12 @@ def random_segment_colour(prev_colour = None):
 
 
 def random_eyeliner_lines_corners():
+    """Creates eyeliner wing lines and corners where:
+            P1 == the end of the wing
+            P0 == the outer corner of the eye
+            P2 == The point on the upper eye-line where the wing joins
+            *P3 == the point on the lower eyelid where the wing joins
+        """
     start_at_corner = random.choice([True, False])
     upper_eyelid_coords_40 = int(0.4* len(upper_eyelid_coords))
     upper_eyelid_coords_10 = int(0.05 * len(upper_eyelid_coords))
