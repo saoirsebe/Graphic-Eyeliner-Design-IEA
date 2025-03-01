@@ -1,8 +1,14 @@
 import copy
 import random
 
-from A import min_fitness_score
+import numpy as np
+from matplotlib import pyplot as plt
+
+from A import min_fitness_score, SegmentType, StartMode, eye_corner_start
 from AnalyseDesign import analyse_negative
+from CompareSegments import compare_segments, random_irregular_polygon
+from EyelinerDesign import EyelinerDesign
+from Segments import LineSegment
 
 
 def crossover_designs(designs):
@@ -57,6 +63,22 @@ def produce_correct_crossover(designs):
 
     return new_design
 
+
+def compare_designs(parent, new_design):
+    difference = 0
+    parent_nodes = parent.get_all_nodes()
+    new_design_nodes = new_design.get_all_nodes()
+    min_len = min(len(parent_nodes), len(new_design_nodes))
+
+    # Compare corresponding segments:
+    for i in range(min_len):
+        difference += compare_segments(parent_nodes[i], new_design_nodes[i])
+    # Penalize for extra nodes in one design:
+    difference += abs(len(parent_nodes) - len(new_design_nodes)) * 10
+    return difference
+
+
+
 def breed_new_designs(selected_genes, mutation_rate):
     new_gene_pool=[]
     n_selected = len(selected_genes)
@@ -64,9 +86,10 @@ def breed_new_designs(selected_genes, mutation_rate):
         old_gene = selected_genes[0]
         for i in range(6):
             new_design = old_gene.mutate_design(mutation_rate)
-            # print("first overlap_score: ", overlap_score)
-            #while analyse_negative(new_design) <= min_fitness_score:
-            #    new_design = old_gene.mutate(mutation_rate)
+            difference = compare_designs(old_gene, new_design)
+            while difference < 0.5:
+                new_design = new_design.mutate_design(mutation_rate)
+                difference = compare_designs(old_gene, new_design)
             new_gene_pool.append(new_design)
 
     else:
@@ -80,7 +103,40 @@ def breed_new_designs(selected_genes, mutation_rate):
                 new_design = produce_correct_crossover(to_breed)
                 try_unique+=1
 
-            new_design = new_design.mutate_design(mutation_rate)
+            new_mutated_design = new_design.mutate_design(mutation_rate)
+            difference = compare_designs(new_design, new_mutated_design)
+            while difference < 0.5:
+                new_design = new_design.mutate_design(mutation_rate)
+                difference = compare_designs(new_design, new_mutated_design)
+
             new_gene_pool.append(new_design)
 
     return new_gene_pool
+"""
+fig, ax_n = plt.subplots(figsize=(3, 3))
+line = LineSegment(SegmentType.LINE, (50,100), StartMode.JUMP, 70, 0, 2, 1, 'red', 0.7, True, 0.4, 0, 0)
+line2 = LineSegment(SegmentType.LINE, eye_corner_start, StartMode.CONNECT_MID, 30, 90, 1, 2, 'blue', 0, False, 0.5, 0.5, 0)
+line3 = LineSegment(SegmentType.LINE, (102,105), StartMode.SPLIT, 50, 90, 2, 4, 'green', 0.3, False, 0.5, 0, 0.5)
+
+
+design = EyelinerDesign(line)
+line.add_child_segment(line2)
+line2.add_child_segment(line3)
+fig = design.render_design()
+
+fig.show()
+design2 = copy.deepcopy(design)
+design2 = design2.mutate_design()
+design2 = design2.mutate_design()
+design2 = design2.mutate_design()
+#design2 = design2.mutate_design()
+
+#design2.root.start = (design2.root.start[0] + 100, design2.root.start[1])
+fig, ax_n = plt.subplots(figsize=(3, 3))
+fig = design2.render_design()
+
+fig.show()
+
+difference = compare_designs(design, design2)
+print("difference =",difference)
+"""
