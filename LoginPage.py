@@ -29,7 +29,8 @@ def check_password(stored_hash, password):
 
 class LoginPage(ctk.CTkFrame):
     def __init__(self, parent, controller):
-        super().__init__(parent)
+        super().__init__(parent, width=1200, height=600)
+        self.grid_propagate(False)
         self.create_widgets()
         self.users = load_users()
         self.controller = controller
@@ -74,15 +75,16 @@ class LoginPage(ctk.CTkFrame):
             self.controller.show_page("SignUpPage")
 
         # Login and Signup buttons using CTkButton.
-        ctk.CTkButton(self, text="Login", command=login)\
+        ctk.CTkButton(self, text="Login", command=login,width=200, height=50)\
             .grid(row=3, column=0, columnspan=2, pady=10)
-        ctk.CTkButton(self, text="Sign Up", command=go_to_signup)\
-            .grid(row=4, column=0, columnspan=2, pady=5)
+        ctk.CTkButton(self, text="Sign Up", command=go_to_signup,width=200, height=50)\
+            .grid(row=4, column=0, columnspan=2, pady=5 )
 
 
 class SignUpPage(ctk.CTkFrame):
     def __init__(self, parent, controller):
-        super().__init__(parent)
+        super().__init__(parent, width=1200, height=600)
+        self.grid_propagate(False)
         self.controller = controller
         self.users = load_users()
         self.create_widgets()
@@ -139,7 +141,7 @@ class SignUpPage(ctk.CTkFrame):
                 self.controller.show_page("LoginPage")
 
         # SignUp and Back to Login buttons.
-        ctk.CTkButton(self, text="Sign Up", command=signup)\
+        ctk.CTkButton(self, text="Sign Up", command=signup,width=200, height=50)\
             .grid(row=4, column=0, columnspan=2, pady=10)
-        ctk.CTkButton(self, text="Back to Login", command=lambda: self.controller.show_page("LoginPage"))\
+        ctk.CTkButton(self, text="Back to Login",width=200, height=50, command=lambda: self.controller.show_page("LoginPage"))\
             .grid(row=5, column=0, columnspan=2, pady=5)

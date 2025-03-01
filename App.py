@@ -3,6 +3,8 @@ from DesignPage import DesignPage
 from DualScrollableFrame import DualScrollableFrame
 from HomePage import HomePage
 from LoginPage import LoginPage, SignUpPage
+from SavedDesigns import SaveDesignPage
+
 
 class App(ctk.CTk):
     def __init__(self):
@@ -13,6 +15,9 @@ class App(ctk.CTk):
         self.title("Eyeliner Design App")
         self.geometry("1200x600")
         self.configure(bg="#1E1E1E")
+
+        #Global list to store all saved designs from all generations
+        self.all_saved_designs = []
 
         # Create a container frame that fills the entire window
         self.container = ctk.CTkFrame(self)
@@ -27,28 +32,29 @@ class App(ctk.CTk):
             "DesignPage": DesignPage,
             "LoginPage": LoginPage,
             "SignUpPage": SignUpPage,
+            "SaveDesignPage": SaveDesignPage,
         }
 
         self.pages = {}  # Dictionary to store each page's dual scrollable frame
 
         for PageClass in (HomePage, DesignPage, SignUpPage, LoginPage):
             page_name = PageClass.__name__
-            # Create a new dual scrollable frame for this page
             dual_frame = DualScrollableFrame(self.container, fg_color="#2A2A2A")
             dual_frame.grid(row=0, column=0, sticky="nsew")
             dual_frame.grid_rowconfigure(0, weight=1)
             dual_frame.grid_columnconfigure(0, weight=1)
-            # Do not set fixed size; let it grow with the container.
-            # dual_frame.configure(width=1200, height=600)
-            # dual_frame.grid_propagate(False)
 
-            # Initialize the page inside the dual scrollable frame's inner_frame.
             page = PageClass(parent=dual_frame.inner_frame, controller=self)
             page.grid(row=0, column=0, sticky="nsew")
             page.grid_rowconfigure(0, weight=1)
             page.grid_columnconfigure(0, weight=1)
 
             self.pages[page_name] = dual_frame
+
+        # For SaveDesignPage, instantiate it directly:
+        save_design_page = SaveDesignPage(parent=self.container, controller=self)
+        save_design_page.grid(row=0, column=0, sticky="nsew")
+        self.pages["SaveDesignPage"] = save_design_page
 
         self.show_page("DesignPage")
         # Optionally bind container resize event to update page size if needed.
@@ -63,8 +69,18 @@ class App(ctk.CTk):
         """Show the selected page by hiding all others."""
         for widget in self.container.winfo_children():
             widget.grid_forget()
+        for page in self.pages.values():
+            page.grid_remove()  # or pack_forget() depending on your layout
         self.pages[page_name].grid(row=0, column=0, sticky="nsew")
+        if page_name == "SaveDesignPage" and hasattr(self.pages[page_name], "update_designs"):
+            self.pages[page_name].update_designs()
 
+    def add_saved_designs(self, designs):
+        # Add new saved designs to the global list (avoid duplicates)
+        for design in designs:
+            if design not in self.all_saved_designs:
+                self.all_saved_designs.append(design)
+                print("saved designs:",self.all_saved_designs)
 
 if __name__ == "__main__":
     app = App()

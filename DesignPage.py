@@ -76,6 +76,11 @@ class DesignPage(ctk.CTkFrame):
         for row in range(4, 4 + self.number_of_rows):
             self.scrollable_frame.inner_frame.grid_rowconfigure(row, weight=1)
 
+    def finish_designing(self):
+        #Add the saved designs from this page to the global list in the controller.
+        self.controller.add_saved_designs(self.saved_genes)
+        #Then go to the SaveDesignPage.
+        self.controller.show_page("SaveDesignPage")
 
     def add_into_pool(self, the_gene):
         if the_gene not in self.current_gene_pool:
@@ -102,6 +107,8 @@ class DesignPage(ctk.CTkFrame):
             canvas.draw()
             canvas_widget = canvas.get_tk_widget()
             canvas_widget.pack(padx=2.5, pady=2.5)
+            # Bind the canvas widget so clicking it shows the design in a popup
+            #canvas_widget.bind("<Button-1>", lambda event, index=i: self.show_design_popup(index))
 
             into_pool_button = ctk.CTkButton(frame, text="Add back to pool", command=lambda g=gene: self.add_into_pool(g))
             into_pool_button.pack(pady=2.5)
@@ -171,7 +178,8 @@ class DesignPage(ctk.CTkFrame):
         ctk.CTkButton(self, text="Re-generate designs", command=self.re_generate).grid(row=11, column=1, pady=5)
         ctk.CTkButton(self, text="Submit", command=self.submit_selection).grid(row=10, column=0, pady=5)
         ctk.CTkButton(self, text="Back to previous designs", command=self.back_to_prev_designs).grid(row=11, column=0, pady=5)
-
+        ctk.CTkButton(self, text="Finish Designing", command=self.finish_designing) \
+            .grid(row=12, column=0, columnspan=3, pady=20, sticky="ew")
         self.show_saved_genes()
 
     def set_mutation_rate(self, value):
