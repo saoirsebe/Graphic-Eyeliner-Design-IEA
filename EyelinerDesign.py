@@ -182,6 +182,7 @@ class EyelinerDesign:   #Creates overall design, calculates start points, render
 
     def mutate_self(self, mutation_rate=0.05):
         nodes_list = self.get_all_nodes()
+
         # Random chance of deleting a segment:
         if len(nodes_list) >1 and np.random.random() < mutation_rate:
             #Assign higher weight to later nodes:
@@ -204,14 +205,18 @@ class EyelinerDesign:   #Creates overall design, calculates start points, render
             self.mutate_node(child,mutation_rate)
 
         len_nodes_list = len(nodes_list)
+
         #Random chance of adding in a new segment:
         if len_nodes_list <max_segments and np.random.random() < mutation_rate:
-            new_segment = random_segment(False)
             nodes_list = self.get_all_nodes()
             is_branch = False if random.random() < 0.7 else True #If the new segment branches off a segment or is placed in-between segments
             if len_nodes_list>1:
-                self.add_segment_at(new_segment, np.random.randint(0, len_nodes_list-1),is_branch)
+                new_parent_int = np.random.randint(0, len_nodes_list - 1)
+                new_parent_colour = nodes_list[new_parent_int].colour
+                new_segment = random_segment(prev_colour=new_parent_colour)
+                self.add_segment_at(new_segment, new_parent_int,is_branch)
             else:
+                new_segment = random_segment()
                 self.add_segment_at(new_segment,0,is_branch)
 
         return self
