@@ -11,7 +11,9 @@ from InitialiseGenePool import initialise_gene_pool
 
 class DesignPage(ctk.CTkFrame):
     def __init__(self, parent, controller):
-        super().__init__(parent)
+        super().__init__(parent, width=1200, height=800)
+        self.number_of_rows = 3
+        self.grid_propagate(False)
         self.controller = controller
         self.current_gene_pool = []
         self.selected_gene_indices = []
@@ -31,16 +33,18 @@ class DesignPage(ctk.CTkFrame):
             self.grid_columnconfigure(i, weight=1)
 
         # For example, rows 4-6 (where the DualScrollableFrame sits) get extra weight.
-        self.grid_rowconfigure(0, weight=0)   # title
-        self.grid_rowconfigure(1, weight=0)   # buttons row
-        self.grid_rowconfigure(2, weight=0)   # design selection prompt
-        self.grid_rowconfigure(3, weight=0)   # mutation rate row and saved_frame starts here
+        #self.grid_rowconfigure(0, weight=0)   # title
+        #self.grid_rowconfigure(1, weight=0)   # buttons row
+        #self.grid_rowconfigure(2, weight=0)   # design selection prompt
+        #self.grid_rowconfigure(3, weight=0)   # mutation rate row and saved_frame starts here
         self.grid_rowconfigure(4, weight=3)   # DualScrollableFrame row (start designing)
-        self.grid_rowconfigure(5, weight=3)
-        self.grid_rowconfigure(6, weight=3)
-        self.grid_rowconfigure(7, weight=0)   # submission/back buttons
-        self.grid_rowconfigure(8, weight=0)
-        self.grid_rowconfigure(9, weight=0)
+        #self.grid_rowconfigure(5, weight=3)
+        #self.grid_rowconfigure(6, weight=3)
+        #self.grid_rowconfigure(7, weight=3)
+        #self.grid_rowconfigure(8, weight=3)
+        #self.grid_rowconfigure(9, weight=3)
+
+        self.columnconfigure(0, weight=3)
 
         self.label_title = ctk.CTkLabel(self, text="Start designing your makeup look!", font=("Arial", 24))
         self.label_title.grid(row=0, column=0, columnspan=3, pady=20)
@@ -61,9 +65,16 @@ class DesignPage(ctk.CTkFrame):
 
         # This is the scrollable area for your designs.
         self.scrollable_frame = DualScrollableFrame(self, fg_color="#1A1A1A")
-        self.scrollable_frame.grid(row=4, column=0, columnspan=4, rowspan=3, padx=10, pady=10, sticky="nsew")
+        self.scrollable_frame.grid(row=4, column=0, columnspan=3, rowspan=4, padx=10, pady=10, sticky="nsew")
         self.scrollable_frame.grid_propagate(False)
         self.scrollable_frame.configure(height=400)
+
+        #Configure the inner_frame's grid so that its cells expand:
+        for col in range(3):
+            self.scrollable_frame.inner_frame.grid_columnconfigure(col, weight=1)
+
+        for row in range(4, 4 + self.number_of_rows):
+            self.scrollable_frame.inner_frame.grid_rowconfigure(row, weight=1)
 
 
     def add_into_pool(self, the_gene):
@@ -84,19 +95,19 @@ class DesignPage(ctk.CTkFrame):
 
         for i, gene in enumerate(self.saved_genes):
             frame = ctk.CTkFrame(self.saved_frame)
-            frame.pack(pady=5, padx=5, fill='both')
+            frame.pack(pady=2.5, padx=2.5, fill='both')
 
             fig = gene.render_design()
             canvas = FigureCanvasTkAgg(fig, master=frame)
             canvas.draw()
             canvas_widget = canvas.get_tk_widget()
-            canvas_widget.pack(padx=5, pady=5)
+            canvas_widget.pack(padx=2.5, pady=2.5)
 
             into_pool_button = ctk.CTkButton(frame, text="Add back to pool", command=lambda g=gene: self.add_into_pool(g))
-            into_pool_button.pack(pady=5)
+            into_pool_button.pack(pady=2.5)
 
             un_save_button = ctk.CTkButton(frame, text="Un-save", command=lambda g=gene: self.un_save(g))
-            un_save_button.pack(pady=5)
+            un_save_button.pack(pady=2.5)
 
             self.saved_gene_widgets[gene] = frame
 
@@ -120,6 +131,10 @@ class DesignPage(ctk.CTkFrame):
             self.current_gene_pool = initialise_gene_pool()
             self.gene_pools_all.append(self.current_gene_pool)
 
+        if len(self.current_gene_pool) ==6:
+            self.number_of_rows = 3
+        else:
+            self.number_of_rows = 4
 
         # Mutation rate selection
         ctk.CTkLabel(self, text="Select Mutation Rate:", font=("Arial", 12)).grid(row=3, column=0, pady=10)
@@ -136,8 +151,9 @@ class DesignPage(ctk.CTkFrame):
 
             canvas = FigureCanvasTkAgg(fig, master=frame)
             canvas.draw()
+
             canvas_widget = canvas.get_tk_widget()
-            canvas_widget.pack(padx=5, pady=5)
+            canvas_widget.pack(expand=True, fill="both", padx=2.5, pady=2.5)
             self.current_gene_pool_figures.append((fig, frame))
 
             #Bind the canvas widget so clicking it shows the design in a popup
@@ -145,15 +161,16 @@ class DesignPage(ctk.CTkFrame):
 
             toggle_button = ctk.CTkButton(frame, text="Toggle Selection")
             toggle_button.configure(command=lambda index=i, b=toggle_button: self.toggle_gene(index, b))
-            toggle_button.pack(pady=5)
+            toggle_button.pack(pady=2.5)
 
             save_button = ctk.CTkButton(frame, text="Save")
             save_button.configure(command=lambda index=i, b=save_button: self.save_gene(index, b))
-            save_button.pack(pady=5)
+            save_button.pack(pady=2.5)
 
-        ctk.CTkButton(self, text="Re-generate designs", command=self.re_generate).grid(row=9, column=1, pady=20)
-        ctk.CTkButton(self, text="Submit", command=self.submit_selection).grid(row=8, column=0, pady=20)
-        ctk.CTkButton(self, text="Back to previous designs", command=self.back_to_prev_designs).grid(row=9, column=0, pady=20)
+
+        ctk.CTkButton(self, text="Re-generate designs", command=self.re_generate).grid(row=11, column=1, pady=5)
+        ctk.CTkButton(self, text="Submit", command=self.submit_selection).grid(row=10, column=0, pady=5)
+        ctk.CTkButton(self, text="Back to previous designs", command=self.back_to_prev_designs).grid(row=11, column=0, pady=5)
 
         self.show_saved_genes()
 
@@ -225,7 +242,7 @@ class DesignPage(ctk.CTkFrame):
         # Create a popup window
         popup = ctk.CTkToplevel(self)
         popup.title("Design Preview")
-        popup.geometry("800x600")  # Adjust the size as needed
+        popup.geometry("600x400")  # Adjust the size as needed
 
         # Create a frame for the content
         content_frame = ctk.CTkFrame(popup)
@@ -233,7 +250,7 @@ class DesignPage(ctk.CTkFrame):
 
         # Render a larger version of the design. You might want to adjust gene.render_design()
         # to account for the new size if necessary.
-        large_fig = self.current_gene_pool[index].render_design(scale = 2)
+        large_fig = self.current_gene_pool[index].render_design(scale = 3)
         large_canvas = FigureCanvasTkAgg(large_fig, master=content_frame)
         large_canvas.draw()
         large_canvas.get_tk_widget().pack(expand=True, fill="both", padx=5, pady=5)

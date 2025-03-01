@@ -78,6 +78,71 @@ def compare_designs(parent, new_design):
     return difference
 
 
+def generate_sufficiently_different_gene(old_gene, new_gene_pool, mutation_rate, diff_threshold=0.5, max_attempts=100):
+    """
+    Generates a mutated gene that is at least `diff_threshold` different from both the parent gene
+    and all genes in new_gene_pool.
+
+    Keep mutating gene until it differs enough or max_attempts is reached.
+    """
+    attempts = 0
+    new_gene = old_gene.mutate_design(mutation_rate)
+
+    while attempts < max_attempts:
+        # Check difference with parent gene
+        diff_from_parent = compare_designs(old_gene, new_gene)
+        if diff_from_parent < diff_threshold:
+            new_gene = new_gene.mutate_design(mutation_rate)
+            attempts += 1
+            continue
+
+        # Check difference with every gene in the new gene pool
+        differences = [compare_designs(gene, new_gene) for gene in new_gene_pool]
+        if differences and min(differences) < diff_threshold:
+            new_gene = new_gene.mutate_design(mutation_rate)
+            attempts += 1
+            continue
+
+        # Candidate is sufficiently different from both the parent and the pool
+        return new_gene
+
+    return new_gene
+
+def generate_sufficiently_different_gene_multiple_parents(parents, new_gene_pool, mutation_rate, diff_threshold=0.5, max_attempts=100):
+    """
+    Generates a mutated gene that is at least `diff_threshold` different from all parent genes
+    and all genes in new_gene_pool.
+
+    Keep mutating gene until it differs enough or max_attempts is reached.
+    """
+    attempts = 0
+    # Randomly pick some genes to breed
+    num_to_select = random.randint(2, len(parents))
+    to_breed = random.sample(parents, num_to_select)
+    new_design = produce_correct_crossover(to_breed)
+    new_mutated_design = new_design.mutate_design(mutation_rate)
+
+    while attempts < max_attempts:
+        # Check difference with every parent gene
+        differences = [compare_designs(parent, new_mutated_design) for parent in to_breed]
+        min_difference = min(differences)
+        if min_difference < diff_threshold:
+            new_mutated_design = new_mutated_design.mutate_design(mutation_rate)
+            attempts += 1
+            continue
+
+        # Check difference with every gene in the new gene pool
+        differences = [compare_designs(gene, new_mutated_design) for gene in new_gene_pool]
+        if differences and min(differences) < diff_threshold:
+            new_mutated_design = new_mutated_design.mutate_design(mutation_rate)
+            attempts += 1
+            continue
+
+        # Candidate is sufficiently different from both the parent and the pool
+        return new_mutated_design
+
+    return new_mutated_design
+
 
 def breed_new_designs(selected_genes, mutation_rate):
     new_gene_pool=[]
@@ -85,41 +150,14 @@ def breed_new_designs(selected_genes, mutation_rate):
     if n_selected == 1:
         old_gene = selected_genes[0]
         for i in range(6):
-            new_design = old_gene.mutate_design(mutation_rate)
-            difference = compare_designs(old_gene, new_design)
-            while difference < 0.5:
-                new_design = new_design.mutate_design(mutation_rate)
-                difference = compare_designs(old_gene, new_design)
-            new_gene_pool.append(new_design)
+            new_design = generate_sufficiently_different_gene(old_gene, new_gene_pool, mutation_rate)
 
+            new_gene_pool.append(new_design)
     else:
         for i in range(6):
-            #Randomly pick some genes to breed
-            num_to_select = random.randint(2, len(selected_genes))
-            to_breed = random.sample(selected_genes, num_to_select)
-            new_design = produce_correct_crossover(to_breed)
-            try_unique = 0
-            while new_design in selected_genes and try_unique<4:
-                new_design = produce_correct_crossover(to_breed)
-                try_unique+=1
+            new_design = generate_sufficiently_different_gene_multiple_parents(selected_genes, new_gene_pool, mutation_rate)
 
-            new_mutated_design = new_design.mutate_design(mutation_rate)
-
-            #Make sure new design isn't too similar to any of parents:
-            difference = 10
-            for design in to_breed:
-                new_difference = compare_designs(design, new_mutated_design)
-                if new_difference < difference:
-                    difference = new_difference
-                    print("difference:", difference)
-                    similar_parent = design
-
-            while difference < 0.5:
-                new_mutated_design = new_mutated_design.mutate_design(mutation_rate)
-                difference = compare_designs(similar_parent, new_mutated_design)
-                print("new mutated difference:", difference)
-
-            new_gene_pool.append(new_mutated_design)
+            new_gene_pool.append(new_design)
 
     return new_gene_pool
 """

@@ -553,9 +553,9 @@ def generate_radius_arm_lengths(new_star_type):
             if new_arm_length >30:
                 new_arm_length-=5
     else:
-        new_radius = random_normal_within_range(3, 10, radius_range)
-        new_arm_length = random_normal_within_range(5, 10,
-                                                    arm_length_range) if new_radius > 20 else random_normal_within_range(15, 15, arm_length_range)
+        new_radius = random_normal_within_range(3, 5, radius_range)
+        new_arm_length = random_normal_within_range(5, 7,
+                                                    arm_length_range) if new_radius > 25 else random_normal_within_range(17, 7, arm_length_range)
         if new_radius > new_arm_length*1.5 and new_radius>5:
             new_radius -=5
     return new_radius , new_arm_length

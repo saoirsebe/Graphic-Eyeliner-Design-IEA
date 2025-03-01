@@ -3,7 +3,8 @@ import customtkinter as ctk
 
 class DualScrollableFrame(ctk.CTkFrame):
     def __init__(self, master, **kwargs):
-        super().__init__(master, **kwargs)
+        super().__init__(master, **kwargs,  width=800, height=600)
+        self.grid_propagate(False)
         # Create a canvas and two scrollbars
         self.canvas = ctk.CTkCanvas(self, bg=self.cget("fg_color"))
         self.canvas.grid(row=0, column=0, sticky="nsew")
@@ -18,6 +19,7 @@ class DualScrollableFrame(ctk.CTkFrame):
 
         # Create an inner frame to hold the content
         self.inner_frame = ctk.CTkFrame(self.canvas, fg_color=self.cget("fg_color"))
+        #self.inner_frame.pack(expand=True, fill="both")
         self.canvas.create_window((0, 0), window=self.inner_frame, anchor="nw")
 
         # Update scrollregion when the inner frame changes size

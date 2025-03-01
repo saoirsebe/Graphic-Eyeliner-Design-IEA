@@ -1,10 +1,8 @@
 import customtkinter as ctk
-
 from DesignPage import DesignPage
 from DualScrollableFrame import DualScrollableFrame
 from HomePage import HomePage
 from LoginPage import LoginPage, SignUpPage
-
 
 class App(ctk.CTk):
     def __init__(self):
@@ -16,16 +14,13 @@ class App(ctk.CTk):
         self.geometry("1200x600")
         self.configure(bg="#1E1E1E")
 
-        # Configure the main grid so the scrollable frame fills the entire window
-        self.grid_rowconfigure(0, weight=1)
-        self.grid_columnconfigure(0, weight=1)
+        # Create a container frame that fills the entire window
+        self.container = ctk.CTkFrame(self)
+        self.container.pack(fill="both", expand=True, padx=10, pady=10)
 
-        # Create a scrollable frame using grid
-        self.scrollable_frame = ctk.CTkScrollableFrame(self, fg_color="#2A2A2A", corner_radius=10)
-        self.scrollable_frame.grid(row=0, column=0, sticky="nsew", padx=10, pady=10)
-        # Ensure the scrollable frame's internal grid expands as well
-        self.scrollable_frame.grid_rowconfigure(0, weight=1)
-        self.scrollable_frame.grid_columnconfigure(0, weight=1)
+        # Use grid inside container so pages can expand dynamically.
+        self.container.grid_rowconfigure(0, weight=1)
+        self.container.grid_columnconfigure(0, weight=1)
 
         self.page_classes = {
             "HomePage": HomePage,
@@ -34,27 +29,41 @@ class App(ctk.CTk):
             "SignUpPage": SignUpPage,
         }
 
-        self.pages = {}  # Store pages dynamically
+        self.pages = {}  # Dictionary to store each page's dual scrollable frame
+
         for PageClass in (HomePage, DesignPage, SignUpPage, LoginPage):
             page_name = PageClass.__name__
-            page = PageClass(parent=self.scrollable_frame, controller=self)
-            self.pages[page_name] = page
-            # Use grid to fill the available space
+            # Create a new dual scrollable frame for this page
+            dual_frame = DualScrollableFrame(self.container, fg_color="#2A2A2A")
+            dual_frame.grid(row=0, column=0, sticky="nsew")
+            dual_frame.grid_rowconfigure(0, weight=1)
+            dual_frame.grid_columnconfigure(0, weight=1)
+            # Do not set fixed size; let it grow with the container.
+            # dual_frame.configure(width=1200, height=600)
+            # dual_frame.grid_propagate(False)
+
+            # Initialize the page inside the dual scrollable frame's inner_frame.
+            page = PageClass(parent=dual_frame.inner_frame, controller=self)
             page.grid(row=0, column=0, sticky="nsew")
-            # Configure the scrollable frame to let the page expand
-            self.scrollable_frame.grid_rowconfigure(0, weight=1)
-            self.scrollable_frame.grid_columnconfigure(0, weight=1)
+            page.grid_rowconfigure(0, weight=1)
+            page.grid_columnconfigure(0, weight=1)
+
+            self.pages[page_name] = dual_frame
 
         self.show_page("DesignPage")
+        # Optionally bind container resize event to update page size if needed.
+        self.container.bind("<Configure>", self._on_container_configure)
+
+    def _on_container_configure(self, event):
+        # When container resizes, force each page's frame to use the new size.
+        for frame in self.pages.values():
+            frame.configure(width=event.width, height=event.height)
 
     def show_page(self, page_name):
-        """Show the selected page."""
-        for widget in self.scrollable_frame.winfo_children():
+        """Show the selected page by hiding all others."""
+        for widget in self.container.winfo_children():
             widget.grid_forget()
         self.pages[page_name].grid(row=0, column=0, sticky="nsew")
-        # Re-configure grid weights to ensure expansion
-        self.scrollable_frame.grid_rowconfigure(0, weight=1)
-        self.scrollable_frame.grid_columnconfigure(0, weight=1)
 
 
 if __name__ == "__main__":
