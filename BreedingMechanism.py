@@ -104,12 +104,22 @@ def breed_new_designs(selected_genes, mutation_rate):
                 try_unique+=1
 
             new_mutated_design = new_design.mutate_design(mutation_rate)
-            difference = compare_designs(new_design, new_mutated_design)
-            while difference < 0.5:
-                new_design = new_design.mutate_design(mutation_rate)
-                difference = compare_designs(new_design, new_mutated_design)
 
-            new_gene_pool.append(new_design)
+            #Make sure new design isn't too similar to any of parents:
+            difference = 10
+            for design in to_breed:
+                new_difference = compare_designs(design, new_mutated_design)
+                if new_difference < difference:
+                    difference = new_difference
+                    print("difference:", difference)
+                    similar_parent = design
+
+            while difference < 0.5:
+                new_mutated_design = new_mutated_design.mutate_design(mutation_rate)
+                difference = compare_designs(similar_parent, new_mutated_design)
+                print("new mutated difference:", difference)
+
+            new_gene_pool.append(new_mutated_design)
 
     return new_gene_pool
 """

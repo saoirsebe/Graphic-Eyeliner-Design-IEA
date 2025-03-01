@@ -3,6 +3,8 @@ from tkinter import messagebox
 import customtkinter as ctk
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import matplotlib.pyplot as plt
+
+from DualScrollableFrame import DualScrollableFrame
 from Page import Page
 from BreedingMechanism import breed_new_designs
 from InitialiseGenePool import initialise_gene_pool
@@ -21,25 +23,48 @@ class DesignPage(ctk.CTkFrame):
         self.gene_pools_all = []
         self.create_widgets()
 
+
     def create_widgets(self):
-        self.grid_columnconfigure((0, 1, 2, 3, 4), weight=1)
+        # Configure columns and rows.
+        # Give a higher weight to rows where you want expansion.
+        for i in range(6):
+            self.grid_columnconfigure(i, weight=1)
+
+        # For example, rows 4-6 (where the DualScrollableFrame sits) get extra weight.
+        self.grid_rowconfigure(0, weight=0)   # title
+        self.grid_rowconfigure(1, weight=0)   # buttons row
+        self.grid_rowconfigure(2, weight=0)   # design selection prompt
+        self.grid_rowconfigure(3, weight=0)   # mutation rate row and saved_frame starts here
+        self.grid_rowconfigure(4, weight=3)   # DualScrollableFrame row (start designing)
+        self.grid_rowconfigure(5, weight=3)
+        self.grid_rowconfigure(6, weight=3)
+        self.grid_rowconfigure(7, weight=0)   # submission/back buttons
+        self.grid_rowconfigure(8, weight=0)
+        self.grid_rowconfigure(9, weight=0)
 
         self.label_title = ctk.CTkLabel(self, text="Start designing your makeup look!", font=("Arial", 24))
         self.label_title.grid(row=0, column=0, columnspan=3, pady=20)
 
-        self.back_button = ctk.CTkButton(self, text="Back to Home", command=lambda: self.controller.show_page("HomePage"))
+        self.back_button = ctk.CTkButton(self, text="Back to Home",
+                                         command=lambda: self.controller.show_page("HomePage"))
         self.back_button.grid(row=1, column=0, pady=10, padx=10)
 
         self.start_button = ctk.CTkButton(self, text="Start Designing", command=self.start_designing)
         self.start_button.grid(row=1, column=1, pady=10)
 
         self.saved_frame = ctk.CTkScrollableFrame(self, width=250, fg_color="#2A2A2A")
-        self.saved_frame.grid(row=3, column=2, rowspan=5, padx=10, pady=10, sticky="nsew")
+        # Place saved_frame and force it to keep its size.
+        self.saved_frame.grid(row=3, column=5, rowspan=5, padx=10, pady=10, sticky="nsew")
+        #self.saved_frame.grid_propagate(False)
         self.saved_label = ctk.CTkLabel(self.saved_frame, text="Saved Designs", font=("Arial", 18))
-        self.saved_label.pack()
+        self.saved_label.pack(expand=True, fill="both")
 
-        self.scrollable_frame = ctk.CTkScrollableFrame(self, width=800, height=600, fg_color="#1A1A1A",orientation='horizontal')
-        self.scrollable_frame.grid(row=4, column=0, columnspan=2, padx=10, pady=10, sticky="nsew")
+        # This is the scrollable area for your designs.
+        self.scrollable_frame = DualScrollableFrame(self, fg_color="#1A1A1A")
+        self.scrollable_frame.grid(row=4, column=0, columnspan=4, rowspan=3, padx=10, pady=10, sticky="nsew")
+        self.scrollable_frame.grid_propagate(False)
+        self.scrollable_frame.configure(height=400)
+
 
     def add_into_pool(self, the_gene):
         if the_gene not in self.current_gene_pool:
@@ -104,7 +129,7 @@ class DesignPage(ctk.CTkFrame):
         mutation_rate_dropdown.grid(row=3, column=1, pady=10)
 
         for i, gene in enumerate(self.current_gene_pool):
-            frame = ctk.CTkFrame(self.scrollable_frame)
+            frame = ctk.CTkFrame(self.scrollable_frame.inner_frame)
             frame.grid(row=(i // 3) + 5, column=i % 3, padx=10, pady=10, sticky="nsew")
 
             fig = gene.render_design()
@@ -126,9 +151,9 @@ class DesignPage(ctk.CTkFrame):
             save_button.configure(command=lambda index=i, b=save_button: self.save_gene(index, b))
             save_button.pack(pady=5)
 
-        ctk.CTkButton(self, text="Re-generate designs", command=self.re_generate).grid(row=11, column=1, pady=20)
-        ctk.CTkButton(self, text="Submit", command=self.submit_selection).grid(row=10, column=0, pady=20)
-        ctk.CTkButton(self, text="Back to previous designs", command=self.back_to_prev_designs).grid(row=11, column=0, pady=20)
+        ctk.CTkButton(self, text="Re-generate designs", command=self.re_generate).grid(row=9, column=1, pady=20)
+        ctk.CTkButton(self, text="Submit", command=self.submit_selection).grid(row=8, column=0, pady=20)
+        ctk.CTkButton(self, text="Back to previous designs", command=self.back_to_prev_designs).grid(row=9, column=0, pady=20)
 
         self.show_saved_genes()
 

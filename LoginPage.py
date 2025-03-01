@@ -1,10 +1,11 @@
-import tkinter as tk
+import customtkinter as ctk
 from tkinter import messagebox
-from Page import Page
-USERS_FILE = "users.json"
 import json
 import os
 import bcrypt
+from Page import Page  # Assumed base page class
+
+USERS_FILE = "users.json"
 
 def load_users():
     """Load users from the JSON file."""
@@ -33,7 +34,7 @@ class LoginPage(Page):
         self.users = load_users()
 
     def create_widgets(self):
-        # Grid configuration for LoginPage layout
+        # Configure grid for the LoginPage layout.
         self.grid_rowconfigure(0, weight=1)
         self.grid_rowconfigure(1, weight=1)
         self.grid_rowconfigure(2, weight=1)
@@ -42,20 +43,23 @@ class LoginPage(Page):
         self.grid_columnconfigure(0, weight=1)
         self.grid_columnconfigure(1, weight=3)
 
-        # Title label
-        tk.Label(self, text="Login", font=("Arial", 24)).grid(row=0, column=0, columnspan=2, pady=20)
+        # Title label using CTkLabel.
+        ctk.CTkLabel(self, text="Login", font=("Arial", 24))\
+            .grid(row=0, column=0, columnspan=2, pady=20)
 
-        # Username Label and Entry
-        tk.Label(self, text="Username").grid(row=1, column=0, sticky="e", padx=10, pady=5)
-        username_entry = tk.Entry(self)
+        # Username label and entry.
+        ctk.CTkLabel(self, text="Username")\
+            .grid(row=1, column=0, sticky="e", padx=10, pady=5)
+        username_entry = ctk.CTkEntry(self)
         username_entry.grid(row=1, column=1, padx=10, pady=5, sticky="ew")
 
-        # Password Label and Entry
-        tk.Label(self, text="Password").grid(row=2, column=0, sticky="e", padx=10, pady=5)
-        password_entry = tk.Entry(self, show="*")
+        # Password label and entry.
+        ctk.CTkLabel(self, text="Password")\
+            .grid(row=2, column=0, sticky="e", padx=10, pady=5)
+        password_entry = ctk.CTkEntry(self, show="*")
         password_entry.grid(row=2, column=1, padx=10, pady=5, sticky="ew")
 
-        # Login function
+        # Login function.
         def login():
             username = username_entry.get()
             password = password_entry.get()
@@ -64,16 +68,17 @@ class LoginPage(Page):
             else:
                 messagebox.showerror("Login Failed", "Invalid username or password")
 
-        # Go to SignUp page function
+        # Go to SignUp page function.
         def go_to_signup():
             self.controller.show_page("SignUpPage")
 
-        # Login and Signup buttons
-        tk.Button(self, text="Login", command=login).grid(row=3, column=0, columnspan=2, pady=10)
-        tk.Button(self, text="Sign Up", command=go_to_signup).grid(row=4, column=0, columnspan=2, pady=5)
+        # Login and Signup buttons using CTkButton.
+        ctk.CTkButton(self, text="Login", command=login)\
+            .grid(row=3, column=0, columnspan=2, pady=10)
+        ctk.CTkButton(self, text="Sign Up", command=go_to_signup)\
+            .grid(row=4, column=0, columnspan=2, pady=5)
 
 
-# SignUpPage
 class SignUpPage(Page):
     def __init__(self, parent, controller):
         super().__init__(parent, controller)
@@ -81,7 +86,7 @@ class SignUpPage(Page):
         self.create_widgets()
 
     def create_widgets(self):
-        # Grid configuration for SignUpPage layout
+        # Configure grid for the SignUpPage layout.
         self.grid_rowconfigure(0, weight=1)
         self.grid_rowconfigure(1, weight=1)
         self.grid_rowconfigure(2, weight=1)
@@ -91,25 +96,29 @@ class SignUpPage(Page):
         self.grid_columnconfigure(0, weight=1)
         self.grid_columnconfigure(1, weight=3)
 
-        # Title label
-        tk.Label(self, text="Sign Up", font=("Arial", 24)).grid(row=0, column=0, columnspan=2, pady=20)
+        # Title label.
+        ctk.CTkLabel(self, text="Sign Up", font=("Arial", 24))\
+            .grid(row=0, column=0, columnspan=2, pady=20)
 
-        # Username Label and Entry
-        tk.Label(self, text="Username").grid(row=1, column=0, sticky="e", padx=10, pady=5)
-        username_entry = tk.Entry(self)
+        # Username label and entry.
+        ctk.CTkLabel(self, text="Username")\
+            .grid(row=1, column=0, sticky="e", padx=10, pady=5)
+        username_entry = ctk.CTkEntry(self)
         username_entry.grid(row=1, column=1, padx=10, pady=5, sticky="ew")
 
-        # Password Label and Entry
-        tk.Label(self, text="Password").grid(row=2, column=0, sticky="e", padx=10, pady=5)
-        password_entry = tk.Entry(self, show="*")
+        # Password label and entry.
+        ctk.CTkLabel(self, text="Password")\
+            .grid(row=2, column=0, sticky="e", padx=10, pady=5)
+        password_entry = ctk.CTkEntry(self, show="*")
         password_entry.grid(row=2, column=1, padx=10, pady=5, sticky="ew")
 
-        # Confirm Password Label and Entry
-        tk.Label(self, text="Confirm Password").grid(row=3, column=0, sticky="e", padx=10, pady=5)
-        confirm_password_entry = tk.Entry(self, show="*")
+        # Confirm Password label and entry.
+        ctk.CTkLabel(self, text="Confirm Password")\
+            .grid(row=3, column=0, sticky="e", padx=10, pady=5)
+        confirm_password_entry = ctk.CTkEntry(self, show="*")
         confirm_password_entry.grid(row=3, column=1, padx=10, pady=5, sticky="ew")
 
-        # SignUp function
+        # Sign up function.
         def signup():
             username = username_entry.get()
             password = password_entry.get()
@@ -127,10 +136,8 @@ class SignUpPage(Page):
                 messagebox.showinfo("Success", "Account created successfully")
                 self.controller.show_page("LoginPage")
 
-        # SignUp and Back to Login buttons
-        tk.Button(self, text="Sign Up", command=signup).grid(row=4, column=0, columnspan=2, pady=10)
-        tk.Button(self, text="Back to Login", command=lambda: self.controller.show_page("LoginPage")).grid(row=5, column=0, columnspan=2, pady=5)
-
-
-
-
+        # SignUp and Back to Login buttons.
+        ctk.CTkButton(self, text="Sign Up", command=signup)\
+            .grid(row=4, column=0, columnspan=2, pady=10)
+        ctk.CTkButton(self, text="Back to Login", command=lambda: self.controller.show_page("LoginPage"))\
+            .grid(row=5, column=0, columnspan=2, pady=5)
