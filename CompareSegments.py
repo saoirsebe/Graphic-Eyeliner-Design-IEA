@@ -18,9 +18,9 @@ def compare_segments(seg1, seg2):
         if c1 == c2:
             return 0.0
         elif c2 in similar_colours.get(c1, []):
-            return 0.5
+            return 0.2
         else:
-            return 1.0
+            return 0.4
 
     #Compare segments based on type.
     if seg1.segment_type == SegmentType.LINE:
@@ -38,7 +38,7 @@ def compare_segments(seg1, seg2):
 
         # Categorical attributes
         if seg1.start_mode != seg2.start_mode:
-            diff += 1.0
+            diff += 0.4
         diff += compare_colour(seg1.colour, seg2.colour)
 
     elif seg1.segment_type == SegmentType.STAR:
@@ -52,14 +52,14 @@ def compare_segments(seg1, seg2):
 
         # Categorical attributes
         if seg1.start_mode != seg2.start_mode:
-            diff += 1.0
+            diff += 0.4
         if seg1.star_type != seg2.star_type:
-            diff += 1.0
+            diff += 0.4
         diff += compare_colour(seg1.colour, seg2.colour)
 
         # Boolean for fill
         if seg1.fill != seg2.fill:
-            diff += 0.5
+            diff += 0.4
 
     elif seg1.segment_type == SegmentType.IRREGULAR_POLYGON:
         # Numeric comparisons
@@ -68,7 +68,7 @@ def compare_segments(seg1, seg2):
 
         # Categorical
         if seg1.start_mode != seg2.start_mode:
-            diff += 1.0
+            diff += 0.4
         diff += compare_colour(seg1.colour, seg2.colour)
 
         # Compare bounding_size, assumed to be a tuple (width, height)
@@ -84,7 +84,7 @@ def compare_segments(seg1, seg2):
                 diff += np.linalg.norm(np.array(pt1) - np.array(pt2)) / (
                             random_shape_size_range[1] - random_shape_size_range[0])
         else:
-            diff += 1.0  # Penalty if the number of corners differs
+            diff += 0.4  # Penalty if the number of corners differs
 
         #Compare lines_list (list of edge segments with attributes curviness and curve_location)
         if len(seg1.lines_list) == len(seg2.lines_list):
@@ -93,11 +93,11 @@ def compare_segments(seg1, seg2):
                 diff += abs(edge1.curve_location - edge2.curve_location) / (
                             relative_location_range[1] - relative_location_range[0])
         else:
-            diff += 1.0
+            diff += 0.4
 
         #Compare fill
         if seg1.fill != seg2.fill:
-            diff += 0.5
+            diff += 0.4
 
         #Compare is_eyeliner_wing if it exists:
         if hasattr(seg1, 'is_eyeliner_wing') and hasattr(seg2, 'is_eyeliner_wing'):
@@ -138,9 +138,7 @@ def random_irregular_polygon(ax=None):
 
     return new_segment
 """
-#line = LineSegment(SegmentType.LINE, (100,10), StartMode.CONNECT_MID, 100, 0, 3, 2, 'lightblue', 0, True, 0.5, 0, 0)
-#line2 = LineSegment(SegmentType.LINE, (50,100), StartMode.JUMP, 30, 0, 1, 2, 'blue', 0, True, 0.5, 0, 0)
-
+#
 fig, ax_n = plt.subplots(figsize=(3, 3))
 polygon1 = random_irregular_polygon(ax_n)
 prev_array = np.array([polygon1.start])
@@ -159,6 +157,26 @@ polygon2.render(prev_array, prev_angle, prev_colour, prev_end_thickness, ax_n=ax
 fig.show()
 
 difference = compare_segments(polygon1,polygon2)
+print("difference =",difference)
+
+line = LineSegment(SegmentType.LINE, (10,10), StartMode.JUMP, 30, 0, 3, 2, 'lightblue', 0, True, 0.5, 0, 0)
+#line2 = LineSegment(SegmentType.LINE, (50,100), StartMode.JUMP, 30, 0, 1, 2, 'blue', 0, True, 0.5, 0, 0)
+fig, ax_n = plt.subplots(figsize=(3, 3))
+
+prev_array = np.array([line.start])
+prev_angle = 0
+prev_colour = line.colour
+prev_end_thickness= line.end_thickness
+line.render(prev_array, prev_angle, prev_colour, prev_end_thickness, ax_n=ax_n)
+line2 = copy.deepcopy(line)
+line2.start = (line2.start[0] + 2, line2.start[1]+ 2)
+#line2.colour = "red"
+line2.mutate()
+line2.render(prev_array, prev_angle, prev_colour, prev_end_thickness, ax_n=ax_n)
+
+fig.show()
+
+difference = compare_segments(line,line2)
 print("difference =",difference)
 
 """

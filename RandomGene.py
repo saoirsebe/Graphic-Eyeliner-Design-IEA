@@ -1,9 +1,12 @@
 import random
+from copy import deepcopy
+
 import numpy as np
 from A import *
 from AnalyseDesign import check_design_overlaps, check_overlaps, analyse_negative, \
     analyse_positive, \
     check_segment_overlaps, is_in_eye, is_outside_face_area
+from BreedingMechanism import compare_designs
 from EyelinerDesign import EyelinerDesign
 from Segments import create_segment, random_segment, set_prev_end_thickness_array, make_eyeliner_wing, \
     random_segment_colour
@@ -155,7 +158,7 @@ def random_gene(gene_n):
             #print("Score:",total_score)
             return design
 
-"""
+""""""
 #design = random_gene(1)
 design = random_gene(10)
 #design = random_gene(190)
@@ -168,5 +171,14 @@ print("Positive Score:", positive_score)
 
 negative_score = analyse_negative(design)
 print("analyse_negative score:", negative_score)
-"""
+print("New design:")
+design2 = design.mutate_design(0.05)
+fig = design2.render_design()
+
+difference = compare_designs(design, design2)
+print("Difference:", difference)
+fig.show()
+
+
+
 

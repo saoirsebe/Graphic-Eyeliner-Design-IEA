@@ -267,7 +267,7 @@ class LineSegment(Segment):
                     )
 
 
-    def mutate(self, mutation_rate=0.05):
+    def mutate(self, mutation_rate=0.1):
         """Randomly mutate properties of the line segment within a mutation rate."""
         # mutation rate chance of changing:
         self.start_mode = self.mutate_choice(self.start_mode, [StartMode.CONNECT, StartMode.JUMP, StartMode.SPLIT, StartMode.CONNECT_MID], mutation_rate)

@@ -555,7 +555,7 @@ def analyse_design_shapes(design, to_print = False):
             elif size_score >= 0 and average_x > 100:
                 total_score += 1
 
-    penalise_n_of_segments = len(segments) / 5
+    penalise_n_of_segments = len(segments) / 6
     if penalise_n_of_segments < 1:
         # So score doesn't get bigger with smaller n of segments
         penalise_n_of_segments = 1

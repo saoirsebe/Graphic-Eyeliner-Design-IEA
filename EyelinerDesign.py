@@ -173,15 +173,14 @@ class EyelinerDesign:   #Creates overall design, calculates start points, render
             self.render_node(root_node, prev_array, prev_angle, prev_colour, prev_end_thickness_array, scale = scale)
             return
 
-    def mutate_node(self,node,mutation_rate=0.05):
-        if random.random() < mutation_rate:
-            node.mutate(mutation_rate)
+    def mutate_node(self,node,mutation_rate=0.1):
+        node.mutate(mutation_rate)
 
         for child in node.children:
             self.mutate_node(child, mutation_rate)
 
 
-    def mutate_self(self, mutation_rate=0.05):
+    def mutate_self(self, mutation_rate=0.1):
         nodes_list = self.get_all_nodes()
 
         # Random chance of deleting a segment:
@@ -359,7 +358,7 @@ line.render(np.array([line.start]), 0, 'red', line.end_thickness, ax_n)
 
 cProfile.run('random_random_shape()')
 """
-
+"""
 fig, ax_n = plt.subplots(figsize=(3, 3))
 line = LineSegment(SegmentType.LINE, (50,100), StartMode.JUMP, 70, 0, 2, 1, 'red', 0.7, True, 0.4, 0, 0)
 line2 = LineSegment(SegmentType.LINE, eye_corner_start, StartMode.CONNECT_MID, 30, 90, 1, 2, 'blue', 0, False, 0.5, 0.5, 0)
@@ -382,7 +381,7 @@ print("positive_score:",positive_score)
 print(is_outside_face_area(line2))
 
 
-""""""
+"""
 """
 design = EyelinerDesign(random_irregular_polygon())
 fig, ax_n = plt.subplots(figsize=(3, 3))
