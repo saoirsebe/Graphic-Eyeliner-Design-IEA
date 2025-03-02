@@ -545,19 +545,48 @@ def make_eyeliner_wing(random_colour):
 
 def generate_radius_arm_lengths(new_star_type):
     if new_star_type == StarType.STRAIGHT or new_star_type == StarType.FLOWER:
-        new_radius = random_normal_within_range(7, 15, radius_range)
-        new_arm_length = random_normal_within_range(5, 10, arm_length_range) if new_radius > 15 else random_normal_within_range(
-            12, 15, arm_length_range)
-        if new_arm_length<5:
-            new_arm_length =5
-            if new_arm_length >30:
-                new_arm_length-=5
+        new_radius = random_normal_within_range(9, 7, radius_range)  # Radius between 5 and 10
+        new_arm_length = random_normal_within_range(9, 7, arm_length_range)  # Arm length between 5 and 10
+
+        if new_arm_length < new_radius * 0.4:
+            #new_arm_length = new_radius * 0.4
+            diff = new_radius - new_arm_length * 1.5
+            new_radius -= diff / 2
+            new_arm_length += diff / 2
+        """
+        #Ensure radius is not significantly larger than arm length
+        if new_radius > new_arm_length * 1.5:
+            diff = new_radius - new_arm_length * 1.5
+            new_radius -= diff / 2
+            new_arm_length += diff / 2
+        """
+        #Ensure the total does not exceed 20:
+        if new_radius + new_arm_length > 20:
+            scale_factor = 20 / (new_radius + new_arm_length)
+            new_radius *= scale_factor
+            new_arm_length *= scale_factor
+
     else:
-        new_radius = random_normal_within_range(3, 5, radius_range)
-        new_arm_length = random_normal_within_range(5, 7,
-                                                    arm_length_range) if new_radius > 25 else random_normal_within_range(17, 7, arm_length_range)
-        if new_radius > new_arm_length*1.5 and new_radius>5:
-            new_radius -=5
+        new_radius = random_normal_within_range(2, 7, radius_range)  # Radius between 0 and 5
+        new_arm_length = random_normal_within_range(16, 8, arm_length_range)  # Arm length between 10 and 15
+
+        # If total exceeds 20, prioritize reducing radius first
+        total_size = new_radius + new_arm_length
+        if total_size > 20:
+            excess = total_size - 20
+            if new_radius > excess:  # Reduce radius if it's large enough
+                new_radius -= excess
+            else:
+                new_radius = 0  # Ensure it doesn't go negative
+                new_arm_length -= excess  # Reduce arm length if necessary
+
+        #If total still exceeds 20, apply a general scale
+        total_size = new_radius + new_arm_length
+        if total_size > 20:
+            scale_factor = 20 / total_size
+            new_radius *= scale_factor
+            new_arm_length *= scale_factor
+
     return new_radius , new_arm_length
 
 
@@ -657,7 +686,7 @@ def random_segment(prev_colour=None, segment_start=None):
         while new_shape_overlaps > max_shape_overlaps:
             n_of_corners = round(random_normal_within_range(5, 1, num_points_range))
             corners, lines = random_lines_corners_list(n_of_corners)
-            bounding_size_x = random_normal_within_range(50, 30,random_shape_size_range)
+            bounding_size_x = random_normal_within_range(30, 20,random_shape_size_range)
             new_segment = create_segment(
                 segment_type=SegmentType.IRREGULAR_POLYGON,
                 start=segment_start,
@@ -665,7 +694,7 @@ def random_segment(prev_colour=None, segment_start=None):
                 end_thickness=random_normal_within_range(1, 2, thickness_range),
                 relative_angle=random.uniform(*direction_range),
                 colour=random_colour,
-                bounding_size=(bounding_size_x, random_normal_within_range(bounding_size_x, 30,random_shape_size_range)),
+                bounding_size=(bounding_size_x, random_normal_within_range(bounding_size_x, 20,random_shape_size_range)),
                 corners=corners,
                 lines_list=lines,
                 fill=random.choice([True, False]),

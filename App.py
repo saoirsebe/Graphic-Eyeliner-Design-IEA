@@ -56,7 +56,7 @@ class App(ctk.CTk):
         save_design_page.grid(row=0, column=0, sticky="nsew")
         self.pages["SaveDesignPage"] = save_design_page
 
-        self.show_page("DesignPage")
+        self.show_page("LoginPage")
         # Optionally bind container resize event to update page size if needed.
         self.container.bind("<Configure>", self._on_container_configure)
 

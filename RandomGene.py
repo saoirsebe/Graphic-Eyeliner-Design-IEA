@@ -147,8 +147,8 @@ def random_gene(gene_n):
             if not success or total_score < min_fitness_score:
                 success = False
 
-        if analyse_negative(design)<min_fitness_score:
-            success = False
+        #if analyse_negative(design)<min_fitness_score:
+        #    success = False
 
         if success:
             #print(f"success {gene_n}")

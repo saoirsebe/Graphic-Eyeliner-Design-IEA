@@ -142,6 +142,11 @@ def angle_between_vectors(v1, v2):
 
 def compair_overlapping_sections(overlapping_points_segment, overlapping_points_eye_shape):
     """Calculates curvature and direction similarities between two sections (points arrays)"""
+    if overlapping_points_segment[0][0]>overlapping_points_segment[-1][0]:
+        overlapping_points_segment = overlapping_points_segment[::-1]
+    if overlapping_points_eye_shape[0][0]>overlapping_points_eye_shape[-1][0]:
+        overlapping_points_eye_shape = overlapping_points_eye_shape[::-1]
+
     bezier_curvature = calculate_curvature(overlapping_points_segment)
     eye_curvature = calculate_curvature(overlapping_points_eye_shape)
     # Compute shape similarity (curvature comparison)
@@ -404,9 +409,9 @@ def analyse_design_shapes(design, to_print = False):
             if segment.start_mode == StartMode.JUMP:
                 total_score -=0.5
             elif segment.start_mode == StartMode.CONNECT_MID:
-                total_score +=0.5
+                total_score +=0.55
             elif segment.start_mode == StartMode.SPLIT:
-                total_score +=0.5
+                total_score +=0.55
 
             if check_points_left(segment.points_array,True):
                 #If 80% of segment is left of the eye corner then compare segment with eyelid curve
@@ -479,46 +484,66 @@ def analyse_design_shapes(design, to_print = False):
 
             if segment.is_eyeliner_wing:
                 #Size of eyeliner wing polygon is 1 so size will be penalised
-                total_score +=6.5
+                total_score +=6
             else:
                 # Score polygon based on size (bigger preferred on outside of eye and smaller nearer the inner corner)
                 x_values = segment.points_array[:, 0]
+                y_values = segment.points_array[:, 1]
                 average_x = np.mean(x_values)
-                shape_size = (segment.bounding_size[0] + segment.bounding_size[1])//2
-                k = 0.4
+                average_y = np.mean(y_values)
+                shape_size = max((max(x_values)-min(x_values)) , (max(y_values)-min(y_values)))
+                if average_x <= 100:
+                    k = 0.3  # Default for small x-values
+                else:
+                    k = 0.32 #+ 0.002 * (average_x - 100)  # Gradual increase for large x-values
+                if average_y < 70 and average_x < 110:
+                    k *= 0.7
+
                 deviation = abs(shape_size - k * average_x)
                 print("polygon_shape_size =", shape_size)
                 print("shape_x =", average_x)
+                print("shape_y =", average_y)
                 print("deviation =", deviation)
                 #size_score = math.exp(-2 * deviation)
                 size_score = 1 / (math.log(deviation + 1))
                 #print("size_score: ", size_score)
                 if size_score > 0.35:
-                    size_score = (5//n_of_polygons) * size_score
+                    size_score = (6//n_of_polygons) * size_score
                     if size_score > 4:
                         size_score = 4
                     #print(f"colour:{segment.colour} polygon positive size_score =", size_score)
                     total_score += size_score
-                elif size_score < 0.3 and average_x < 90:
+                elif size_score < 0.35 and average_x < 90:
                     negative_score = 2 * (math.log(deviation + 1))
                     #print(f"colour:{segment.colour} polygon negative size_score =", -negative_score)
                     total_score -= negative_score
+                elif size_score >=0 and average_x >100:
+                    total_score +=1
+
         elif segment.segment_type == SegmentType.STAR:
             n_of_stars +=1
             #Score a star based on size (bigger preferred on outside of eye and smaller nearer the inner corner)
             x_values = segment.points_array[:, 0]
+            y_values = segment.points_array[:, 1]
             average_x = np.mean(x_values)
-            shape_size = (segment.radius + segment.arm_length)*2
-            k = 0.36
+            average_y = np.mean(y_values)
+            shape_size = max((max(x_values)-min(x_values)) , (max(y_values)-min(y_values)))
+            if average_x <= 100:
+                k = 0.3  # Default for small x-values
+            else:
+                k = 0.32 #+ 0.002 * (average_x - 100)  # Gradual increase for large x-values
+            if average_y < 70 and average_x < 110:
+                k *= 0.7
             deviation = abs(shape_size - k * average_x)
-            #print("star_shape_size =", shape_size)
-            #print("star_shape_x =", average_x)
-            #print("star_deviation =", deviation)
+            print("star_shape_size =", shape_size)
+            print("star_shape_x =", average_x)
+            print("shape_y =", average_y)
+            print("star_deviation =", deviation)
             #size_score = math.exp(-2 * deviation)
             size_score = 1 / (math.log(deviation + 1))
             #print("size_score: ",size_score)
             if size_score > 0.35:
-                size_score = (5//n_of_stars) * size_score
+                size_score = (6//n_of_stars) * size_score
                 if size_score >4:
                     size_score = 4
                 print(f"colour:{segment.colour} star_size_score =", size_score)
@@ -527,23 +552,26 @@ def analyse_design_shapes(design, to_print = False):
                 negative_score =2 * (math.log(deviation + 1))
                 print(f"colour:{segment.colour} star_size_score =", -negative_score)
                 total_score -= negative_score
+            elif size_score >= 0 and average_x > 100:
+                total_score += 1
 
-        if n_of_stars + n_of_polygons > 4:
-            total_score -=5
-        else:
-            if n_of_polygons >2:
-                total_score -=2
-            if n_of_stars >2:
-                total_score -=2
+    penalise_n_of_segments = len(segments) / 5
+    if penalise_n_of_segments < 1:
+        # So score doesn't get bigger with smaller n of segments
+        penalise_n_of_segments = 1
+    total_score = total_score / penalise_n_of_segments
 
-        if n_of_jumps >4:
-            total_score -=5
+    if n_of_stars + n_of_polygons > 4:
+        total_score -=5
+    else:
+        if n_of_polygons >2:
+            total_score -=2
+        if n_of_stars >2:
+            total_score -=2
 
-    divisor = len(segments) / 4
-    if divisor < 1:
-        #So score doesn't get bigger with smaller n of segments
-        divisor = 1
-    total_score = total_score / divisor
+    if n_of_jumps >4:
+        total_score -=6
+
     return total_score
 
 

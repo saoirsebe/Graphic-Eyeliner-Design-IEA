@@ -24,7 +24,9 @@ def initialise_gene_pool():
         if i >= 6:
             break
         analyse_positive(gene, True)
+        #ned_score = analyse_negative(gene)
         print(f"Score: {score}")
+        #print(f"negative Score: {ned_score}")
 
     gene_pool = [gene for gene, score in scored_genes[:6]]
 

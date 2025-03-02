@@ -276,7 +276,7 @@ def random_lines_corners_list(n_of_corners):
 
     return sorted_corners, lines_list
 
-"""
+
 def random_irregular_polygon(ax=None):
 
     segment_start = generate_valid_start()
@@ -308,7 +308,28 @@ def random_irregular_polygon(ax=None):
 
 
     return new_segment
-"""
+
+def random_star():
+    new_star_type = random.choice([StarType.STRAIGHT, StarType.CURVED, StarType.FLOWER])
+    new_radius, new_arm_length = generate_radius_arm_lengths(new_star_type)
+    segment_start = generate_valid_start()
+    random_colour = random_segment_colour("blue")
+    new_segment = create_segment(
+        segment_type=SegmentType.STAR,
+        start=segment_start,
+        start_mode=random.choice([StartMode.CONNECT, StartMode.JUMP]),
+        radius=new_radius,
+        arm_length=new_arm_length,
+        num_points=round(random_normal_within_range(5, 2, num_points_range)),
+        asymmetry=0 if random.random() < 0.6 else random_normal_within_range(2, 2, asymmetry_range),
+        star_type=new_star_type,
+        end_thickness=random_normal_within_range(2, 2, thickness_range),
+        relative_angle=random.uniform(*direction_range),
+        colour=random_colour,
+        fill=random.choice([True, False]),
+    )
+    return new_segment
+""""""
 """
 fig, ax_n = plt.subplots(figsize=(3, 3))
 shape = random_irregular_polygon(ax_n)
@@ -338,7 +359,7 @@ line.render(np.array([line.start]), 0, 'red', line.end_thickness, ax_n)
 
 cProfile.run('random_random_shape()')
 """
-"""
+
 fig, ax_n = plt.subplots(figsize=(3, 3))
 line = LineSegment(SegmentType.LINE, (50,100), StartMode.JUMP, 70, 0, 2, 1, 'red', 0.7, True, 0.4, 0, 0)
 line2 = LineSegment(SegmentType.LINE, eye_corner_start, StartMode.CONNECT_MID, 30, 90, 1, 2, 'blue', 0, False, 0.5, 0.5, 0)
@@ -356,20 +377,29 @@ fig.show()
 
 negative_score = analyse_negative(design)
 print("negative_score:",negative_score)
-positive_score = analyse_positive(design)
+positive_score = analyse_positive(design,True)
 print("positive_score:",positive_score)
 print(is_outside_face_area(line2))
 
 
-"""
+""""""
 """
 design = EyelinerDesign(random_irregular_polygon())
 fig, ax_n = plt.subplots(figsize=(3, 3))
-fig = design.render_design(ax_n)
+fig = design.render_design()
 fig.show()
 positive_score = analyse_positive(design)
 negative_score = analyse_negative(design)
 print("analyse_negative score:", negative_score)
 print("Positive Score:", positive_score)
-"""
 
+design = EyelinerDesign(random_star())
+fig, ax_n = plt.subplots(figsize=(3, 3))
+fig = design.render_design()
+fig.show()
+positive_score = analyse_positive(design)
+negative_score = analyse_negative(design)
+print("analyse_negative score:", negative_score)
+print("Positive Score:", positive_score)
+
+"""
