@@ -21,20 +21,18 @@ class SaveDesignPage(ctk.CTkFrame):
         self.scrollable_frame.pack(expand=True, fill="both", padx=10, pady=10)
 
         # Back button to return to the design page
-        self.back_button = ctk.CTkButton(self, text="Back to Design",width=200, height=50,
-                                         command=lambda: controller.show_page("DesignPage"))
+        self.back_button = ctk.CTkButton(self, text="Back to Homepage",width=200, height=50,
+                                         command=lambda: controller.show_page("HomePage"))
         self.back_button.pack(pady=10)
 
         self.update_designs()
 
     def update_designs(self):
-        print("WEoooo")
         # Clear any existing widgets
         for widget in self.scrollable_frame.winfo_children():
             widget.destroy()
 
         saved_designs = self.controller.all_saved_designs  # Global list maintained in App
-        print("all_saved_designs in savedDesigns:", saved_designs)
         num_columns = 3
 
         # Layout each saved design in a grid
@@ -44,6 +42,8 @@ class SaveDesignPage(ctk.CTkFrame):
 
             # Render the design (assuming design.render_design() returns a matplotlib Figure)
             fig = design.render_design()
+            for ax in fig.get_axes():
+                ax.set_axis_off()
             canvas = FigureCanvasTkAgg(fig, master=frame)
             canvas.draw()
             canvas_widget = canvas.get_tk_widget()

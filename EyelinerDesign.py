@@ -156,7 +156,7 @@ class EyelinerDesign:   #Creates overall design, calculates start points, render
         prev_end_thickness_array = root_node.end_thickness
 
         if show:
-            fig, ax_n = plt.subplots(figsize=(self.eye_image.width / 100, self.eye_image.height / 100), dpi=100)
+            fig, ax_n = plt.subplots(figsize=(self.eye_image.width / 100, self.eye_image.height / 100), dpi=150)
 
             flipped_img = np.flipud(self.eye_image)
             ax_n.imshow(flipped_img)

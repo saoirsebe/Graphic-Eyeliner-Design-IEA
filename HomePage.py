@@ -9,19 +9,24 @@ class HomePage(ctk.CTkFrame):
 
     def create_widgets(self):
         self.grid_columnconfigure(0, weight=1)
-        self.grid_columnconfigure(1, weight=1)
+        self.grid_columnconfigure(1, weight=2)
+        self.grid_columnconfigure(2, weight=1)
 
         self.label_title = ctk.CTkLabel(self, text="Welcome to the Eyeliner Design App", font=("Arial", 24))
-        self.label_title.grid(row=0, column=0, columnspan=2, pady=30)
+        self.label_title.grid(row=0, column=1, columnspan=2, pady=30)
 
         self.greeting_label = ctk.CTkLabel(self, text="Hello, User!", font=("Arial", 18))
-        self.greeting_label.grid(row=1, column=0, columnspan=2, pady=10)
+        self.greeting_label.grid(row=1, column=1, columnspan=2, pady=10)
 
-        self.start_button = ctk.CTkButton(self, text="Go to Design Page", command=lambda: self.controller.show_page("DesignPage"), width=200, height=50)
-        self.start_button.grid(row=2, column=0, columnspan=2, pady=20)
+        self.design_page_button = ctk.CTkButton(self, text="Go to Design Page", command=lambda: self.controller.show_page("DesignPage"), width=200, height=50)
+        self.design_page_button.grid(row=2, column=0, columnspan=2, pady=20)
+
+        self.saved_page_button = ctk.CTkButton(self, text="Go to saved designs page",
+                                          command=lambda: self.controller.show_page("SaveDesignPage"), width=200, height=50)
+        self.saved_page_button.grid(row=2, column=2, columnspan=2, pady=20)
 
         self.logout_button = ctk.CTkButton(self, text="Logout", command=self.logout, width=200, height=50, fg_color="red", hover_color="#8B0000")
-        self.logout_button.grid(row=3, column=0, columnspan=2, pady=20)
+        self.logout_button.grid(row=3, column=1, columnspan=2, pady=20)
 
     def logout(self):
         self.controller.show_page("LoginPage")

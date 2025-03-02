@@ -5,7 +5,6 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import matplotlib.pyplot as plt
 
 from DualScrollableFrame import DualScrollableFrame
-from Page import Page
 from BreedingMechanism import breed_new_designs
 from InitialiseGenePool import initialise_gene_pool
 
@@ -22,7 +21,7 @@ class DesignPage(ctk.CTkFrame):
         self.saved_genes_indices = []
         self.saved_gene_widgets = {}
         self.current_gene_pool_figures = []
-        self.gene_pools_all = []
+        self.gene_pools_previous = []
         self.create_widgets()
 
 
@@ -79,14 +78,19 @@ class DesignPage(ctk.CTkFrame):
     def finish_designing(self):
         #Add the saved designs from this page to the global list in the controller.
         self.controller.add_saved_designs(self.saved_genes)
+        self.current_gene_pool =[]
+        self.gene_pools_previous = []
+        self.selected_gene_indices = []
+        self.saved_genes = []
+        self.saved_genes_indices = []
+        self.saved_gene_widgets = {}
+        self.current_gene_pool_figures = []
         #Then go to the SaveDesignPage.
         self.controller.show_page("SaveDesignPage")
 
     def add_into_pool(self, the_gene):
         if the_gene not in self.current_gene_pool:
-            self.gene_pools_all.remove(self.current_gene_pool)
             self.current_gene_pool.append(the_gene)
-            self.gene_pools_all.append(self.current_gene_pool)
             self.start_designing()
 
     def un_save(self, the_gene):
@@ -103,6 +107,8 @@ class DesignPage(ctk.CTkFrame):
             frame.pack(pady=2.5, padx=2.5, fill='both')
 
             fig = gene.render_design()
+            for ax in fig.get_axes():
+                ax.set_axis_off()
             canvas = FigureCanvasTkAgg(fig, master=frame)
             canvas.draw()
             canvas_widget = canvas.get_tk_widget()
@@ -122,8 +128,8 @@ class DesignPage(ctk.CTkFrame):
         for fig, widget in self.current_gene_pool_figures:
             plt.close(fig)
             widget.destroy()
+        self.gene_pools_previous.append(self.current_gene_pool)
         self.current_gene_pool = initialise_gene_pool()
-        self.gene_pools_all.append(self.current_gene_pool)
         self.selected_gene_indices.clear()
         self.saved_genes_indices.clear()
         self.start_designing()
@@ -136,7 +142,6 @@ class DesignPage(ctk.CTkFrame):
 
         if not self.current_gene_pool:
             self.current_gene_pool = initialise_gene_pool()
-            self.gene_pools_all.append(self.current_gene_pool)
 
         if len(self.current_gene_pool) ==6:
             self.number_of_rows = 3
@@ -155,6 +160,8 @@ class DesignPage(ctk.CTkFrame):
             frame.grid(row=(i // 3) + 5, column=i % 3, padx=10, pady=10, sticky="nsew")
 
             fig = gene.render_design()
+            for ax in fig.get_axes():
+                ax.set_axis_off()
 
             canvas = FigureCanvasTkAgg(fig, master=frame)
             canvas.draw()
@@ -229,9 +236,9 @@ class DesignPage(ctk.CTkFrame):
             widget.destroy()
 
         if self.selected_gene_indices:
+            self.gene_pools_previous.append(self.current_gene_pool)
             selected_genes = [self.current_gene_pool[i] for i in self.selected_gene_indices]
             self.current_gene_pool = breed_new_designs(selected_genes, self.mutation_rate)
-            self.gene_pools_all.append(self.current_gene_pool)
             self.selected_gene_indices.clear()
             self.saved_genes_indices.clear()
             self.start_designing()
@@ -239,18 +246,20 @@ class DesignPage(ctk.CTkFrame):
             messagebox.showwarning("No Genes Selected", "No genes were selected.")
 
     def back_to_prev_designs(self):
-        if len(self.gene_pools_all) < 2:
+        if len(self.gene_pools_previous) < 1:
             messagebox.showwarning("Back Error", "Cannot go back.")
         else:
-            self.current_gene_pool = self.gene_pools_all[-2]
-            self.gene_pools_all = self.gene_pools_all[:-2]
+            self.current_gene_pool = self.gene_pools_previous[-1]
+            self.gene_pools_previous = self.gene_pools_previous[:-1]
             self.start_designing()
 
     def show_design_popup(self, index):
         # Create a popup window
         popup = ctk.CTkToplevel(self)
         popup.title("Design Preview")
-        popup.geometry("600x400")  # Adjust the size as needed
+        popup.geometry("600x400")
+        #Bind event to close the popup when clicking outside
+        popup.bind("<FocusOut>", lambda event: popup.destroy())
 
         # Create a frame for the content
         content_frame = ctk.CTkFrame(popup)
@@ -258,7 +267,9 @@ class DesignPage(ctk.CTkFrame):
 
         # Render a larger version of the design. You might want to adjust gene.render_design()
         # to account for the new size if necessary.
-        large_fig = self.current_gene_pool[index].render_design(scale = 3)
+        large_fig = self.current_gene_pool[index].render_design(scale = 2.5)
+        for ax in large_fig.get_axes():
+            ax.set_axis_off()
         large_canvas = FigureCanvasTkAgg(large_fig, master=content_frame)
         large_canvas.draw()
         large_canvas.get_tk_widget().pack(expand=True, fill="both", padx=5, pady=5)
