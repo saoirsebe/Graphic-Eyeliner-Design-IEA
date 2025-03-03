@@ -67,3 +67,4 @@ class SaveDesignPage(ctk.CTkFrame):
 
         close_button = ctk.CTkButton(content_frame, text="Close", command=popup.destroy)
         close_button.pack(pady=5)
+

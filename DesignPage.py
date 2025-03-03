@@ -78,6 +78,9 @@ class DesignPage(ctk.CTkFrame):
     def finish_designing(self):
         #Add the saved designs from this page to the global list in the controller.
         self.controller.add_saved_designs(self.saved_genes)
+        if self.controller.current_user:
+            self.controller.save_user_designs(self.controller.current_user,
+                                              self.controller.all_saved_designs)
         self.current_gene_pool =[]
         self.gene_pools_previous = []
         self.selected_gene_indices = []

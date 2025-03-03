@@ -4,6 +4,7 @@ from DualScrollableFrame import DualScrollableFrame
 from HomePage import HomePage
 from LoginPage import LoginPage, SignUpPage
 from SavedDesigns import SaveDesignPage
+import pickle
 
 
 class App(ctk.CTk):
@@ -80,7 +81,25 @@ class App(ctk.CTk):
         for design in designs:
             if design not in self.all_saved_designs:
                 self.all_saved_designs.append(design)
-                print("saved designs:",self.all_saved_designs)
+                #print("saved designs:",self.all_saved_designs)
+
+
+    def save_user_designs(self,username, designs):
+        """Save the user's designs to a file using pickle."""
+        filename = f"{username}_designs.pkl"
+        with open(filename, "wb") as f:
+            pickle.dump(designs, f)
+
+    def load_user_designs(self,username):
+        """Load the user's designs from a pickle file."""
+        filename = f"{username}_designs.pkl"
+        try:
+            with open(filename, "rb") as f:
+                designs = pickle.load(f)
+            return designs
+        except FileNotFoundError:
+            return []
+
 
 if __name__ == "__main__":
     app = App()

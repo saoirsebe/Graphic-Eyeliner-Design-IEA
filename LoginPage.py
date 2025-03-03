@@ -71,6 +71,9 @@ class LoginPage(ctk.CTkFrame):
             # Reload users in case new account was added.
             self.users = load_users()
             if username in self.users and check_password(self.users[username], password):
+                self.controller.current_user = username
+                #Load the user's saved designs from file
+                self.controller.all_saved_designs = self.controller.load_user_designs(username)
                 self.username_entry.delete(0, "end")
                 self.password_entry.delete(0, "end")
                 self.controller.show_page("HomePage")

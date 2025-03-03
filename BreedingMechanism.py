@@ -108,7 +108,7 @@ def generate_sufficiently_different_gene(old_gene, new_gene_pool, mutation_rate,
 
     return new_gene
 
-def generate_sufficiently_different_gene_multiple_parents(parents, new_gene_pool, mutation_rate, diff_threshold=1, max_attempts=100):
+def generate_sufficiently_different_gene_multiple_parents(parents, new_gene_pool, mutation_rate, diff_threshold=0.75, max_attempts=100):
     """
     Generates a mutated gene that is at least `diff_threshold` different from all parent genes
     and all genes in new_gene_pool.
