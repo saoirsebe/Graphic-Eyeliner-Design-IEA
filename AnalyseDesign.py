@@ -182,7 +182,7 @@ def wing_angle(node1,node2):
              return 3
     return 0
 
-def analyse_negative(design):
+def analyse_negative(design, to_print = False):
     #print("design:")
     segments = design.get_all_nodes()
     score = 0  # Count how many overlaps there are in this gene
@@ -192,25 +192,40 @@ def analyse_negative(design):
     for i in range(len_segments):
         average_x = np.mean(segments[i].points_array[:, 0])
         if average_x < 10:
+            if to_print:
+                print("average_x < 10")
             score -= 0.5
-        average_y = np.mean(segments[i].points_array[:, 1])
 
+        average_y = np.mean(segments[i].points_array[:, 1])
         if average_y > 150:
+            if to_print:
+                print("average_y > 150")
             score -= 1.5
         elif average_y < 50:
+            if to_print:
+                print("average_y < 50")
             score -= 0.5
 
         eye_overlaps = is_in_eye(segments[i])
+        if to_print:
+            print("eye_overlaps:", eye_overlaps)
         if eye_overlaps>0:
             return min_fitness_score *2
-        else:
-            score-=eye_overlaps
+        #else:
+        #    score-=eye_overlaps
         if is_outside_face_area(segments[i]):
+            if to_print:
+                print("is_outside_face_area")
             return min_fitness_score * 2
+
         if score < min_fitness_score:
             return score
+
         if i!=len_segments-1:
-            score  -= check_design_overlaps(i, segments)
+            segment_score = check_design_overlaps(i, segments)
+            score  -= segment_score
+            if to_print:
+                print(f"for colour: {segments[i].colour} segment_score:", segment_score)
         if score < min_fitness_score:
             return score
     return score
@@ -219,8 +234,8 @@ def analyse_positive(design, to_print = False):
     #segments = design.get_all_nodes()
     score=0
     #If starts with a wing angle
-    for child in design.root.children:
-        score += wing_angle(design.root, child)
+    #for child in design.root.children:
+    #    score += wing_angle(design.root, child)
 
     score += analyse_design_shapes(design, to_print)
     #score = score + (len(segments) * 0.25)  # Higher score for designs with more segments
@@ -311,3 +326,4 @@ def fix_overlaps_shape_overlaps(shape, lines, ax=None):
 
 
     return overlaps
+

@@ -277,27 +277,27 @@ def score_segment_against_eyelid_shape(segment, tolerance=0.1, to_print = False)
 
     # Assign scores
     score = 0
-    if upper_curve_results["overall_similarity"]>0.7:# and upper_curve_results["direction_similarity"]>0.5:
+    if upper_curve_results["overall_similarity"]>0.7 and upper_curve_results["direction_similarity"]>0.7:# and upper_curve_results["direction_similarity"]>0.5:
         if to_print:
             print(f"for colour: {segment.colour} similarity to upper eyelid:", upper_curve_results["overall_similarity"])
             print("upper_curve_results[direction_similarity]", upper_curve_results["direction_similarity"])
             print("upper_curve_results[shape_similarity]", upper_curve_results["shape_similarity"])
         #print("overlap_length:", upper_overlap_length)
-        score+= 2 * math.log(upper_overlap_length) * upper_curve_results["overall_similarity"]
-    elif lower_curve_results["overall_similarity"]>0.7:
+        score+= 1.7 * math.log(upper_overlap_length) * upper_curve_results["overall_similarity"]
+    elif lower_curve_results["overall_similarity"]>0.7 and lower_curve_results["direction_similarity"]>0.7:
         if to_print:
             print(f"for colour: {segment.colour} similarity to lower eyelid:", lower_curve_results["overall_similarity"])
             print("lower_curve_results[direction_similarity]", lower_curve_results["direction_similarity"])
             print("lower_curve_results[shape_similarity]", lower_curve_results["shape_similarity"])
         #print("overlap_length:", lower_overlap_length)
-        score += 2 * math.log(lower_overlap_length) * lower_curve_results["overall_similarity"]
+        score += 1.5 * math.log(lower_overlap_length) * lower_curve_results["overall_similarity"]
     elif upper_curve_results["overall_similarity"] < 0.5 or lower_curve_results["direction_similarity"] < 0.4:
         if to_print:
             print("upper_curve_results[direction_similarity]", upper_curve_results["direction_similarity"])
             print("upper_curve_results[shape_similarity]", upper_curve_results["shape_similarity"])
         seg_array = segment.points_array
         seg_length = math.sqrt((seg_array[-1][0] - seg_array[0][0]) ** 2 + (seg_array[-1][1] - seg_array[0][1]) ** 2)
-        score += -0.035 * seg_length  # Penalty for deviating
+        score += -0.04 * seg_length  # Penalty for deviating
 
     return score
 
@@ -500,10 +500,11 @@ def analyse_design_shapes(design, to_print = False):
                     k *= 0.7
 
                 deviation = abs(shape_size - k * average_x)
-                print("polygon_shape_size =", shape_size)
-                print("shape_x =", average_x)
-                print("shape_y =", average_y)
-                print("deviation =", deviation)
+                if to_print:
+                    print("polygon_shape_size =", shape_size)
+                    print("shape_x =", average_x)
+                    print("shape_y =", average_y)
+                    print("deviation =", deviation)
                 #size_score = math.exp(-2 * deviation)
                 size_score = 1 / (math.log(deviation + 1))
                 #print("size_score: ", size_score)
@@ -535,10 +536,11 @@ def analyse_design_shapes(design, to_print = False):
             if average_y < 70 and average_x < 110:
                 k *= 0.7
             deviation = abs(shape_size - k * average_x)
-            print("star_shape_size =", shape_size)
-            print("star_shape_x =", average_x)
-            print("shape_y =", average_y)
-            print("star_deviation =", deviation)
+            if to_print:
+                print("star_shape_size =", shape_size)
+                print("star_shape_x =", average_x)
+                print("shape_y =", average_y)
+                print("star_deviation =", deviation)
             #size_score = math.exp(-2 * deviation)
             size_score = 1 / (math.log(deviation + 1))
             #print("size_score: ",size_score)
@@ -546,16 +548,18 @@ def analyse_design_shapes(design, to_print = False):
                 size_score = (6//n_of_stars) * size_score
                 if size_score >4:
                     size_score = 4
-                print(f"colour:{segment.colour} star_size_score =", size_score)
+                if to_print:
+                    print(f"colour:{segment.colour} star_size_score =", size_score)
                 total_score += size_score
             elif size_score < 0.3 and average_x<95:
                 negative_score =2 * (math.log(deviation + 1))
-                print(f"colour:{segment.colour} star_size_score =", -negative_score)
+                if to_print:
+                    print(f"colour:{segment.colour} star_size_score =", -negative_score)
                 total_score -= negative_score
             elif size_score >= 0 and average_x > 100:
                 total_score += 1
 
-    penalise_n_of_segments = len(segments) / 6
+    penalise_n_of_segments = len(segments) / 4
     if penalise_n_of_segments < 1:
         # So score doesn't get bigger with smaller n of segments
         penalise_n_of_segments = 1

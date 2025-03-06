@@ -1,3 +1,4 @@
+import asyncio
 from tkinter import messagebox
 
 import customtkinter as ctk
@@ -66,7 +67,7 @@ class DesignPage(ctk.CTkFrame):
         self.scrollable_frame = DualScrollableFrame(self, fg_color="#1A1A1A")
         self.scrollable_frame.grid(row=4, column=0, columnspan=3, rowspan=4, padx=10, pady=10, sticky="nsew")
         self.scrollable_frame.grid_propagate(False)
-        self.scrollable_frame.configure(height=400)
+        self.scrollable_frame.configure(height=500)
 
         #Configure the inner_frame's grid so that its cells expand:
         for col in range(3):

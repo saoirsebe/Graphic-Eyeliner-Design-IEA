@@ -4,7 +4,7 @@ import random
 import numpy as np
 from matplotlib import pyplot as plt
 
-from A import min_fitness_score, SegmentType, StartMode, eye_corner_start
+from A import min_fitness_score, SegmentType, StartMode, eye_corner_start, random_normal_within_range
 from AnalyseDesign import analyse_negative
 from CompareSegments import compare_segments, random_irregular_polygon
 from EyelinerDesign import EyelinerDesign
@@ -29,15 +29,25 @@ def crossover_designs(designs):
                 # Get all nodes in both trees
                 offspring_nodes = offspring.get_all_nodes()
                 gene_to_breed_nodes = gene_to_breed.get_all_nodes()
-
+                len_gene_to_breed_nodes = len(gene_to_breed_nodes)
+                len_offspring_nodes = len(offspring_nodes)
                 # Randomly select a node from each tree (excluding the root to avoid swapping entire trees)
-                if len(gene_to_breed_nodes)>1 and len(offspring_nodes)>1:
-                    offspring_node = random.choice(offspring_nodes[1:])  # Exclude the root of tree1
-                    gene_to_breed_node = random.choice(gene_to_breed_nodes[1:])  # Exclude the root of tree2
+                if len_gene_to_breed_nodes>1 and len_offspring_nodes>1:
+                    offspring_index = random.randrange(1, len_offspring_nodes-1)
+                    offspring_node = offspring_nodes[offspring_index]
+
+                    #Scale that index to the gene_nodes list
+                    scaled_index = int(round(offspring_index / len_offspring_nodes * len_gene_to_breed_nodes))
+                    if scaled_index >= len_gene_to_breed_nodes:
+                        scaled_index = len_gene_to_breed_nodes - 1
+
+                    stddev = len_gene_to_breed_nodes/4
+                    gene_to_breed_index = int(random_normal_within_range(scaled_index,stddev,(1,len_gene_to_breed_nodes-1)))
+                    gene_to_breed_node = gene_to_breed_nodes[gene_to_breed_index] # Exclude the root of tree2
 
                     # Find parents of the selected nodes
                     offspring_parent = offspring.find_the_parent(offspring.root, offspring_node)
-                   # print("offspring_parent children before:", offspring_parent.children)
+                    # print("offspring_parent children before:", offspring_parent.children)
 
                     # Swap subtree with offspring
                     if offspring_parent:
@@ -56,7 +66,7 @@ def produce_correct_crossover(designs):
     new_design = crossover_designs(designs)
     new_design.render_design(show=False)
     overlap_score = analyse_negative(new_design)
-    while overlap_score <= min_fitness_score:
+    while overlap_score < min_fitness_score :
         new_design = crossover_designs(designs)
         new_design.render_design(show=False)
         overlap_score = analyse_negative(new_design)

@@ -49,7 +49,7 @@ class Segment:
         if not colour or colour not in colour_options:
             colour = self.colour
             print("colour == False in mutate_colour")
-        if np.random.random() < mutation_rate:
+        if np.random.random() < mutation_rate/2:
             return np.random.choice(colour_options)
         else:
             return colour

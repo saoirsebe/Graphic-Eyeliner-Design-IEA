@@ -2,6 +2,8 @@
 import customtkinter as ctk
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
+from AnalyseDesign import analyse_negative
+
 
 class SaveDesignPage(ctk.CTkFrame):
     def __init__(self, parent, controller):
@@ -37,6 +39,12 @@ class SaveDesignPage(ctk.CTkFrame):
 
         # Layout each saved design in a grid
         for i, design in enumerate(saved_designs):
+            segments = design.get_all_nodes()
+            for segment in segments:
+                print(f"segment colour {segment.colour} points_ array:", segment.points_array)
+            neg = analyse_negative(design)
+            print("Negative score:",neg)
+
             frame = ctk.CTkFrame(self.scrollable_frame)
             frame.grid(row=i // num_columns, column=i % num_columns, padx=10, pady=10, sticky="nsew")
 

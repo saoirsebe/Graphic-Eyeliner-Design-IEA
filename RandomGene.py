@@ -2,6 +2,8 @@ import random
 from copy import deepcopy
 
 import numpy as np
+import asyncio
+
 from A import *
 from AnalyseDesign import check_design_overlaps, check_overlaps, analyse_negative, \
     analyse_positive, \
@@ -13,18 +15,21 @@ from Segments import create_segment, random_segment, set_prev_end_thickness_arra
 
 
 def check_new_segments_negative_score(design, new_segment):
+    score = 0
     if is_outside_face_area(new_segment):
         return min_fitness_score * 2
     eye_overlaps = is_in_eye(new_segment)
-    if eye_overlaps > 5:
+    if eye_overlaps > 0:
         return min_fitness_score * 2
-    else:
-        score = -eye_overlaps
+
     average_x = np.mean(new_segment.points_array[:, 0])
     if average_x < 10:
         score -= 0.5
+
     average_y = np.mean(new_segment.points_array[:, 1])
-    if average_y > 150:
+    if average_y > 190:
+        return min_fitness_score * 2
+    elif average_y > 150:
         score -= 1.5
     elif average_y < 50:
         score -= 0.5
@@ -150,8 +155,8 @@ def random_gene(gene_n):
             if not success or total_score < min_fitness_score:
                 success = False
 
-        #if analyse_negative(design)<min_fitness_score:
-        #    success = False
+        if analyse_negative(design)<min_fitness_score:
+            success = False
 
         if success:
             #print(f"success {gene_n}")
@@ -159,17 +164,18 @@ def random_gene(gene_n):
             return design
 
 """"""
+"""
 #design = random_gene(1)
-design = random_gene(10)
+design =random_gene(10)
 #design = random_gene(190)
 fig = design.render_design()
 fig.show()
 
-positive_score = analyse_positive(design)
+positive_score = analyse_positive(design, True)
 segments = design.get_all_nodes()
 print("Positive Score:", positive_score)
 
-negative_score = analyse_negative(design)
+negative_score = analyse_negative(design, True)
 print("analyse_negative score:", negative_score)
 print("New design:")
 design2 = design.mutate_design(0.05)
@@ -179,6 +185,7 @@ difference = compare_designs(design, design2)
 print("Difference:", difference)
 fig.show()
 
+"""
 
 
 

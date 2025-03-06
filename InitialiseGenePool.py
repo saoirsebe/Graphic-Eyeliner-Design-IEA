@@ -1,4 +1,7 @@
+import asyncio
 import cProfile
+import multiprocessing
+
 from PIL import Image, ImageTk
 
 import matplotlib.pyplot as plt
@@ -6,14 +9,18 @@ import time
 from A import min_fitness_score, initial_gene_pool_size
 from AnalyseDesign import analyse_negative, analyse_positive
 from RandomGene import random_gene
-
+import concurrent.futures
 
 def initialise_gene_pool():
     start_time = time.time()
-    gene_pool = [random_gene(i) for i in range(initial_gene_pool_size)]
+    #gene_pool = [random_gene(i) for i in range(initial_gene_pool_size)]
+    with multiprocessing.Pool() as pool:
+        gene_pool = pool.map(random_gene, range(initial_gene_pool_size))
+
+
     end_time = time.time()
     elapsed_time = end_time - start_time
-    print(f"Time taken: {elapsed_time:.6f} seconds")
+    print(f"       >>>>    Time taken: {elapsed_time:.6f} seconds  <<<<<<<<     ")
 
     scored_genes = []
     for idx, gene in enumerate(gene_pool):
@@ -24,9 +31,9 @@ def initialise_gene_pool():
         if i >= 6:
             break
         analyse_positive(gene, True)
-        #ned_score = analyse_negative(gene)
+        ned_score = analyse_negative(gene,True)
         print(f"Score: {score}")
-        #print(f"negative Score: {ned_score}")
+        print(f"negative Score: {ned_score}")
 
     gene_pool = [gene for gene, score in scored_genes[:6]]
 

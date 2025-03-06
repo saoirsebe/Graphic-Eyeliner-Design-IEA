@@ -15,6 +15,7 @@ class EyelinerDesign:   #Creates overall design, calculates start points, render
         self.tree_size= 0
         self.image_path = "female-face-drawing-template-one-eye.jpg"
         self.eye_image = Image.open(self.image_path)
+        #self.positive_score = None
 
     def get_all_nodes(self, node=None, nodes_list=None):
         """
@@ -230,7 +231,7 @@ class EyelinerDesign:   #Creates overall design, calculates start points, render
         overlap_score = analyse_negative(new_gene)
         new_positive_score = analyse_positive(new_gene)
         #print("overlap_score", overlap_score)
-        while overlap_score<=min_fitness_score or new_positive_score < old_positive_score -3:
+        while overlap_score < min_fitness_score or new_positive_score < old_positive_score:
             old_gene = copy.deepcopy(self)
             new_gene = old_gene.mutate_self(mutation_rate)
             new_gene.render_design(show=False)
