@@ -11,7 +11,7 @@ from InitialiseGenePool import initialise_gene_pool
 
 class DesignPage(ctk.CTkFrame):
     def __init__(self, parent, controller):
-        super().__init__(parent, width=1200, height=800)
+        super().__init__(parent, width=1250, height=800)
         self.number_of_rows = 3
         self.grid_propagate(False)
         self.controller = controller

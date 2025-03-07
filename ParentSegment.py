@@ -55,7 +55,7 @@ class Segment:
             return colour
 
     def mutate_choice(self, the_value, options, mutation_rate):
-        if np.random.random() < mutation_rate:
+        if np.random.random() < mutation_rate /1.5:
             return np.random.choice(options)
         else:
             return the_value

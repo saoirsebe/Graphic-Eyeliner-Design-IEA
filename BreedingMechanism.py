@@ -118,7 +118,7 @@ def generate_sufficiently_different_gene(old_gene, new_gene_pool, mutation_rate,
 
     return new_gene
 
-def generate_sufficiently_different_gene_multiple_parents(parents, new_gene_pool, mutation_rate, diff_threshold=0.75, max_attempts=100):
+def generate_sufficiently_different_gene_multiple_parents(parents, new_gene_pool, i, mutation_rate,  diff_threshold=0.75, max_attempts=100):
     """
     Generates a mutated gene that is at least `diff_threshold` different from all parent genes
     and all genes in new_gene_pool.
@@ -128,7 +128,11 @@ def generate_sufficiently_different_gene_multiple_parents(parents, new_gene_pool
     attempts = 0
     # Randomly pick some genes to breed
     num_to_select = random.randint(2, len(parents))
-    to_breed = random.sample(parents, num_to_select)
+    base = parents[i% len(parents)]
+    to_breed = [base]
+    available = [p for p in parents if p != base]
+    additional = random.sample(available, num_to_select - 1)
+    to_breed.extend(additional)
     new_design = produce_correct_crossover(to_breed)
     new_mutated_design = new_design.mutate_design(mutation_rate)
 
@@ -165,7 +169,7 @@ def breed_new_designs(selected_genes, mutation_rate):
             new_gene_pool.append(new_design)
     else:
         for i in range(6):
-            new_design = generate_sufficiently_different_gene_multiple_parents(selected_genes, new_gene_pool, mutation_rate)
+            new_design = generate_sufficiently_different_gene_multiple_parents(selected_genes, new_gene_pool, i, mutation_rate)
 
             new_gene_pool.append(new_design)
 
