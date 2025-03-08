@@ -77,6 +77,8 @@ class LoginPage(ctk.CTkFrame):
                 self.username_entry.delete(0, "end")
                 self.password_entry.delete(0, "end")
                 self.controller.show_page("HomePage")
+                self.controller.pages["HomePage"].show_recent_designs()
+
             else:
                 messagebox.showerror("Login Failed", "Invalid username or password")
                 self.password_entry.delete(0, "end")

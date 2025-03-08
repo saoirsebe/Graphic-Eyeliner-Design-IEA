@@ -38,7 +38,7 @@ class App(ctk.CTk):
 
         self.pages = {}  # Dictionary to store each page's dual scrollable frame
 
-        for PageClass in (HomePage, DesignPage, SignUpPage, LoginPage):
+        for PageClass in (DesignPage, SignUpPage, LoginPage):
             page_name = PageClass.__name__
             dual_frame = DualScrollableFrame(self.container, fg_color="#2A2A2A")
             dual_frame.grid(row=0, column=0, sticky="nsew")
@@ -52,10 +52,14 @@ class App(ctk.CTk):
 
             self.pages[page_name] = dual_frame
 
-        # For SaveDesignPage, instantiate it directly:
+        # For SaveDesignPage and HomePage, instantiate it directly:
         save_design_page = SaveDesignPage(parent=self.container, controller=self)
         save_design_page.grid(row=0, column=0, sticky="nsew")
         self.pages["SaveDesignPage"] = save_design_page
+
+        home_page = HomePage(parent=self.container, controller=self)
+        home_page.grid(row=0, column=0, sticky="nsew")
+        self.pages["HomePage"] = home_page
 
         self.show_page("DesignPage")
         # Optionally bind container resize event to update page size if needed.
@@ -82,7 +86,6 @@ class App(ctk.CTk):
             if design not in self.all_saved_designs:
                 self.all_saved_designs.append(design)
                 #print("saved designs:",self.all_saved_designs)
-
 
     def save_user_designs(self,username, designs):
         """Save the user's designs to a file using pickle."""
