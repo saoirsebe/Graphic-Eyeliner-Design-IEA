@@ -30,7 +30,7 @@ class SaveDesignPage(ctk.CTkFrame):
             text="Back to Homepage",
             width=200,
             height=40,
-            command=lambda: controller.show_page("HomePage"),
+            command=lambda: self.go_home,
             fg_color="#3B8ED0",
             hover_color="#1C6EA4",
             font=("Helvetica", 14)
@@ -51,6 +51,10 @@ class SaveDesignPage(ctk.CTkFrame):
 
         # Call method to display designs
         self.update_designs()
+
+    def go_home(self):
+        self.controller.pages["HomePage"].show_recent_designs()
+        self.controller.show_page("HomePage")
 
     def update_designs(self):
         """Clears and repopulates the scrollable frame with all saved designs."""

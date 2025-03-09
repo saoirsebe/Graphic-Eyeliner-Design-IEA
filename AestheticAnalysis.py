@@ -32,7 +32,7 @@ def resample_curve(points, num_resize_val):
     interp_y = interp1d(cumulative_distances, points[:, 1], kind='linear')
     return np.vstack((interp_x(uniform_distances), interp_y(uniform_distances))).T
 
-def resample_directions_or_curvatures(values, points, num_resize_val):
+def resample_curvatures_old(values, points, num_resize_val):
     """Resample directions or curvatures arrays based on the distance between points:
         if distance is < threshold between consecutive points then calculate distance between point and next point with distance > threshold instead."""
     # Compute distances between successive points
@@ -75,11 +75,65 @@ def resample_directions_or_curvatures(values, points, num_resize_val):
 
     return interp_values(uniform_distances)
 
+def resample_curvatures(curvature, num_points):
+    # Original indices normalized between 0 and 1
+    original_indices = np.linspace(0, 1, num=len(curvature))
+    new_indices = np.linspace(0, 1, num=num_points)
+    return np.interp(new_indices, original_indices, curvature)
+
+
 # Compute curvature for both sets of points
-def calculate_curvature(points):
+def calculate_curvature_old(points):
     vectors = np.diff(points, axis=0)
     angles = np.arctan2(vectors[:, 1], vectors[:, 0])
     curvatures = np.diff(angles)
+    return curvatures
+
+
+def calculate_curvature(points, threshold=0.0001):
+    """
+    Calculate curvature for a sequence of points.
+    For each interior point, find a previous and next point that are
+    sufficiently far away (distance > threshold). If no such point is found,
+    fall back to the immediate neighbor.
+
+    Returns an array of curvature values of length len(points)-2.
+    """
+    n = len(points)
+    if n < 3:
+        return np.array([])
+
+    curvatures = np.empty(n - 2)
+    for i in range(1, n - 1):
+        # Find previous index:
+        prev_idx = i - 1
+        while prev_idx >= 0 and np.linalg.norm(points[i] - points[prev_idx]) <= threshold:
+            prev_idx -= 1
+        if prev_idx < 0:
+            prev_idx = i - 1  # fallback to immediate previous
+
+        # Find next index:
+        next_idx = i + 1
+        while next_idx < n and np.linalg.norm(points[next_idx] - points[i]) <= threshold:
+            next_idx += 1
+        if next_idx >= n:
+            next_idx = i + 1  # fallback to immediate next
+
+        # Compute vectors from the chosen neighbors to the current point
+        v1 = points[i] - points[prev_idx]
+        v2 = points[next_idx] - points[i]
+        angle1 = np.arctan2(v1[1], v1[0])
+        angle2 = np.arctan2(v2[1], v2[0])
+        curvature = angle2 - angle1
+
+        # Normalize curvature to be between -pi and pi
+        if curvature > np.pi:
+            curvature -= 2 * np.pi
+        elif curvature < -np.pi:
+            curvature += 2 * np.pi
+
+        curvatures[i - 1] = curvature
+
     return curvatures
 
 def get_overlapping_points(curve1, curve2, tolerance=0.1):
@@ -156,10 +210,8 @@ def compair_overlapping_sections(overlapping_points_segment, overlapping_points_
         print("overlapping_points_bezier:", overlapping_points_segment)
         shape_similarity = 0
     else:
-        bezier_curvature_resampled = resample_directions_or_curvatures(bezier_curvature, overlapping_points_segment,
-                                                                       num_resize)
-        eye_curvature_resampled = resample_directions_or_curvatures(eye_curvature, overlapping_points_eye_shape,
-                                                                    num_resize)
+        bezier_curvature_resampled = resample_curvatures(bezier_curvature,num_resize)
+        eye_curvature_resampled = resample_curvatures(eye_curvature,num_resize)
         # shape_similarity = 1 - np.mean(np.abs(bezier_curvature - eye_curvature))
         shape_similarity = 1 - np.sqrt(np.mean((bezier_curvature_resampled - eye_curvature_resampled) ** 2))
 

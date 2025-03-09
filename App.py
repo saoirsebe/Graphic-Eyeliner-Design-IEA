@@ -10,21 +10,25 @@ import pickle
 class App(ctk.CTk):
     def __init__(self):
         super().__init__()
-        ctk.set_appearance_mode("dark")  # Options: "System", "Dark", "Light"
-        ctk.set_default_color_theme("blue")  # Options: "blue", "green", "dark-blue"
+        # Use a light appearance mode and a built-in color theme.
+        ctk.set_appearance_mode("light")   # Options: "system", "light", "dark"
+        ctk.set_default_color_theme("blue")  # or "green", "dark-blue", etc.
 
         self.title("Eyeliner Design App")
         self.geometry("1200x600")
-        self.configure(bg="#1E1E1E")
 
-        #Global list to store all saved designs from all generations
+        # Give the main window a pastel background (or white if you prefer).
+        self.configure(bg="#F9FAFB")  # Light pastel grayish background
+
+        # Global list to store all saved designs from all generations
         self.all_saved_designs = []
 
         # Create a container frame that fills the entire window
-        self.container = ctk.CTkFrame(self)
-        self.container.pack(fill="both", expand=True, padx=10, pady=10)
+        # Use a light pastel background and rounded corners for a modern aesthetic.
+        self.container = ctk.CTkFrame(self, fg_color="#F9FAFB", corner_radius=0)
+        self.container.pack(fill="both", expand=True)
 
-        # Use grid inside container so pages can expand dynamically.
+        # Use grid inside the container so pages can expand dynamically
         self.container.grid_rowconfigure(0, weight=1)
         self.container.grid_columnconfigure(0, weight=1)
 
@@ -36,15 +40,22 @@ class App(ctk.CTk):
             "SaveDesignPage": SaveDesignPage,
         }
 
-        self.pages = {}  # Dictionary to store each page's dual scrollable frame
+        self.pages = {}  # Dictionary to store each page widget (or DualScrollableFrame)
 
+        # Create pages that use DualScrollableFrame
         for PageClass in (DesignPage, SignUpPage, LoginPage):
             page_name = PageClass.__name__
-            dual_frame = DualScrollableFrame(self.container, fg_color="#2A2A2A")
+            # Create a pastel, rounded DualScrollableFrame
+            dual_frame = DualScrollableFrame(
+                self.container,
+                fg_color="#FFFFFF",      # White background for the outer frame
+                corner_radius=15
+            )
             dual_frame.grid(row=0, column=0, sticky="nsew")
             dual_frame.grid_rowconfigure(0, weight=1)
             dual_frame.grid_columnconfigure(0, weight=1)
 
+            # Create the actual page within the dual_frame's inner_frame
             page = PageClass(parent=dual_frame.inner_frame, controller=self)
             page.grid(row=0, column=0, sticky="nsew")
             page.grid_rowconfigure(0, weight=1)
@@ -52,7 +63,7 @@ class App(ctk.CTk):
 
             self.pages[page_name] = dual_frame
 
-        # For SaveDesignPage and HomePage, instantiate it directly:
+        # Create pages that do NOT use DualScrollableFrame
         save_design_page = SaveDesignPage(parent=self.container, controller=self)
         save_design_page.grid(row=0, column=0, sticky="nsew")
         self.pages["SaveDesignPage"] = save_design_page
@@ -61,22 +72,27 @@ class App(ctk.CTk):
         home_page.grid(row=0, column=0, sticky="nsew")
         self.pages["HomePage"] = home_page
 
-        self.show_page("DesignPage")
-        # Optionally bind container resize event to update page size if needed.
+        # Initially show the LoginPage
+        self.show_page("LoginPage")
+
+        # Optionally bind container resize event to update page size if needed
         self.container.bind("<Configure>", self._on_container_configure)
 
     def _on_container_configure(self, event):
-        # When container resizes, force each page's frame to use the new size.
+        # When the container resizes, force each page's frame to use the new size
         for frame in self.pages.values():
             frame.configure(width=event.width, height=event.height)
 
     def show_page(self, page_name):
         """Show the selected page by hiding all others."""
+        # Hide all pages
         for widget in self.container.winfo_children():
             widget.grid_forget()
-        for page in self.pages.values():
-            page.grid_remove()  # or pack_forget() depending on your layout
+
+        # Then grid only the requested page
         self.pages[page_name].grid(row=0, column=0, sticky="nsew")
+
+        # If SaveDesignPage is shown, update designs
         if page_name == "SaveDesignPage" and hasattr(self.pages[page_name], "update_designs"):
             self.pages[page_name].update_designs()
 
@@ -85,15 +101,14 @@ class App(ctk.CTk):
         for design in designs:
             if design not in self.all_saved_designs:
                 self.all_saved_designs.append(design)
-                #print("saved designs:",self.all_saved_designs)
 
-    def save_user_designs(self,username, designs):
+    def save_user_designs(self, username, designs):
         """Save the user's designs to a file using pickle."""
         filename = f"{username}_designs.pkl"
         with open(filename, "wb") as f:
             pickle.dump(designs, f)
 
-    def load_user_designs(self,username):
+    def load_user_designs(self, username):
         """Load the user's designs from a pickle file."""
         filename = f"{username}_designs.pkl"
         try:

@@ -31,18 +31,25 @@ def crossover_designs(designs):
                 gene_to_breed_nodes = gene_to_breed.get_all_nodes()
                 len_gene_to_breed_nodes = len(gene_to_breed_nodes)
                 len_offspring_nodes = len(offspring_nodes)
+
                 # Randomly select a node from each tree (excluding the root to avoid swapping entire trees)
                 if len_gene_to_breed_nodes>1 and len_offspring_nodes>1:
-                    offspring_index = random.randrange(1, len_offspring_nodes-1)
+                    if len_offspring_nodes ==2:
+                        offspring_index = 1
+                    else:
+                        offspring_index = random.randrange(1, len_offspring_nodes-1)
                     offspring_node = offspring_nodes[offspring_index]
 
-                    #Scale that index to the gene_nodes list
-                    scaled_index = int(round(offspring_index / len_offspring_nodes * len_gene_to_breed_nodes))
-                    if scaled_index >= len_gene_to_breed_nodes:
-                        scaled_index = len_gene_to_breed_nodes - 1
+                    if len_gene_to_breed_nodes ==2:
+                        gene_to_breed_index = 1
+                    else:
+                        #Scale that index to the gene_nodes list
+                        scaled_index = int(round(offspring_index / len_offspring_nodes * len_gene_to_breed_nodes))
+                        if scaled_index >= len_gene_to_breed_nodes:
+                            scaled_index = len_gene_to_breed_nodes - 1
 
-                    stddev = len_gene_to_breed_nodes/4
-                    gene_to_breed_index = int(random_normal_within_range(scaled_index,stddev,(1,len_gene_to_breed_nodes-1)))
+                        stddev = len_gene_to_breed_nodes/4
+                        gene_to_breed_index = int(random_normal_within_range(scaled_index,stddev,(1,len_gene_to_breed_nodes-1)))
                     gene_to_breed_node = gene_to_breed_nodes[gene_to_breed_index] # Exclude the root of tree2
 
                     # Find parents of the selected nodes

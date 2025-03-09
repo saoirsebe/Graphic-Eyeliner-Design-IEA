@@ -90,6 +90,61 @@ class EyelinerDesign:   #Creates overall design, calculates start points, render
                 return result
         return None
 
+    def swap_subtrees(self):
+        # Get all nodes in both trees
+        all_nodes = self.get_all_nodes()
+        len_nodes = len(all_nodes)
+        # Randomly select a node from each tree (excluding the root to avoid swapping entire trees)
+        if len_nodes > 2:
+            if len_nodes ==3:
+                to_swap_1_index =1
+                to_swap_2_index =2
+            else:
+                to_swap_1_index = random.randrange(1, len_nodes - 1)
+                to_swap_2_index = random.randrange(1, len_nodes - 1)
+                while to_swap_1_index == to_swap_2_index:
+                    to_swap_2_index = random.randrange(1, len_nodes - 1)
+
+            to_swap_1_node = all_nodes[to_swap_1_index]
+            to_swap_2_node = all_nodes[to_swap_2_index]
+
+            # Find parents of the selected nodes
+            parent_1 = self.find_the_parent(self.root, to_swap_1_node)
+            parent_2 = self.find_the_parent(self.root, to_swap_2_node)
+
+            # Swap subtree with offspring
+            if parent_1 and parent_2:
+                is_2_descendent_of_1 = self.is_descendant(to_swap_1_node, to_swap_2_node)
+                is_1_descendent_of_2 = self.is_descendant(to_swap_2_node, to_swap_1_node)
+                if not is_2_descendent_of_1 and not is_1_descendent_of_2:
+                    # Remove both nodes from their respective parents.
+                    parent_1.remove_child_segment(to_swap_1_node)
+                    parent_2.remove_child_segment(to_swap_2_node)
+                    # Swap: add each node into the other's parent's children.
+                    parent_1.add_child_segment(to_swap_2_node)
+                    parent_2.add_child_segment(to_swap_1_node)
+
+                # Case 2: to_swap_1_node is an ancestor of to_swap_2_node.
+                elif is_2_descendent_of_1:
+                    # Remove both nodes
+                    parent_1.remove_child_segment(to_swap_1_node)
+                    parent_2.remove_child_segment(to_swap_2_node)
+                    # Insert to_swap_2_node into to_swap_1_node's position (as a child of parent_1).
+                    parent_1.add_child_segment(to_swap_2_node)
+                    # Attach to_swap_1_node as a child of to_swap_2_node.
+                    to_swap_2_node.add_child_segment(to_swap_1_node)
+
+                # Case 3: to_swap_2_node is an ancestor of to_swap_1_node.
+                elif is_1_descendent_of_2:
+                    # Remove both nodes
+                    parent_2.remove_child_segment(to_swap_2_node)
+                    parent_1.remove_child_segment(to_swap_1_node)
+                    parent_2.add_child_segment(to_swap_1_node)
+                    to_swap_1_node.add_child_segment(to_swap_2_node)
+            else:
+                print("no offspring_parent")
+
+
     def move_subtree(self, subtree_root):
         """
         Randomly moves a subtree to a new location in the tree.
@@ -195,9 +250,13 @@ class EyelinerDesign:   #Creates overall design, calculates start points, render
 
             nodes_list = self.get_all_nodes()
 
-        #Random chance of swapping a subtree position:
+        #Random chance of changing a subtree position:
         if np.random.random() < mutation_rate and len(nodes_list)>2:
             self.move_subtree(random.choice(nodes_list[1:]))
+            nodes_list = self.get_all_nodes()
+        #Or random chance of swapping 2 subtrees:
+        elif np.random.random() < mutation_rate and len(nodes_list)>2:
+            self.swap_subtrees()
             nodes_list = self.get_all_nodes()
 
         node = self.root

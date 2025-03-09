@@ -51,7 +51,7 @@ class DesignPage(ctk.CTkFrame):
         # Navigation Buttons
         self.back_button = ctk.CTkButton(
             self, text="Back to Home",
-            command=lambda: self.controller.show_page("HomePage"),
+            command=lambda: self.go_home,
             font=("Helvetica", 14),
             fg_color="#3B8ED0",
             hover_color="#1C6EA4"
@@ -100,7 +100,14 @@ class DesignPage(ctk.CTkFrame):
         for row in range(4, 4 + self.number_of_rows):
             self.scrollable_frame.inner_frame.grid_rowconfigure(row, weight=1)
 
+    def go_home(self):
+        self.controller.pages["HomePage"].show_recent_designs()
+        self.controller.show_page("HomePage")
+
     def finish_designing(self):
+        for fig, widget in self.current_gene_pool_figures:
+            plt.close(fig)
+            widget.destroy()
         # Add the saved designs from this page to the global list in the controller.
         self.controller.add_saved_designs(self.saved_genes)
         if self.controller.current_user:
