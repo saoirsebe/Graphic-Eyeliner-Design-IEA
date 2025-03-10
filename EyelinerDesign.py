@@ -281,7 +281,7 @@ class EyelinerDesign:   #Creates overall design, calculates start points, render
 
         return self
 
-    def mutate_design(self,mutation_rate=0.1):
+    def mutate_design_positive_check(self,mutation_rate=0.1):
         old_gene = copy.deepcopy(self)
         old_positive_score = analyse_positive(old_gene)
 
@@ -296,6 +296,21 @@ class EyelinerDesign:   #Creates overall design, calculates start points, render
             new_gene.render_design(show=False)
             overlap_score = analyse_negative(new_gene)
             new_positive_score = analyse_positive(new_gene)
+
+        return new_gene
+
+    def mutate_design(self,mutation_rate=0.1):
+        old_gene = copy.deepcopy(self)
+
+        new_gene= old_gene.mutate_self(mutation_rate)
+        new_gene.render_design(show=False)
+        overlap_score = analyse_negative(new_gene)
+        #print("overlap_score", overlap_score)
+        while overlap_score < min_fitness_score:
+            old_gene = copy.deepcopy(self)
+            new_gene = old_gene.mutate_self(mutation_rate)
+            new_gene.render_design(show=False)
+            overlap_score = analyse_negative(new_gene)
 
         return new_gene
 

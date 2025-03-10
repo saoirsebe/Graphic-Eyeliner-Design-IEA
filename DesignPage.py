@@ -6,7 +6,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import matplotlib.pyplot as plt
 
 from DualScrollableFrame import DualScrollableFrame
-from BreedingMechanism import breed_new_designs
+from BreedingMechanism import breed_new_designs, breed_new_designs_with_auto_selection
 from InitialiseGenePool import initialise_gene_pool
 
 class DesignPage(ctk.CTkFrame):
@@ -94,11 +94,11 @@ class DesignPage(ctk.CTkFrame):
         self.scrollable_frame.grid_propagate(False)
         self.scrollable_frame.configure(height=500)
         # Configure inner frame grid so cells expand evenly.
-        for col in range(3):
-            self.scrollable_frame.inner_frame.grid_columnconfigure(col, weight=1)
+        #for col in range(3):
+        #    self.scrollable_frame.inner_frame.grid_columnconfigure(col, weight=1)
 
-        for row in range(4, 4 + self.number_of_rows):
-            self.scrollable_frame.inner_frame.grid_rowconfigure(row, weight=1)
+        #for row in range(4, 4 + self.number_of_rows):
+        #    self.scrollable_frame.inner_frame.grid_rowconfigure(row, weight=1)
 
     def go_home(self):
         self.controller.pages["HomePage"].show_recent_designs()
@@ -320,7 +320,8 @@ class DesignPage(ctk.CTkFrame):
         if self.selected_gene_indices:
             self.gene_pools_previous.append(self.current_gene_pool)
             selected_genes = [self.current_gene_pool[i] for i in self.selected_gene_indices]
-            self.current_gene_pool = breed_new_designs(selected_genes, self.mutation_rate)
+            #self.current_gene_pool = breed_new_designs(selected_genes, self.mutation_rate)
+            self.current_gene_pool = breed_new_designs_with_auto_selection(selected_genes, self.mutation_rate)
             self.selected_gene_indices.clear()
             self.saved_genes_indices.clear()
             self.start_designing()
