@@ -1,12 +1,13 @@
 import copy
 import random
 from conda.common.configuration import raise_errors
-from AnalyseDesign import analyse_negative, analyse_positive, check_overlaps, fix_overlaps_shape_overlaps, check_segment_overlaps, check_design_overlaps, is_outside_face_area
+from AnalyseDesign import analyse_negative, analyse_positive, check_overlaps, fix_overlaps_shape_overlaps, check_segment_overlaps, check_design_overlaps, is_outside_face_area, check_new_segments_negative_score
 from Segments import *
 import cProfile
 from IrregularPolygonSegment import are_points_collinear
 from PIL import Image, ImageTk
 from A import set_prev_array
+
 
 class EyelinerDesign:   #Creates overall design, calculates start points, renders each segment by calling their render function
     def __init__(self, root_node):
@@ -288,12 +289,12 @@ class EyelinerDesign:   #Creates overall design, calculates start points, render
             new_segment.render(new_parent_array, new_parent_angle, new_parent_colour, prev_end_thickness_array)
             #Ensure new segment doesnt overlap with other segments (try 12 times):
             regen_count = 0
-            new_segment_score = check_new_segments_negative_score(design, new_segment)
+            new_segment_score = check_new_segments_negative_score(self, new_segment)
             while new_segment_score < min_fitness_score and regen_count < node_re_gen_max:
                 new_segment = random_segment(prev_colour=new_parent_colour)
                 new_segment.render(new_parent_array, new_parent_angle, new_parent_colour, prev_end_thickness_array)
                 regen_count += 1
-                new_segment_score = check_new_segments_negative_score(design, new_segment)
+                new_segment_score = check_new_segments_negative_score(self, new_segment)
             if regen_count < node_re_gen_max:
                 if len_nodes_list>1:
                     self.add_segment_at(new_segment, new_parent_int, is_branch)

@@ -30,7 +30,6 @@ class DesignPage(ctk.CTkFrame):
         # Configure columns (6 columns for balanced layout)
         for i in range(6):
             self.grid_columnconfigure(i, weight=1)
-        self.grid_rowconfigure(4, weight=3)
         self.columnconfigure(0, weight=3)
         self.grid_rowconfigure(0, weight=0)  # header
         self.grid_rowconfigure(1, weight=0)  # navigation buttons
@@ -86,19 +85,23 @@ class DesignPage(ctk.CTkFrame):
 
         # ---------- Main Design Pool (Scrollable Area) ----------
         # Outer frame for styling
-        self.outer_scroll_frame = ctk.CTkFrame(self, fg_color="#E8E8E8", corner_radius=15)
+        self.outer_scroll_frame = ctk.CTkFrame(self, height=520, fg_color="#E8E8E8", corner_radius=15)
         self.outer_scroll_frame.grid(row=4, column=0, columnspan=3, rowspan=4, padx=10, pady=10, sticky="nsew")
+        self.outer_scroll_frame.grid_propagate(False)
         # DualScrollableFrame inside with a white background
         self.scrollable_frame = DualScrollableFrame(self, fg_color="#FFFFFF")
-        self.scrollable_frame.grid(row=4, column=0, columnspan=3, rowspan=4, padx=10, pady=10, sticky="nsew")
+        self.scrollable_frame.grid(row=4, column=0, columnspan=3, rowspan=4, padx=5, pady=5, sticky="nsew")
         self.scrollable_frame.grid_propagate(False)
         self.scrollable_frame.configure(height=500)
-        # Configure inner frame grid so cells expand evenly.
-        #for col in range(3):
-        #    self.scrollable_frame.inner_frame.grid_columnconfigure(col, weight=1)
+        self.rowconfigure(4, minsize=500)
 
-        #for row in range(4, 4 + self.number_of_rows):
-        #    self.scrollable_frame.inner_frame.grid_rowconfigure(row, weight=1)
+        #Configure the inner_frame's grid so that its cells expand:
+        for col in range(3):
+            self.scrollable_frame.inner_frame.grid_columnconfigure(col, weight=1)
+
+        for row in range(4, 4 + self.number_of_rows):
+            self.scrollable_frame.inner_frame.grid_rowconfigure(row, weight=1)
+
 
     def go_home(self):
         self.controller.pages["HomePage"].show_recent_designs()
@@ -151,7 +154,7 @@ class DesignPage(ctk.CTkFrame):
             into_pool_button = ctk.CTkButton(
                 frame, text="Add back to pool",
                 command=lambda g=gene: self.add_into_pool(g),
-                font=("Helvetica", 12),
+                font=("Helvetica", 10),
                 fg_color="#3B8ED0",
                 hover_color="#1C6EA4"
             )
@@ -159,7 +162,7 @@ class DesignPage(ctk.CTkFrame):
             un_save_button = ctk.CTkButton(
                 frame, text="Un-save",
                 command=lambda g=gene: self.un_save(g),
-                font=("Helvetica", 12),
+                font=("Helvetica", 10),
                 fg_color="#D9534F",
                 hover_color="#C9302C"
             )
@@ -200,7 +203,7 @@ class DesignPage(ctk.CTkFrame):
         # Display designs in the scrollable gene pool area
         for i, gene in enumerate(self.current_gene_pool):
             frame = ctk.CTkFrame(self.scrollable_frame.inner_frame, fg_color="#FFFFFF", corner_radius=10)
-            frame.grid(row=(i // 3) + 5, column=i % 3, padx=10, pady=10, sticky="nsew")
+            frame.grid(row=(i // 3) + 5, column=i % 3, padx=2, pady=2, sticky="nsew")
 
             fig = gene.render_design()
             for ax in fig.get_axes():
@@ -209,21 +212,21 @@ class DesignPage(ctk.CTkFrame):
             canvas = FigureCanvasTkAgg(fig, master=frame)
             canvas.draw()
             canvas_widget = canvas.get_tk_widget()
-            canvas_widget.pack(expand=True, fill="both", padx=2.5, pady=2.5)
+            canvas_widget.pack(expand=True, fill="both", padx=2, pady=2)
             self.current_gene_pool_figures.append((fig, frame))
 
             # Bind click event to show a larger preview
             canvas_widget.bind("<Button-1>", lambda event, index=i: self.show_design_popup(index))
 
             toggle_button = ctk.CTkButton(
-                frame, text="Toggle Selection", font=("Helvetica", 12),
+                frame, text="Select design", font=("Helvetica", 11),width=90, height=25,
                 fg_color="gray", hover_color="#888888"
             )
             toggle_button.configure(command=lambda index=i, b=toggle_button: self.toggle_gene(index, b))
             toggle_button.pack(pady=2)
 
             save_button = ctk.CTkButton(
-                frame, text="Save", font=("Helvetica", 12),
+                frame, text="Save", font=("Helvetica", 11), width=90, height=25,
                 fg_color="gray", hover_color="#888888"
             )
             save_button.configure(command=lambda index=i, b=save_button: self.save_gene(index, b))

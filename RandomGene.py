@@ -2,40 +2,12 @@
 from A import *
 from AnalyseDesign import check_design_overlaps, check_overlaps, analyse_negative, \
     analyse_positive, \
-    check_segment_overlaps, is_in_eye, is_outside_face_area
+    check_segment_overlaps, is_in_eye, is_outside_face_area, check_new_segments_negative_score
 from BreedingMechanism import compare_designs
 from EyelinerDesign import EyelinerDesign
 from Segments import create_segment, random_segment, set_prev_end_thickness_array, make_eyeliner_wing, \
     random_segment_colour
 
-
-def check_new_segments_negative_score(design, new_segment):
-    score = 0
-    if is_outside_face_area(new_segment):
-        return min_fitness_score * 2
-    eye_overlaps = is_in_eye(new_segment)
-    if eye_overlaps > 0:
-        return min_fitness_score * 2
-
-    average_x = np.mean(new_segment.points_array[:, 0])
-    if average_x < 10:
-        score -= 0.5
-
-    average_y = np.mean(new_segment.points_array[:, 1])
-    if average_y > 190:
-        return min_fitness_score * 2
-    elif average_y > 150:
-        score -= 1.5
-    elif average_y < 50:
-        score -= 0.5
-
-    current_segments = design.get_all_nodes()
-    for segment in current_segments:
-        score -= check_segment_overlaps(segment,new_segment)
-        if score < min_fitness_score:
-            return score
-
-    return score
 
 def n_of_children_decreasing_likelihood(segment_number, branch_length, max_segments, base_mean, std_dev, value_range):
     """
@@ -68,7 +40,6 @@ def n_of_children_decreasing_likelihood(segment_number, branch_length, max_segme
 
     # Generate the number of children
     return round(random_normal_within_range(mean, std_dev, value_range))
-
 
 
 def random_gene_node(design, parent, prev_colour, segment_number=1, depth=0):

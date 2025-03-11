@@ -61,6 +61,33 @@ def any_points_inside_filled_polygon(points, polygon):
     # Check for any intersection
     return len(points_set & polygon_set) > 0
 
+def check_new_segments_negative_score(design, new_segment):
+    score = 0
+    if is_outside_face_area(new_segment):
+        return min_fitness_score * 2
+    eye_overlaps = is_in_eye(new_segment)
+    if eye_overlaps > 0:
+        return min_fitness_score * 2
+
+    average_x = np.mean(new_segment.points_array[:, 0])
+    if average_x < 10:
+        score -= 0.5
+
+    average_y = np.mean(new_segment.points_array[:, 1])
+    if average_y > 190:
+        return min_fitness_score * 2
+    elif average_y > 150:
+        score -= 1.5
+    elif average_y < 50:
+        score -= 0.5
+
+    current_segments = design.get_all_nodes()
+    for segment in current_segments:
+        score -= check_segment_overlaps(segment,new_segment)
+        if score < min_fitness_score:
+            return score
+
+    return score
 
 def check_segment_overlaps(segment1, segment2, segment1_tree = None):
     segment2_array = segment2.points_array
@@ -84,7 +111,7 @@ def check_segment_overlaps(segment1, segment2, segment1_tree = None):
     #else:
     #    overlaps = 0
     inside_shape = False
-    if segment1.segment_type == SegmentType.STAR or segment2.segment_type == SegmentType.IRREGULAR_POLYGON:
+    if segment1.segment_type == SegmentType.STAR or segment1.segment_type == SegmentType.IRREGULAR_POLYGON:
         inside_shape = any_points_inside_filled_polygon(segment2_array, segment1_array)
     elif segment2.segment_type == SegmentType.STAR or segment2.segment_type == SegmentType.IRREGULAR_POLYGON:
         inside_shape = any_points_inside_filled_polygon(segment1_array,segment2_array)
