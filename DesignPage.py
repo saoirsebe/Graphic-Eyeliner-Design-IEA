@@ -51,7 +51,7 @@ class DesignPage(ctk.CTkFrame):
         # Navigation Buttons
         self.back_button = ctk.CTkButton(
             self, text="Back to Home",
-            command=lambda: self.go_home,
+            command=lambda: self.go_home(),
             font=("Helvetica", 14),
             fg_color="#3B8ED0",
             hover_color="#1C6EA4"

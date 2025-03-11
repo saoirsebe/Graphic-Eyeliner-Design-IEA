@@ -4,6 +4,8 @@ import pickle
 import customtkinter as ctk
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
+from AnalyseDesign import analyse_positive, analyse_negative
+
 
 class SaveDesignPage(ctk.CTkFrame):
     def __init__(self, parent, controller):
@@ -30,7 +32,7 @@ class SaveDesignPage(ctk.CTkFrame):
             text="Back to Homepage",
             width=200,
             height=40,
-            command=lambda: self.go_home,
+            command=lambda: self.go_home(),
             fg_color="#3B8ED0",
             hover_color="#1C6EA4",
             font=("Helvetica", 14)
@@ -56,6 +58,7 @@ class SaveDesignPage(ctk.CTkFrame):
         self.controller.pages["HomePage"].show_recent_designs()
         self.controller.show_page("HomePage")
 
+
     def update_designs(self):
         """Clears and repopulates the scrollable frame with all saved designs."""
         for widget in self.scrollable_frame.winfo_children():
@@ -72,6 +75,11 @@ class SaveDesignPage(ctk.CTkFrame):
             fig = design.render_design(scale=1)
             for ax in fig.get_axes():
                 ax.set_axis_off()
+
+            positive_score = analyse_positive(design, True)
+            negative_score = analyse_negative(design, True)
+            print(f"analyse_positive: {positive_score}")
+            print(f"negative Score: {negative_score}")
 
             canvas = FigureCanvasTkAgg(fig, master=design_frame)
             canvas.draw()

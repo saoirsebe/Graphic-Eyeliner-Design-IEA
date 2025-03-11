@@ -1,8 +1,3 @@
-import random
-from copy import deepcopy
-
-import numpy as np
-import asyncio
 
 from A import *
 from AnalyseDesign import check_design_overlaps, check_overlaps, analyse_negative, \
@@ -74,34 +69,24 @@ def n_of_children_decreasing_likelihood(segment_number, branch_length, max_segme
     # Generate the number of children
     return round(random_normal_within_range(mean, std_dev, value_range))
 
+
+
 def random_gene_node(design, parent, prev_colour, segment_number=1, depth=0):
     #Create new node, render, check overlaps with the other segments in design, if new_node overlaps more than min_fitness_score then re-generate random new_node
     new_node = random_segment(prev_colour=prev_colour)
     prev_end_thickness_array = set_prev_end_thickness_array(parent)
-    if parent.segment_type == SegmentType.STAR:
-        prev_array = parent.arm_points_array # if segment is a star then pass in the arm points that the next segment should start at:
-    elif parent.segment_type == SegmentType.LINE:
-        prev_array = parent.points_array
-    else:
-        if not parent.is_eyeliner_wing:
-            prev_array = parent.to_scale_corners
-        else:
-            if len(parent.corners) ==3:
-                prev_array = np.array([parent.to_scale_corners[1]])
-            elif len(parent.corners) ==4:
-                prev_array = np.array([parent.to_scale_corners[2]])
-            else:
-                raise ValueError("Wrong number of corners for eyeliner wing")
-    new_node.render(prev_array, parent.absolute_angle, prev_colour, prev_end_thickness_array)
+    prev_array = set_prev_array(parent)
+    prev_angle = parent.absolute_angle
+    new_node.render(prev_array, prev_angle, prev_colour, prev_end_thickness_array)
     regen_count = 0
 
     new_segment_score = check_new_segments_negative_score(design, new_node)
     while new_segment_score < min_fitness_score and regen_count < node_re_gen_max:
         new_node = random_segment( prev_colour=prev_colour)
-        new_node.render(prev_array, parent.absolute_angle, prev_colour, prev_end_thickness_array)
+        new_node.render(prev_array, prev_angle, prev_colour, prev_end_thickness_array)
         regen_count+=1
         new_segment_score = check_new_segments_negative_score(design, new_node)
-    if regen_count ==node_re_gen_max:
+    if regen_count >=node_re_gen_max:
         return False, min_fitness_score *2
 
     parent.children.append(new_node)
@@ -155,6 +140,7 @@ def random_gene(gene_n):
             if not success or total_score < min_fitness_score:
                 success = False
 
+        design.render_design(show = False)
         if analyse_negative(design)<min_fitness_score:
             success = False
 

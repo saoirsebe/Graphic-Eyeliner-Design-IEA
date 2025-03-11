@@ -491,22 +491,31 @@ def random_eyeliner_lines_corners():
     p2[1] = p2[1] + 0.1
     p0 = np.array(eye_corner_start)
     p0[0] = p0[0] + 0.1
-    # p1 = wing length in wing direction away from the corner of the eye:
-    p1_angle = random_normal_within_range(22.5, 20, direction_range)
-    p1_dir_radians = np.radians(p1_angle)
     wing_length = random_normal_within_range(30, 20, length_range)
-    dx = wing_length * np.cos(p1_dir_radians)
-    dy = wing_length * np.sin(p1_dir_radians)
-    p1 = p0 + np.array([dx, dy])
 
     if start_at_corner:
+        # p1 = wing length in wing direction away from the corner of the eye:
+        p1_angle = random_normal_within_range(22.5, 20, direction_range)
+        p1_dir_radians = np.radians(p1_angle)
+        dx = wing_length * np.cos(p1_dir_radians)
+        dy = wing_length * np.sin(p1_dir_radians)
+        p1 = p0 + np.array([dx, dy])
+
         eyeliner_corners = np.array([p0, p1, p2])
         eyeliner_lines = [IrregularPolygonEdgeSegment(random_normal_within_range(-0.1, 0.1,(-0.2,0)),random_normal_within_range(0.5, 0.15,relative_location_range)),
                           IrregularPolygonEdgeSegment(random_normal_within_range(0.2,0.1, curviness_range), random_normal_within_range(0.5, 0.15,relative_location_range)),
                           IrregularPolygonEdgeSegment(0.2,0.4)]
     else:
+        # p1 = wing length in wing direction away from the corner of the eye:
+        p1_angle = random_from_two_distributions(0,20,355,10,direction_range,0.6)
+        p1_dir_radians = np.radians(p1_angle)
+        dx = wing_length * np.cos(p1_dir_radians)
+        dy = wing_length * np.sin(p1_dir_radians)
+        p1 = p0 + np.array([dx, dy])
+
         lower_eyelid_coords_section = int(0.1 * len(lower_eyelid_coords))
-        p3 = lower_eyelid_coords[random.randint(-lower_eyelid_coords_section, -1)] -0.05
+        p3 = lower_eyelid_coords[random.randint(-lower_eyelid_coords_section, -1)]
+        p3[1] = p3[1] - 0.1
         eyeliner_corners = np.array([p0, p3, p1, p2])
 
         eyeliner_lines = [IrregularPolygonEdgeSegment(0, 0.5),

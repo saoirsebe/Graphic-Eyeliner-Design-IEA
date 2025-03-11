@@ -6,6 +6,7 @@ from Segments import *
 import cProfile
 from IrregularPolygonSegment import are_points_collinear
 from PIL import Image, ImageTk
+from A import set_prev_array
 
 class EyelinerDesign:   #Creates overall design, calculates start points, renders each segment by calling their render function
     def __init__(self, root_node):
@@ -269,15 +270,35 @@ class EyelinerDesign:   #Creates overall design, calculates start points, render
         #Random chance of adding in a new segment:
         if len_nodes_list <max_segments and np.random.random() < mutation_rate:
             nodes_list = self.get_all_nodes()
-            is_branch = False if random.random() < 0.7 else True #If the new segment branches off a segment or is placed in-between segments
+            is_branch = False if np.random.random() < 0.7 else True #If the new segment branches off a segment or is placed in-between segments
             if len_nodes_list>1:
                 new_parent_int = np.random.randint(0, len_nodes_list - 1)
-                new_parent_colour = nodes_list[new_parent_int].colour
+                new_parent = nodes_list[new_parent_int]
+                new_parent_colour = new_parent.colour
                 new_segment = random_segment(prev_colour=new_parent_colour)
-                self.add_segment_at(new_segment, new_parent_int,is_branch)
             else:
                 new_segment = random_segment()
-                self.add_segment_at(new_segment,0,is_branch)
+                new_parent = nodes_list[0]
+                new_parent_colour = new_parent.colour
+
+            new_parent_array = prev_array = set_prev_array(new_parent)
+            new_parent_angle = new_parent.absolute_angle
+            prev_end_thickness_array = set_prev_end_thickness_array(new_parent)
+
+            new_segment.render(new_parent_array, new_parent_angle, new_parent_colour, prev_end_thickness_array)
+            #Ensure new segment doesnt overlap with other segments (try 12 times):
+            regen_count = 0
+            new_segment_score = check_new_segments_negative_score(design, new_segment)
+            while new_segment_score < min_fitness_score and regen_count < node_re_gen_max:
+                new_segment = random_segment(prev_colour=new_parent_colour)
+                new_segment.render(new_parent_array, new_parent_angle, new_parent_colour, prev_end_thickness_array)
+                regen_count += 1
+                new_segment_score = check_new_segments_negative_score(design, new_segment)
+            if regen_count < node_re_gen_max:
+                if len_nodes_list>1:
+                    self.add_segment_at(new_segment, new_parent_int, is_branch)
+                else:
+                    self.add_segment_at(new_segment,0, is_branch)
 
         return self
 

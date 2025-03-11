@@ -133,6 +133,21 @@ def random_from_two_distributions(mean1, stddev1, mean2, stddev2, value_range, p
         if value_range[0] <= value <= value_range[1]:
             return value
 
+def set_prev_array(parent):
+    if parent.segment_type == SegmentType.STAR:
+        return parent.arm_points_array # if segment is a star then pass in the arm points that the next segment should start at:
+    elif parent.segment_type == SegmentType.LINE:
+        return parent.points_array
+    else:
+        if not parent.is_eyeliner_wing:
+            return parent.to_scale_corners
+        else:
+            if len(parent.corners) ==3:
+                return np.array([parent.corners[1]])#parent.to_scale_corners[1]])
+            elif len(parent.corners) ==4:
+                return np.array([parent.corners[2]])#parent.to_scale_corners[2]])
+            else:
+                raise ValueError("Wrong number of corners for eyeliner wing")
 
 upper_eyelid_coords =  bezier_curve(np.array([28,82]), np.array([70,123]), np.array([118,93]))
 upper_eyelid_x = [coord[0] for coord in upper_eyelid_coords]
