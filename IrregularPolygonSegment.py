@@ -227,7 +227,9 @@ class IrregularPolygonSegment(Segment):
             dy = mutated_length * np.sin(mutated_angle_rad)
             p1 = p0 + np.array([dx, dy])
 
+
         p2 = eyeliner_corners[-1]
+
         if random.random() < mutation_rate:
             # Mutate p2: add small random offsets. p2 is always the last point.
             p2[1] = p2[1] - 0.15

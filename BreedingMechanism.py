@@ -11,19 +11,30 @@ from EyelinerDesign import EyelinerDesign
 from Segments import LineSegment
 
 
-def crossover_designs(designs):
+def crossover_designs(designs,try_n=0):
     """
        Performs a crossover between trees by swapping a subtree with each design it is breeding with.
     """
-    valid_designs = [d for d in designs if len(d.get_all_nodes()) > 1]
-    if valid_designs:
-        offspring_choice = random.choice(valid_designs)
+    if try_n<20:
+        offspring_choice = designs[0]
+        if len(offspring_choice.get_all_nodes()) == 1:
+            valid_designs = [d for d in designs if len(d.get_all_nodes()) > 1]
+            if valid_designs:
+                offspring_choice = random.choice(valid_designs)
+            else:
+                offspring_choice = None
     else:
-        offspring_choice = None
+        valid_designs = [d for d in designs if len(d.get_all_nodes()) > 1]
+        if valid_designs:
+            offspring_choice = random.choice(valid_designs)
+        else:
+            offspring_choice = None
 
     if offspring_choice:
+        print("start")
         offspring = copy.deepcopy(offspring_choice)
         for design in designs:
+            print("design")
             if design != offspring:
                 gene_to_breed = copy.deepcopy(design)
                 # Get all nodes in both trees
@@ -48,7 +59,7 @@ def crossover_designs(designs):
                         if scaled_index >= len_gene_to_breed_nodes:
                             scaled_index = len_gene_to_breed_nodes - 1
 
-                        stddev = len_gene_to_breed_nodes/4
+                        stddev = max(1,int(len_gene_to_breed_nodes/4))
                         gene_to_breed_index = int(random_normal_within_range(scaled_index,stddev,(1,len_gene_to_breed_nodes-1)))
                     gene_to_breed_node = gene_to_breed_nodes[gene_to_breed_index] # Exclude the root of tree2
 
@@ -65,18 +76,25 @@ def crossover_designs(designs):
                     else:
                         print("no offspring_parent")
     else:
-        return random.choice(designs)
+        return designs[0]
 
     return offspring
 
 def produce_correct_crossover(designs):
-    new_design = crossover_designs(designs)
+    try_n = 0
+    for design in designs:
+        overlap_score = analyse_negative(design)
+        print(f"original overlap_score =={overlap_score}")
+    new_design = crossover_designs(designs, try_n)
     new_design.render_design(show=False)
     overlap_score = analyse_negative(new_design)
+    print(f"overlap_score =={overlap_score}")
     while overlap_score < min_fitness_score :
-        new_design = crossover_designs(designs)
+        try_n +=1
+        new_design = crossover_designs(designs,try_n)
         new_design.render_design(show=False)
         overlap_score = analyse_negative(new_design)
+        print(f"overlap_score =={overlap_score}")
 
     return new_design
 
@@ -125,7 +143,7 @@ def generate_sufficiently_different_gene(old_gene, new_gene_pool, mutation_rate,
 
     return new_gene
 
-def generate_sufficiently_different_positive_gene_multiple_parents(parents, new_gene_pool, i, mutation_rate,  diff_threshold=0.75, max_attempts=100):
+def generate_sufficiently_different_positive_gene_multiple_parents(parents, new_gene_pool, i, mutation_rate,  diff_threshold=0.75, max_attempts=12):
     """
     Generates a mutated gene that is at least `diff_threshold` different from all parent genes
     and all genes in new_gene_pool.
@@ -150,6 +168,7 @@ def generate_sufficiently_different_positive_gene_multiple_parents(parents, new_
         if min_difference < diff_threshold:
             new_mutated_design = new_mutated_design.mutate_design_positive_check(mutation_rate)
             attempts += 1
+            print("parent differences and min(differences) < diff_threshold")
             continue
 
         # Check difference with every gene in the new gene pool
@@ -157,6 +176,7 @@ def generate_sufficiently_different_positive_gene_multiple_parents(parents, new_
         if differences and min(differences) < diff_threshold:
             new_mutated_design = new_mutated_design.mutate_design_positive_check(mutation_rate)
             attempts += 1
+            print("new gene pool differences and min(differences) < diff_threshold")
             continue
 
         # Candidate is sufficiently different from both the parent and the pool
@@ -256,6 +276,7 @@ def breed_new_designs_with_auto_selection(selected_genes, mutation_rate, aesthet
                 # For each batch, call generate_gene_multiple_parents with the current parent's index.
                 new_design = generate_gene_multiple_parents(selected_genes, idx, mutation_rate)
                 batch.append(new_design)
+                print("batch.append(new_design)")
             # Score each gene in the batch relative to all selected parents.
             scored_batch = []
             for gene in batch:
