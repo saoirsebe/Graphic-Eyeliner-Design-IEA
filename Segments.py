@@ -485,12 +485,10 @@ def random_eyeliner_lines_corners():
             *P3 == the point on the lower eyelid where the wing joins
         """
     start_at_corner = random.choice([True, False])
-    upper_eyelid_coords_40 = int(0.4* len(upper_eyelid_coords))
-    upper_eyelid_coords_10 = int(0.05 * len(upper_eyelid_coords))
-    p2 = upper_eyelid_coords[random.randint(-upper_eyelid_coords_40, -upper_eyelid_coords_10)] +0.05
-    p2[1] = p2[1] + 0.1
+    p2 = upper_eyelid_coords[random.randint(-upper_eyelid_coords_40, -upper_eyelid_coords_10)]
+    p2[1] = p2[1] + 0.15
     p0 = np.array(eye_corner_start)
-    p0[0] = p0[0] + 0.1
+    p0[0] = p0[0] + 0.15
     wing_length = random_normal_within_range(30, 20, length_range)
 
     if start_at_corner:
@@ -513,9 +511,8 @@ def random_eyeliner_lines_corners():
         dy = wing_length * np.sin(p1_dir_radians)
         p1 = p0 + np.array([dx, dy])
 
-        lower_eyelid_coords_section = int(0.1 * len(lower_eyelid_coords))
         p3 = lower_eyelid_coords[random.randint(-lower_eyelid_coords_section, -1)]
-        p3[1] = p3[1] - 0.1
+        p3[1] = p3[1] - 0.15
         eyeliner_corners = np.array([p0, p3, p1, p2])
 
         eyeliner_lines = [IrregularPolygonEdgeSegment(0, 0.5),

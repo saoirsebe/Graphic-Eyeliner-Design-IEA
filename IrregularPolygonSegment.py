@@ -1,10 +1,13 @@
 import math
+import random
+
 import numpy as np
 from matplotlib import pyplot as plt
 
 from A import StartMode, SegmentType, un_normalised_vector_direction, normalised_vector_direction, start_x_range, \
     start_y_range, curviness_range, relative_location_range, random_shape_size_range, corner_initialisation_range, \
-    line_num_points, thickness_range, direction_range, eye_corner_start
+    line_num_points, thickness_range, direction_range, eye_corner_start, length_range, upper_eyelid_coords, upper_len, \
+    upper_eyelid_coords_40, upper_eyelid_coords_10, allowed_indices, abs_min, abs_max
 from ParentSegment import Segment, point_in_array
 from StarGeneration import bezier_curve_t
 
@@ -89,6 +92,7 @@ class IrregularPolygonEdgeSegment:
             self.curviness = self.mutate_val(self.curviness, curviness_range, mutation_rate)
 
         self.curve_location = self.mutate_val(self.curve_location, relative_location_range, mutation_rate)
+
 
 
 class IrregularPolygonSegment(Segment):
@@ -184,6 +188,73 @@ class IrregularPolygonSegment(Segment):
             else:
                 ax_n.plot(self.points_array[:, 0], self.points_array[:, 1], self.colour, lw=self.end_thickness * scale)  # Plot all points as a single object
 
+    def mutate_eyeliner_polygon(self, eyeliner_corners, eyeliner_lines, mutation_rate=0.1):
+        """
+        Mutates the eyeliner polygon while preserving its structure.
+
+        Assumptions:
+          - If len(eyeliner_corners)==3 then structure is [p0, p1, p2] (start_at_corner == True)
+          - If len(eyeliner_corners)==4 then structure is [p0, p3, p1, p2] (start_at_corner == False)
+
+        Mutation strategy:
+          - Mutate the wing length and angle used for p1.
+          - Mutate p2 by adding a small random offset.
+          - (Optionally, mutate p3 similarly if present.)
+        """
+
+        # Calculate original parameters for p1 based on p0 and the current p1.
+        if len(eyeliner_corners) == 3:
+            p1 = eyeliner_corners[1]
+        elif len(eyeliner_corners) == 4:
+            p1 = eyeliner_corners[2]
+        else:
+            raise ValueError("Unexpected structure for eyeliner_corners.")
+
+        # Derive original wing vector (and thus length and angle)
+        p0 = eyeliner_corners[0]
+        wing_vector = p1 - p0
+        orig_wing_length = np.linalg.norm(wing_vector)
+        orig_angle = np.degrees(np.arctan2(wing_vector[1], wing_vector[0]))
+
+        # Mutate wing length and angle
+        mutated_length = self.mutate_val(orig_wing_length, length_range, mutation_rate)
+        mutated_angle = self.mutate_val(orig_angle, direction_range, mutation_rate/2)
+
+        if mutated_angle!= orig_angle or mutated_length != orig_wing_length:
+            # Recalculate p1 using the mutated parameters:
+            mutated_angle_rad = np.radians(mutated_angle)
+            dx = mutated_length * np.cos(mutated_angle_rad)
+            dy = mutated_length * np.sin(mutated_angle_rad)
+            p1 = p0 + np.array([dx, dy])
+
+        p2 = eyeliner_corners[-1]
+        if random.random() < mutation_rate:
+            # Mutate p2: add small random offsets. p2 is always the last point.
+            p2[1] = p2[1] - 0.15
+            # Find the allowed index closest to the original p2
+            distances = np.linalg.norm(upper_eyelid_coords[allowed_indices] - p2, axis=1)
+            closest_index = allowed_indices[np.argmin(distances)]
+            # Mutate the index by a small random offset
+            index_mutation_range = max(1,int(mutation_rate*50))
+            offset = random.randint(-index_mutation_range, index_mutation_range)
+            new_index = max(abs_min, min(closest_index + offset, abs_max))
+            # Recalculate p2 from the mutated index, then add constant offsets
+            p2 = np.array(upper_eyelid_coords[new_index])
+            p2[1] += 0.15
+
+        # If there is a p3 (structure with 4 points), mutate it as well.
+        if len(eyeliner_corners) == 4:
+            p3 = eyeliner_corners[1].copy()
+            #mutated_p3 = orig_p3 + np.array([random.uniform(-0.05, 0.05), random.uniform(-0.05, 0.05)])
+            # Rebuild corners: [p0, mutated_p3, mutated_p1, mutated_p2]
+            mutated_corners = np.array([p0, p3, p1, p2])
+        else:
+            # For structure with 3 points: [p0, mutated_p1, mutated_p2]
+            mutated_corners = np.array([p0, p1, p2])
+
+        return mutated_corners, eyeliner_lines
+
+
 
     def mutate(self, mutation_rate=0.1):
         #start, end_thickness, relative_angle
@@ -201,16 +272,9 @@ class IrregularPolygonSegment(Segment):
                 line.mutate(mutation_rate)
             self.relative_angle = self.mutate_val(self.relative_angle, direction_range, mutation_rate)
 
-        else:
-            if len(self.corners) == 4:
-                self.corners[2] = (self.mutate_val(self.corners[2][0], (eye_corner_start[0],170), mutation_rate),
-                                   self.mutate_val(self.corners[2][1], (eye_corner_start[1],170), mutation_rate))
-            elif len(self.corners) == 3:
-                self.corners[1] = (self.mutate_val(self.corners[1][0], (eye_corner_start[0],170), mutation_rate),
-                                   self.mutate_val(self.corners[1][1], (eye_corner_start[1],170), mutation_rate))
 
-            for line in self.lines_list:
-                line.mutate(mutation_rate)
+        else:
+            self.corners, self.lines_list = self.mutate_eyeliner_polygon(self.corners, self.lines_list, mutation_rate)
 
         self.colour = self.mutate_colour(self.colour, mutation_rate)
         self.fill = self.mutate_choice(self.fill, [True, False], mutation_rate)

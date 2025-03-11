@@ -152,10 +152,19 @@ def set_prev_array(parent):
 upper_eyelid_coords =  bezier_curve(np.array([28,82]), np.array([70,123]), np.array([118,93]))
 upper_eyelid_x = [coord[0] for coord in upper_eyelid_coords]
 upper_eyelid_y = [coord[1] for coord in upper_eyelid_coords]
+upper_len = len(upper_eyelid_coords)
+upper_eyelid_coords_40 = int(0.4 * upper_len)
+upper_eyelid_coords_10 = int(0.05 * upper_len)
+#for p2 mutation:
+abs_min = upper_len - upper_eyelid_coords_40
+abs_max = upper_len - upper_eyelid_coords_10
+allowed_indices = np.arange(abs_min, abs_max + 1)
 
 lower_eyelid_coords =  bezier_curve(np.array([28,82]), np.array([100,60]), np.array([118,93]))
 lower_eyelid_x = [coord[0] for coord in lower_eyelid_coords]
 lower_eyelid_y = [coord[1] for coord in lower_eyelid_coords]
+lower_len = len(lower_eyelid_coords)
+lower_eyelid_coords_section = int(0.1 * lower_len)
 
 def draw_eye_shape(ax_n):
     ax_n.plot(lower_eyelid_x, lower_eyelid_y, label=f"$y = 0.5x^2$", color="black")

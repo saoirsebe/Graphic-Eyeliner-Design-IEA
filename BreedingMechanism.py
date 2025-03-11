@@ -269,7 +269,6 @@ def breed_new_designs_with_auto_selection(selected_genes, mutation_rate, aesthet
             if scored_batch:
                 new_selected_genes.append(scored_batch[0][0])
 
-
     second_new_gene_pool = breed_new_designs(new_selected_genes, mutation_rate)
 
     return second_new_gene_pool

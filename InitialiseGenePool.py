@@ -11,6 +11,10 @@ from AnalyseDesign import analyse_negative, analyse_positive
 from RandomGene import random_gene
 import concurrent.futures
 
+
+def score_gene(gene):
+    return gene, analyse_positive(gene)  # overlap_score + any additional scoring
+
 def initialise_gene_pool():
     start_time = time.time()
     #gene_pool = [random_gene(i) for i in range(initial_gene_pool_size)]
@@ -22,9 +26,9 @@ def initialise_gene_pool():
     elapsed_time = end_time - start_time
     print(f"       >>>>    Time taken: {elapsed_time:.6f} seconds  <<<<<<<<     ")
 
-    scored_genes = []
-    for idx, gene in enumerate(gene_pool):
-        scored_genes.append((gene, analyse_positive(gene))) #overlap_score +
+    # Score genes concurrently
+    with multiprocessing.Pool() as pool:
+        scored_genes = pool.map(score_gene, gene_pool)
 
     scored_genes.sort(key=lambda x: x[1], reverse=True)  # Sort by the gene score
     for i, (gene, score) in enumerate(scored_genes):
