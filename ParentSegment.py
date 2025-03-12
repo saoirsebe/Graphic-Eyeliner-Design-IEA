@@ -1,5 +1,5 @@
 import numpy as np
-from A import StartMode, colour_options
+from A import StartMode, colour_options, similar_colours
 
 
 class Segment:
@@ -49,9 +49,18 @@ class Segment:
         if not colour or colour not in colour_options:
             colour = self.colour
             print("colour == False in mutate_colour")
+        # Decide whether to mutate based on mutation_rate
         if np.random.random() < mutation_rate/2:
-            return np.random.choice(colour_options)
+            # If a mutation happens, try to pick a similar colour
+            similar = similar_colours.get(colour, [])
+            # With high probability (e.g., 80%), choose from similar colours if available
+            if similar and np.random.random() < 0.8:
+                return np.random.choice(similar)
+            else:
+                # Otherwise, fall back to any random colour from the full set
+                return np.random.choice(colour_options)
         else:
+            # No mutation, return the original colour
             return colour
 
     def mutate_choice(self, the_value, options, mutation_rate):

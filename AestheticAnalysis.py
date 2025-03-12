@@ -381,13 +381,13 @@ def compair_middle_curve_shapes(segment, to_print = False):
     all_above_n = np.all(y_values > eye_corner_start[1])
     if all_above_n:
         overlapping_points_segment_1, overlapping_points_curve1 = get_overlapping_points(points, curve1)
-        overall_similarity , segment_overlap_length = check_overlap_length_then_similarity(overlapping_points_segment_1, overlapping_points_curve1, to_print)
+        overall_similarity , segment_overlap_length = check_overlap_length_then_similarity(overlapping_points_segment_1, overlapping_points_curve1, to_print=to_print)
     else:
         # Check if all y values are below n
         all_below_n = np.all(y_values < eye_corner_start[1])
         if all_below_n:
             overlapping_points_segment_2, overlapping_points_curve2 = get_overlapping_points(points, curve2)
-            overall_similarity, segment_overlap_length = check_overlap_length_then_similarity(overlapping_points_segment_2, overlapping_points_curve2)
+            overall_similarity, segment_overlap_length = check_overlap_length_then_similarity(overlapping_points_segment_2, overlapping_points_curve2,to_print=to_print)
 
     if overall_similarity > 0.7:
         score_overall = 2 * overall_similarity * math.log(segment_overlap_length)
@@ -471,7 +471,7 @@ def analyse_design_shapes(design, to_print = False):
                 line_score=score_segment_against_eyelid_shape(segment,to_print=to_print)
                 left_score = line_score
                 if check_points_middle(segment.points_array):
-                    middle_score = compair_middle_curve_shapes(segment)
+                    middle_score = compair_middle_curve_shapes(segment,to_print=to_print)
 
                     if middle_score > left_score:
                         if to_print:
@@ -490,10 +490,10 @@ def analyse_design_shapes(design, to_print = False):
                 # If 80% of segment is right of the eye corner then compare segment with wing shape curves
                 #print("checking against eyeliner shape")
 
-                line_score = compair_segment_wing_shape(segment, eyeliner_curve1, eyeliner_curve2 )
+                line_score = compair_segment_wing_shape(segment, eyeliner_curve1, eyeliner_curve2 ,to_print=to_print)
                 right_score = line_score
                 if check_points_middle(segment.points_array):
-                    middle_score = compair_middle_curve_shapes(segment)
+                    middle_score = compair_middle_curve_shapes(segment,to_print=to_print)
                     middle_score = middle_score
                     if middle_score > right_score:
                         if to_print:
@@ -552,14 +552,16 @@ def analyse_design_shapes(design, to_print = False):
                     k *= 0.7
 
                 deviation = abs(shape_size - k * average_x)
+                # size_score = math.exp(-2 * deviation)
+                size_score = 1 / (math.log(deviation + 1))
+
                 if to_print:
                     print("polygon_shape_size =", shape_size)
                     print("shape_x =", average_x)
                     print("shape_y =", average_y)
                     print("deviation =", deviation)
-                #size_score = math.exp(-2 * deviation)
-                size_score = 1 / (math.log(deviation + 1))
-                #print("size_score: ", size_score)
+                    print("size_score: ", size_score)
+
                 if size_score > 0.35:
                     size_score = (6//n_of_polygons) * size_score
                     if size_score > 4:
@@ -588,14 +590,16 @@ def analyse_design_shapes(design, to_print = False):
             if average_y < 70 and average_x < 110:
                 k *= 0.7
             deviation = abs(shape_size - k * average_x)
+            # size_score = math.exp(-2 * deviation)
+            size_score = 1 / (math.log(deviation + 1))
+
             if to_print:
                 print("star_shape_size =", shape_size)
                 print("star_shape_x =", average_x)
                 print("shape_y =", average_y)
                 print("star_deviation =", deviation)
-            #size_score = math.exp(-2 * deviation)
-            size_score = 1 / (math.log(deviation + 1))
-            #print("size_score: ",size_score)
+                print("size_score: ",size_score)
+
             if size_score > 0.35:
                 size_score = (6//n_of_stars) * size_score
                 if size_score >4:

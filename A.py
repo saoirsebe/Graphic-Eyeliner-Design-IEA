@@ -7,7 +7,7 @@ from numba import njit
 
 min_fitness_score = -3
 min_segment_score = -2
-initial_gene_pool_size = 50
+initial_gene_pool_size = 200
 node_re_gen_max = 12
 #Parameter ranges:
 start_x_range = (20, 140)
@@ -20,29 +20,42 @@ thickness_range = (0.5, 3)
 
 colour_options = [
     "red", "orange", "yellow", "green", "blue", "indigo", "violet",
-    "lightblue", "pink", "purple", "brown", "grey", "black", "cyan", "magenta"
+    "lightblue", "pink", "purple", "brown", "grey", "black", "cyan", "magenta",
+    "maroon", "navy", "olive", "teal", "darkred", "darkgreen", "darkblue",
+    "darkorange", "darkviolet", "darkgrey"
 ]
 
-# Define similar colours for each option
 similar_colours = {
-    "red": ["orange", "magenta", "pink","black"],
-    "orange": ["red", "yellow","black"],
-    "yellow": ["orange", "green","black"],
-    "green": ["yellow", "blue", "cyan","black"],
-    "blue": ["green", "indigo", "lightblue", "cyan","black"],
-    "indigo": ["blue", "violet","black"],
-    "violet": ["indigo", "purple", "magenta","black"],
-    "lightblue": ["blue", "cyan","black"],
-    "pink": ["red", "magenta", "purple","black"],
-    "purple": ["violet", "pink", "indigo","black"],
-    "brown": ["red", "orange","black"],
-    "grey": ["black"],
-    "cyan": ["blue", "lightblue", "green","black"],
-    "magenta": ["red", "pink", "violet","black"],
-    "black": [
-    "red", "orange", "yellow", "green", "blue", "indigo", "violet",
-    "lightblue", "pink", "purple", "brown", "grey", "black", "cyan", "magenta"]
+    "red": ["orange", "magenta", "pink", "darkred", "maroon", "brown", "black"],
+    "orange": ["red", "yellow", "darkorange", "brown", "black"],
+    "yellow": ["orange", "green", "olive", "black"],
+    "green": ["yellow", "blue", "cyan", "olive", "darkgreen", "teal", "black"],
+    "blue": ["green", "indigo", "lightblue", "navy", "darkblue", "cyan", "black"],
+    "indigo": ["blue", "violet", "purple", "navy", "darkblue", "black"],
+    "violet": ["indigo", "purple", "magenta", "darkviolet", "black"],
+    "lightblue": ["blue", "cyan", "navy", "black"],
+    "pink": ["red", "magenta", "purple", "darkred", "black"],
+    "purple": ["violet", "pink", "indigo", "darkviolet", "black"],
+    "brown": ["red", "orange", "maroon", "darkred", "darkorange", "black"],
+    "grey": ["darkgrey", "black"],
+    "black": ["red", "orange", "yellow", "green", "blue", "indigo", "violet",
+        "lightblue", "pink", "purple", "brown", "grey", "black", "cyan", "magenta",
+        "maroon", "navy", "olive", "teal", "darkred", "darkgreen", "darkblue",
+        "darkorange", "darkviolet", "darkgrey"],
+    "cyan": ["blue", "lightblue", "green", "teal", "darkblue", "black"],
+    "magenta": ["red", "pink", "violet", "purple", "darkred", "black"],
+    "maroon": ["red", "darkred", "brown", "black"],
+    "navy": ["blue", "indigo", "darkblue", "black"],
+    "olive": ["green", "yellow", "darkgreen", "brown", "black"],
+    "teal": ["blue", "green", "cyan", "darkblue", "darkgreen", "black"],
+    "darkred": ["red", "maroon", "brown", "magenta", "black"],
+    "darkgreen": ["green", "olive", "teal", "darkblue", "black"],
+    "darkblue": ["blue", "navy", "indigo", "teal", "black"],
+    "darkorange": ["orange", "red", "brown", "black"],
+    "darkviolet": ["violet", "purple", "indigo", "black"],
+    "darkgrey": ["grey", "black"],
 }
+
 
 
 curviness_range = (0, 1)

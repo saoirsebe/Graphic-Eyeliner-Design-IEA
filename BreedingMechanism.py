@@ -82,19 +82,19 @@ def crossover_designs(designs,try_n=0):
 
 def produce_correct_crossover(designs):
     try_n = 0
-    for design in designs:
-        overlap_score = analyse_negative(design)
-        print(f"original overlap_score =={overlap_score}")
+    #for design in designs:
+    #    overlap_score = analyse_negative(design)
+    #    print(f"original overlap_score =={overlap_score}")
     new_design = crossover_designs(designs, try_n)
     new_design.render_design(show=False)
     overlap_score = analyse_negative(new_design)
-    print(f"overlap_score =={overlap_score}")
+    #print(f"overlap_score =={overlap_score}")
     while overlap_score < min_fitness_score :
         try_n +=1
         new_design = crossover_designs(designs,try_n)
         new_design.render_design(show=False)
         overlap_score = analyse_negative(new_design)
-        print(f"overlap_score =={overlap_score}")
+        #print(f"overlap_score =={overlap_score}")
 
     return new_design
 

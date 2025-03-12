@@ -49,12 +49,29 @@ def random_gene_node(design, parent, prev_colour, segment_number=1, depth=0):
     prev_array = set_prev_array(parent)
     prev_angle = parent.absolute_angle
     new_node.render(prev_array, prev_angle, prev_colour, prev_end_thickness_array)
+    """
+    #Print FOR TESTING:
+    fig, ax_n = plt.subplots(figsize=(3, 3))
+    parent.children.append(new_node)
+    fig = design.render_design()
+    fig.show()
+    parent.children.remove(new_node)
+    """
+
     regen_count = 0
 
     new_segment_score = check_new_segments_negative_score(design, new_node)
     while new_segment_score < min_fitness_score and regen_count < node_re_gen_max:
         new_node = random_segment( prev_colour=prev_colour)
         new_node.render(prev_array, prev_angle, prev_colour, prev_end_thickness_array)
+        """
+        # Print FOR TESTING:
+        fig, ax_n = plt.subplots(figsize=(3, 3))
+        parent.children.append(new_node)
+        fig = design.render_design()
+        fig.show()
+        parent.children.remove(new_node)
+        """
         regen_count+=1
         new_segment_score = check_new_segments_negative_score(design, new_node)
     if regen_count >=node_re_gen_max:
@@ -89,8 +106,6 @@ def random_gene(gene_n):
             else:
                 design = EyelinerDesign(random_segment())
 
-            n_of_children = round(random_normal_within_range(1.2,0.2,number_of_children_range))
-
             root_node = design.root
             prev_colour = root_node.colour
             segment_number = 0
@@ -101,6 +116,7 @@ def random_gene(gene_n):
             else:
                 root_score = -is_in_eye(root_node)
 
+        n_of_children = round(random_normal_within_range(1.2, 0.2, number_of_children_range))
         total_score = root_score
         for i in range(n_of_children):
             segment_number +=1
@@ -121,9 +137,9 @@ def random_gene(gene_n):
             return design
 
 """"""
-"""
+""""""
 #design = random_gene(1)
-design =random_gene(10)
+design =random_gene(100)
 #design = random_gene(190)
 fig = design.render_design()
 fig.show()
@@ -142,7 +158,7 @@ difference = compare_designs(design, design2)
 print("Difference:", difference)
 fig.show()
 
-"""
+
 
 
 

@@ -18,15 +18,15 @@ def compare_segments(seg1, seg2):
         if c1 == c2:
             return 0.0
         elif c2 in similar_colours.get(c1, []):
-            return 0.2
+            return 0.15
         else:
-            return 0.4
+            return 0.3
 
     #Compare segments based on type.
     if seg1.segment_type == SegmentType.LINE:
         # Numeric comparisons (normalized by range widths)
         diff += abs(seg1.length - seg2.length) / (length_range[1] - length_range[0])
-        diff += abs(seg1.relative_angle - seg2.relative_angle) / (direction_range[1] - direction_range[0])
+        diff += abs(seg1.relative_angle - seg2.relative_angle) / ((direction_range[1] - direction_range[0])/2)
         diff += abs(seg1.start_thickness - seg2.start_thickness) / (thickness_range[1] - thickness_range[0])
         diff += abs(seg1.end_thickness - seg2.end_thickness) / (thickness_range[1] - thickness_range[0])
         diff += abs(seg1.curviness - seg2.curviness) / (curviness_range[1] - curviness_range[0])

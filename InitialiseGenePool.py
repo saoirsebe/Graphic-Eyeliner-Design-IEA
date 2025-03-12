@@ -21,7 +21,6 @@ def initialise_gene_pool():
     with multiprocessing.Pool() as pool:
         gene_pool = pool.map(random_gene, range(initial_gene_pool_size))
 
-
     end_time = time.time()
     elapsed_time = end_time - start_time
     print(f"       >>>>    Time taken: {elapsed_time:.6f} seconds  <<<<<<<<     ")
