@@ -2,7 +2,7 @@ import math
 
 from matplotlib import pyplot as plt
 from A import SegmentType, StartMode, get_quadratic_points, eye_corner_start, upper_eyelid_coords, lower_eyelid_coords, \
-    eyeliner_curve1, eyeliner_curve2, middle_curve_upper, middle_curve_lower
+    eyeliner_curve1, eyeliner_curve2, middle_curve_upper, middle_curve_lower, StarType
 import numpy as np
 from scipy.interpolate import interp1d
 
@@ -436,6 +436,31 @@ def check_points_middle(points_array):
     return np.sum(in_range) >= len(points_array) * 0.8 #Return if 80% of points are within this range
 
 
+def validate_star_parameters(star):
+    """
+    Validates the radius and arm length ratio.
+    Returns False if they are not within an acceptable range.
+    """
+    arm_length = star.arm_length
+    radius = star.radius
+
+    # Check if arm length is too short compared to radius
+    if arm_length < radius * 0.4:
+        return False
+
+    # Check if radius is too large compared to arm length
+    if radius > arm_length * 1.5:
+        return False
+
+    # Check if total size exceeds 20
+    if radius + arm_length > 20:
+        return False
+
+    # If all checks pass, return True
+    return True
+
+
+
 def analyse_design_shapes(design, to_print = False):
     """
     Analyse the entire design and calculate a total score.
@@ -614,6 +639,11 @@ def analyse_design_shapes(design, to_print = False):
                 total_score -= negative_score
             elif size_score >= 0 and average_x > 100:
                 total_score += 1
+
+            if not validate_star_parameters(segment):
+                total_score -=1
+            else:
+                total_score +=1
 
     penalise_n_of_segments = len(segments) / 4
     if penalise_n_of_segments < 1:

@@ -235,7 +235,8 @@ def analyse_negative(design, to_print = False):
 
         eye_overlaps = is_in_eye(segments[i])
         if eye_overlaps>0:
-            print("eye_overlaps:", eye_overlaps)
+            if to_print:
+                print("eye_overlaps:", eye_overlaps)
             return min_fitness_score *2
         #else:
         #    score-=eye_overlaps

@@ -73,7 +73,7 @@ class App(ctk.CTk):
         self.pages["HomePage"] = home_page
 
         # Initially show the LoginPage
-        self.show_page("DesignPage")
+        self.show_page("LoginPage")
 
         # Optionally bind container resize event to update page size if needed
         self.container.bind("<Configure>", self._on_container_configure)

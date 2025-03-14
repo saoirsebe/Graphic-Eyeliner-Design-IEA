@@ -238,19 +238,20 @@ class EyelinerDesign:   #Creates overall design, calculates start points, render
             self.mutate_node(child, mutation_rate)
 
 
-    def mutate_self(self, mutation_rate=0.1):
+    def mutate_self(self, mutation_rate=0.06, delete =True):
         nodes_list = self.get_all_nodes()
 
-        # Random chance of deleting a segment:
-        if len(nodes_list) >1 and np.random.random() < mutation_rate:
-            #Assign higher weight to later nodes:
-            delete_node = random.choices(nodes_list[1:], weights=range(1, len(nodes_list)), k=1)[0]
-            original_parent = self.find_the_parent(self.root, delete_node)
-            original_parent.children.remove(delete_node)
-            if len(delete_node.children) > 0:
-                original_parent.children.extend(delete_node.children)
+        if delete:
+            # Random chance of deleting a segment:
+            if len(nodes_list) >1 and np.random.random() < mutation_rate:
+                #Assign higher weight to later nodes:
+                delete_node = random.choices(nodes_list[1:], weights=range(1, len(nodes_list)), k=1)[0]
+                original_parent = self.find_the_parent(self.root, delete_node)
+                original_parent.children.remove(delete_node)
+                if len(delete_node.children) > 0:
+                    original_parent.children.extend(delete_node.children)
 
-            nodes_list = self.get_all_nodes()
+                nodes_list = self.get_all_nodes()
 
         #Random chance of changing a subtree position:
         if np.random.random() < mutation_rate and len(nodes_list)>2:
@@ -321,16 +322,16 @@ class EyelinerDesign:   #Creates overall design, calculates start points, render
 
         return new_gene
 
-    def mutate_design(self,mutation_rate=0.1):
+    def mutate_design(self,mutation_rate=0.1, delete=True):
         old_gene = copy.deepcopy(self)
 
-        new_gene= old_gene.mutate_self(mutation_rate)
+        new_gene= old_gene.mutate_self(mutation_rate, delete)
         new_gene.render_design(show=False)
         overlap_score = analyse_negative(new_gene)
         #print("overlap_score", overlap_score)
         while overlap_score < min_fitness_score:
             old_gene = copy.deepcopy(self)
-            new_gene = old_gene.mutate_self(mutation_rate)
+            new_gene = old_gene.mutate_self(mutation_rate, delete)
             new_gene.render_design(show=False)
             overlap_score = analyse_negative(new_gene)
 

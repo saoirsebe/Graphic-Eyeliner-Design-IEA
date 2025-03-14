@@ -31,10 +31,8 @@ def crossover_designs(designs,try_n=0):
             offspring_choice = None
 
     if offspring_choice:
-        print("start")
         offspring = copy.deepcopy(offspring_choice)
         for design in designs:
-            print("design")
             if design != offspring:
                 gene_to_breed = copy.deepcopy(design)
                 # Get all nodes in both trees
@@ -199,7 +197,7 @@ def generate_gene_multiple_parents(parents, index, mutation_rate):
     additional = random.sample(available, num_to_select - 1)
     to_breed.extend(additional)
     new_design = produce_correct_crossover(to_breed)
-    new_mutated_design = new_design.mutate_design(mutation_rate)
+    new_mutated_design = new_design.mutate_design(mutation_rate, delete=False)
 
     return new_mutated_design
 
@@ -220,13 +218,13 @@ def breed_new_designs(selected_genes, mutation_rate):
 
     return new_gene_pool
 
-def breed_new_designs_with_auto_selection(selected_genes, mutation_rate, aesthetic_weight=0.7, diversity_weight=0.3,min_diversity_threshold =2):
+def breed_new_designs_with_auto_selection(selected_genes, mutation_rate, aesthetic_weight=0.7, diversity_weight=0.15, min_diversity_threshold =2):
     new_gene_pool=[]
     n_selected = len(selected_genes)
     if n_selected == 1:
         parent = selected_genes[0]
-        for i in range(20):
-            new_design = parent.mutate_design(mutation_rate)
+        for i in range(30):
+            new_design = parent.mutate_design(mutation_rate, delete=False)
             new_gene_pool.append(new_design)
 
         # Score each gene: using analyse_positive for aesthetics,
@@ -267,7 +265,7 @@ def breed_new_designs_with_auto_selection(selected_genes, mutation_rate, aesthet
                 diversity_threshold *= 0.9  # reduce threshold by 10%
                 iteration += 1
     else:
-        batch_size = 20 // n_selected
+        batch_size = 30 // n_selected
         new_selected_genes = []
 
         for idx, parent in enumerate(selected_genes):
@@ -289,6 +287,8 @@ def breed_new_designs_with_auto_selection(selected_genes, mutation_rate, aesthet
             scored_batch.sort(key=lambda x: x[1], reverse=True)
             if scored_batch:
                 new_selected_genes.append(scored_batch[0][0])
+                if len(new_selected_genes) < 4:
+                    new_selected_genes.append(scored_batch[1][0])
 
     second_new_gene_pool = breed_new_designs(new_selected_genes, mutation_rate)
 

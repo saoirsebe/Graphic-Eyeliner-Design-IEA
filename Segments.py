@@ -576,6 +576,11 @@ def generate_radius_arm_lengths(new_star_type):
         new_radius = random_normal_within_range(2, 7, radius_range)  # Radius between 0 and 5
         new_arm_length = random_normal_within_range(16, 8, arm_length_range)  # Arm length between 10 and 15
 
+        if new_radius > new_arm_length * 1.5:
+            diff = new_radius - new_arm_length * 1.5
+            new_radius -= diff / 2
+            new_arm_length += diff / 2
+
         # If total exceeds 20, prioritize reducing radius first
         total_size = new_radius + new_arm_length
         if total_size > 20:

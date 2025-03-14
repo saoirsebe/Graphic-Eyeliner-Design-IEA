@@ -137,7 +137,7 @@ def random_gene(gene_n):
             return design
 
 """"""
-""""""
+"""
 #design = random_gene(1)
 design =random_gene(100)
 #design = random_gene(190)
@@ -159,6 +159,6 @@ print("Difference:", difference)
 fig.show()
 
 
-
+"""
 
 

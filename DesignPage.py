@@ -1,6 +1,5 @@
 import asyncio
 from tkinter import messagebox
-
 import customtkinter as ctk
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import matplotlib.pyplot as plt
@@ -18,9 +17,10 @@ class DesignPage(ctk.CTkFrame):
         self.controller = controller
         self.current_gene_pool = []
         self.selected_gene_indices = []
-        self.mutation_rate = 0.1
+        self.mutation_rate = 0.06
         self.saved_genes = []
         self.saved_genes_indices = []
+        # saved_gene_widgets now stores tuples: (fig, widget)
         self.saved_gene_widgets = {}
         self.current_gene_pool_figures = []
         self.gene_pools_previous = []
@@ -95,34 +95,55 @@ class DesignPage(ctk.CTkFrame):
         self.scrollable_frame.configure(height=500)
         self.rowconfigure(4, minsize=500)
 
-        #Configure the inner_frame's grid so that its cells expand:
+        # Configure the inner_frame's grid so that its cells expand:
         for col in range(3):
             self.scrollable_frame.inner_frame.grid_columnconfigure(col, weight=1)
 
         for row in range(4, 4 + self.number_of_rows):
             self.scrollable_frame.inner_frame.grid_rowconfigure(row, weight=1)
 
-
     def go_home(self):
-        self.controller.pages["HomePage"].show_recent_designs()
-        self.controller.show_page("HomePage")
-
-    def finish_designing(self):
+        # Close and destroy current gene pool figures
         for fig, widget in self.current_gene_pool_figures:
             plt.close(fig)
             widget.destroy()
-        # Add the saved designs from this page to the global list in the controller.
-        self.controller.add_saved_designs(self.saved_genes)
-        if self.controller.current_user:
-            self.controller.save_user_designs(self.controller.current_user,
-                                              self.controller.all_saved_designs)
+        self.current_gene_pool_figures = []
+        # Close and destroy saved design figures
+        for fig, widget in self.saved_gene_widgets.values():
+            plt.close(fig)
+            widget.destroy()
+        self.saved_gene_widgets = {}
+        # Reset design lists and indices
         self.current_gene_pool = []
         self.gene_pools_previous = []
         self.selected_gene_indices = []
         self.saved_genes = []
         self.saved_genes_indices = []
-        self.saved_gene_widgets = {}
+        self.controller.pages["HomePage"].show_recent_designs()
+        self.controller.show_page("HomePage")
+
+    def finish_designing(self):
+        # Close and destroy current gene pool figures
+        for fig, widget in self.current_gene_pool_figures:
+            plt.close(fig)
+            widget.destroy()
         self.current_gene_pool_figures = []
+        # Close and destroy saved design figures
+        for fig, widget in self.saved_gene_widgets.values():
+            plt.close(fig)
+            widget.destroy()
+        self.saved_gene_widgets = {}
+        # Add the saved designs from this page to the global list in the controller.
+        self.controller.add_saved_designs(self.saved_genes)
+        if self.controller.current_user:
+            self.controller.save_user_designs(self.controller.current_user,
+                                              self.controller.all_saved_designs)
+        # Reset lists and indices
+        self.current_gene_pool = []
+        self.gene_pools_previous = []
+        self.selected_gene_indices = []
+        self.saved_genes = []
+        self.saved_genes_indices = []
         self.controller.show_page("SaveDesignPage")
 
     def add_into_pool(self, the_gene):
@@ -136,7 +157,9 @@ class DesignPage(ctk.CTkFrame):
         self.show_saved_genes()
 
     def show_saved_genes(self):
-        for widget in self.saved_gene_widgets.values():
+        # Close and destroy any existing saved design figures/widgets
+        for fig, widget in self.saved_gene_widgets.values():
+            plt.close(fig)
             widget.destroy()
         self.saved_gene_widgets = {}
 
@@ -167,7 +190,8 @@ class DesignPage(ctk.CTkFrame):
                 hover_color="#C9302C"
             )
             un_save_button.pack(pady=2)
-            self.saved_gene_widgets[gene] = frame
+            # Store both the figure and its widget for later cleanup
+            self.saved_gene_widgets[gene] = (fig, frame)
 
     def re_generate(self):
         for fig, widget in self.current_gene_pool_figures:
@@ -195,8 +219,9 @@ class DesignPage(ctk.CTkFrame):
 
         # Mutation rate selection
         ctk.CTkLabel(self, text="Select Mutation Rate:", font=("Arial", 12)).grid(row=3, column=0, pady=10)
-        mutation_rate_values = [0.05, 0.06, 0.07, 0.08, 0.09, 0.1, 0.11,0.12,0.13,0.14,0.15]
-        mutation_rate_dropdown = ctk.CTkOptionMenu(self, values=[str(x) for x in mutation_rate_values],command=lambda val: self.set_mutation_rate(val))
+        mutation_rate_values = [0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.1, 0.11, 0.12]
+        mutation_rate_dropdown = ctk.CTkOptionMenu(self, values=[str(x) for x in mutation_rate_values],
+                                                   command=lambda val: self.set_mutation_rate(val))
         mutation_rate_dropdown.set(str(self.mutation_rate))
         mutation_rate_dropdown.grid(row=3, column=1, pady=10)
 
@@ -219,7 +244,7 @@ class DesignPage(ctk.CTkFrame):
             canvas_widget.bind("<Button-1>", lambda event, index=i: self.show_design_popup(index))
 
             toggle_button = ctk.CTkButton(
-                frame, text="Select design", font=("Helvetica", 11),width=90, height=25,
+                frame, text="Select design", font=("Helvetica", 11), width=90, height=25,
                 fg_color="gray", hover_color="#888888"
             )
             toggle_button.configure(command=lambda index=i, b=toggle_button: self.toggle_gene(index, b))
@@ -232,9 +257,7 @@ class DesignPage(ctk.CTkFrame):
             save_button.configure(command=lambda index=i, b=save_button: self.save_gene(index, b))
             save_button.pack(pady=2)
 
-
         # ---------- Bottom Buttons ----------
-        # These buttons remain at the bottom in a vertical stack.
         self.regenerate_button = ctk.CTkButton(
             self, text="Re-generate designs",
             command=self.re_generate,
@@ -299,7 +322,9 @@ class DesignPage(ctk.CTkFrame):
         if gene in self.saved_genes:
             self.saved_genes.remove(gene)
             if gene in self.saved_gene_widgets:
-                self.saved_gene_widgets[gene].destroy()
+                fig, widget = self.saved_gene_widgets[gene]
+                plt.close(fig)
+                widget.destroy()
                 del self.saved_gene_widgets[gene]
             button.configure(
                 text="Save",
@@ -320,10 +345,15 @@ class DesignPage(ctk.CTkFrame):
             plt.close(fig)
             widget.destroy()
 
+        # Also close saved design figures
+        for fig, widget in self.saved_gene_widgets.values():
+            plt.close(fig)
+            widget.destroy()
+        self.saved_gene_widgets = {}
+
         if self.selected_gene_indices:
             self.gene_pools_previous.append(self.current_gene_pool)
             selected_genes = [self.current_gene_pool[i] for i in self.selected_gene_indices]
-            #self.current_gene_pool = breed_new_designs(selected_genes, self.mutation_rate)
             self.current_gene_pool = breed_new_designs_with_auto_selection(selected_genes, self.mutation_rate)
             self.selected_gene_indices.clear()
             self.saved_genes_indices.clear()
@@ -346,7 +376,7 @@ class DesignPage(ctk.CTkFrame):
         popup.bind("<FocusOut>", lambda event: popup.destroy())
         content_frame = ctk.CTkFrame(popup, fg_color="#F9FAFB")
         content_frame.pack(expand=True, fill="both", padx=10, pady=10)
-        large_fig = self.current_gene_pool[index].render_design(scale=2.5)
+        large_fig = self.current_gene_pool[index].render_design(scale=1.75)
         for ax in large_fig.get_axes():
             ax.set_axis_off()
         large_canvas = FigureCanvasTkAgg(large_fig, master=content_frame)
