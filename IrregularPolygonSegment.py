@@ -68,7 +68,6 @@ class IrregularPolygonEdgeSegment:
             dy = length * self.curviness * np.sin(curve_dir_radians)
             p1 = p1 + np.array([dx, dy])
             self.points_array = bezier_curve_t(t_values, p0, p1, p2)
-            x_values, y_values = self.points_array[:, 0], self.points_array[:, 1]
         else:
             x_values = np.linspace(start_point[0], end_point[0], line_num_points)
             y_values = np.linspace(start_point[1], end_point[1], line_num_points)
@@ -101,7 +100,6 @@ class IrregularPolygonSegment(Segment):
         super().__init__(segment_type, start, start_mode, end_thickness, relative_angle, colour)
         self.segment_type = SegmentType.IRREGULAR_POLYGON
         self.start = start
-        self.segment_type = SegmentType.IRREGULAR_POLYGON
         self.bounding_size = bounding_size
         self.corners = corners
         self.lines_list = lines_list

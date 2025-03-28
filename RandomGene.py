@@ -139,7 +139,7 @@ def random_gene(gene_n):
 """"""
 """
 #design = random_gene(1)
-design =random_gene(100)
+design =random_gene(150)
 #design = random_gene(190)
 fig = design.render_design()
 fig.show()
@@ -160,5 +160,6 @@ fig.show()
 
 
 """
+
 
 

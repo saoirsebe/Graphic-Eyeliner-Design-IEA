@@ -58,7 +58,7 @@ class SaveDesignPage(ctk.CTkFrame):
 
     def _on_mouse_scroll(self, event):
         """ Handle mouse scrolling for different OS with increased scroll speed. """
-        SCROLL_STEP = 5  # Increase this for faster scrolling (default is 1)
+        SCROLL_STEP = 20  # Increase this for faster scrolling (default is 1)
 
         if event.num == 4:  # Linux Scroll Up
             self.scrollable_frame._parent_canvas.yview_scroll(-SCROLL_STEP, "units")

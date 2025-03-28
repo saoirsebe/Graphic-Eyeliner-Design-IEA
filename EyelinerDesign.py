@@ -237,7 +237,6 @@ class EyelinerDesign:   #Creates overall design, calculates start points, render
         for child in node.children:
             self.mutate_node(child, mutation_rate)
 
-
     def mutate_self(self, mutation_rate=0.06, delete =True):
         nodes_list = self.get_all_nodes()
 
@@ -456,30 +455,33 @@ line.render(np.array([line.start]), 0, 'red', line.end_thickness, ax_n)
 
 cProfile.run('random_random_shape()')
 """
-"""
+""""""
 fig, ax_n = plt.subplots(figsize=(3, 3))
 line = LineSegment(SegmentType.LINE, (50,100), StartMode.JUMP, 70, 0, 2, 1, 'red', 0.7, True, 0.4, 0, 0)
-line2 = LineSegment(SegmentType.LINE, eye_corner_start, StartMode.CONNECT_MID, 30, 90, 1, 2, 'blue', 0, False, 0.5, 0.5, 0)
-line3 = LineSegment(SegmentType.LINE, (102,105), StartMode.SPLIT, 50, 90, 2, 4, 'green', 0.3, False, 0.5, 0, 0.5)
+line2 = LineSegment(SegmentType.LINE, (80,120), StartMode.JUMP, 40, 0, 1, 2, 'blue', 0, False, 0.5, 0.5, 0)
+line3 = LineSegment(SegmentType.LINE, (20,80), StartMode.JUMP, 50, 60, 1, 1.5, 'green', 0.3, False, 0.5, 0, 0.5)
 
 
 design = EyelinerDesign(line)
 line.add_child_segment(line2)
 line2.add_child_segment(line3)
 fig = design.render_design()
+#print(design.root.points_array)
+#print(upper_eyelid_coords)
 
 #a,b = generate_eyeliner_curve_lines()
 #b,c = generate_middle_curve_lines()
 fig.show()
+
 
 negative_score = analyse_negative(design)
 print("negative_score:",negative_score)
 positive_score = analyse_positive(design,True)
 print("positive_score:",positive_score)
 print(is_outside_face_area(line2))
+""""""
 
 
-"""
 """
 design = EyelinerDesign(random_irregular_polygon())
 fig, ax_n = plt.subplots(figsize=(3, 3))

@@ -16,7 +16,32 @@ class HomePage(ctk.CTkFrame):
         self.outer_scroll.pack(expand=True, fill="both")
         self.scrollable_main = ctk.CTkScrollableFrame(self.outer_scroll, fg_color="#F9FAFB")
         self.scrollable_main.pack(expand=True, fill="both")
+        # Bind mouse scroll events to the scrollable frame.
+        self.scrollable_main.bind("<Enter>", self.bind_scroll_events)
+        self.scrollable_main.bind("<Leave>", self.unbind_scroll_events)
         self.create_widgets()
+
+    def bind_scroll_events(self, event):
+        """Bind mouse scrolling when the cursor enters the scrollable frame."""
+        self.scrollable_main.bind_all("<MouseWheel>", self._on_mouse_scroll)  # Windows/macOS
+        self.scrollable_main.bind_all("<Button-4>", self._on_mouse_scroll)     # Linux scroll up
+        self.scrollable_main.bind_all("<Button-5>", self._on_mouse_scroll)     # Linux scroll down
+
+    def unbind_scroll_events(self, event):
+        """Unbind mouse scrolling when the cursor leaves the scrollable frame."""
+        self.scrollable_main.unbind_all("<MouseWheel>")
+        self.scrollable_main.unbind_all("<Button-4>")
+        self.scrollable_main.unbind_all("<Button-5>")
+
+    def _on_mouse_scroll(self, event):
+        """Scroll the scrollable frame more on each mouse wheel event."""
+        SCROLL_STEP = 20  # Adjust this value for faster or slower scrolling
+        if event.num == 4:  # Linux scroll up
+            self.scrollable_main._canvas.yview_scroll(-SCROLL_STEP, "units")
+        elif event.num == 5:  # Linux scroll down
+            self.scrollable_main._canvas.yview_scroll(SCROLL_STEP, "units")
+        else:  # Windows/macOS
+            self.scrollable_main._canvas.yview_scroll(-SCROLL_STEP if event.delta > 0 else SCROLL_STEP, "units")
 
     def create_widgets(self):
         # Use the scrollable_main as the parent for all widgets.
@@ -87,12 +112,12 @@ class HomePage(ctk.CTkFrame):
         self.start_designing_button.grid(row=3, column=0, columnspan=3, pady=10)
 
         # ========== (4) Two Colored Boxes for Saved/Example Designs ==========
-        # Left: Recently Saved Designs (set to smaller height)
+        # Left: Recently Saved Designs (smaller height)
         self.recent_outer_frame = ctk.CTkFrame(
             self.scrollable_main,
             fg_color="#C2E7E5",
             corner_radius=20,
-            height=40
+            height=40  # Reduced height for the outer box
         )
         self.recent_outer_frame.grid(row=4, column=0, columnspan=1, padx=(50, 10), pady=20, sticky="nsew")
         self.recent_outer_frame.grid_propagate(False)
@@ -131,7 +156,7 @@ class HomePage(ctk.CTkFrame):
             self.scrollable_main,
             fg_color="#FBCFD2",
             corner_radius=20,
-            width = 50
+            width=50
         )
         self.example_outer_frame.grid(row=4, column=2, columnspan=1, padx=(10, 50), pady=20, sticky="nsew")
         self.example_outer_frame.grid_columnconfigure(0, weight=1)
@@ -188,6 +213,7 @@ class HomePage(ctk.CTkFrame):
         """
         Displays example design images ("Design1.png" and "Design2.png") in example_inner_frame.
         """
+        from PIL import Image
         for widget in self.example_inner_frame.winfo_children():
             widget.destroy()
         design_images = ["Design1.png", "Design2.png"]

@@ -8,7 +8,11 @@ from scipy.interpolate import interp1d
 
 
 def check_points_left(points_array, is_left, threshold=0.8, x_limit=eye_corner_start[0]):
-    """Check if at least `threshold` percent of points are on the left of x_limit."""
+    """Check if at least `threshold` percent of points are on the left/right of x_limit."""
+    total_points = len(points_array)
+    if total_points == 0:
+        return False
+
     x_coords = points_array[:, 0]
 
     if is_left:
@@ -17,7 +21,6 @@ def check_points_left(points_array, is_left, threshold=0.8, x_limit=eye_corner_s
         side_count = np.sum(x_coords >= x_limit)
 
     # Calculate the percentage of points on the specified side
-    total_points = len(x_coords)
     percentage = side_count / total_points
     # Check if the percentage is greater than or equal to the threshold
     return percentage >= threshold
@@ -32,62 +35,12 @@ def resample_curve(points, num_resize_val):
     interp_y = interp1d(cumulative_distances, points[:, 1], kind='linear')
     return np.vstack((interp_x(uniform_distances), interp_y(uniform_distances))).T
 
-def resample_curvatures_old(values, points, num_resize_val):
-    """Resample directions or curvatures arrays based on the distance between points:
-        if distance is < threshold between consecutive points then calculate distance between point and next point with distance > threshold instead."""
-    # Compute distances between successive points
-    distances = np.sqrt(np.sum(np.diff(points, axis=0) ** 2, axis=1))
-    cumulative_distances = np.insert(np.cumsum(distances), 0,0)  # Insert a 0 at the start to match the number of 'values'
-
-    # Create uniform distances for resampling
-    total_distance = cumulative_distances[-1]
-    uniform_distances = np.linspace(0, total_distance, num_resize_val)
-    # Interpolate values (curvatures or directions) based on cumulative distances
-    if len(values)==len(cumulative_distances) - 2:
-        cumulative_distances = cumulative_distances[1:-1]
-    elif len(values)==len(cumulative_distances) - 1:
-        cumulative_distances=cumulative_distances[1:]
-    else:
-        raise ValueError("The length of 'values' must be one/two less than the length of 'points'")
-    #cumulative_distances_unique = cumulative_distances[0]
-    cumulative_distances_unique, unique_indices = np.unique(cumulative_distances, return_index=True)
-    values_unique = values[unique_indices]
-    if cumulative_distances_unique.size == 0:
-        print("cumulative_distances:", cumulative_distances)
-        print("distances:", distances)
-        print("points:", points)
-        print("values:", values)
-        raise ValueError("cumulative_distances_unique array must not be empty.")
-    if values_unique.size == 0:
-        print("values:", values)
-        raise ValueError("values_unique array must not be empty.")
-    if cumulative_distances_unique.shape[0] != values_unique.shape[0]:
-        raise ValueError("Input arrays must have the same length.")
-
-    interp_values = interp1d(cumulative_distances_unique, values_unique, kind='linear',axis=0, bounds_error=False,fill_value="extrapolate")
-    #print("NaN in cumulative_distances:", np.isnan(cumulative_distances).any())
-
-    #print("Cumulative Distances Range:", min(cumulative_distances), max(cumulative_distances))
-    #print("Uniform Distances Range:", min(uniform_distances), max(uniform_distances))
-    #print(not np.all(np.diff(cumulative_distances) > 0))
-    #extrapolated_values = interp_values([min(cumulative_distances) - 1, max(cumulative_distances) + 1])
-    #print(extrapolated_values)
-
-    return interp_values(uniform_distances)
 
 def resample_curvatures(curvature, num_points):
     # Original indices normalized between 0 and 1
     original_indices = np.linspace(0, 1, num=len(curvature))
     new_indices = np.linspace(0, 1, num=num_points)
     return np.interp(new_indices, original_indices, curvature)
-
-
-# Compute curvature for both sets of points
-def calculate_curvature_old(points):
-    vectors = np.diff(points, axis=0)
-    angles = np.arctan2(vectors[:, 1], vectors[:, 0])
-    curvatures = np.diff(angles)
-    return curvatures
 
 
 def calculate_curvature(points, threshold=0.0001):
@@ -136,7 +89,7 @@ def calculate_curvature(points, threshold=0.0001):
 
     return curvatures
 
-def get_overlapping_points(curve1, curve2, tolerance=0.1):
+def get_overlapping_points_old(curve1, curve2, tolerance=0.1):
     overlapping_points_curve1 = []
     overlapping_points_curve2 = []
 
@@ -149,6 +102,22 @@ def get_overlapping_points(curve1, curve2, tolerance=0.1):
             overlapping_points_curve1.append(point1)
 
     return np.array(overlapping_points_curve1), np.array(overlapping_points_curve2)
+
+
+def get_overlapping_points(curve1, curve2):
+    # Get the x-values of both curves
+    x1 = curve1[:, 0]
+    x2 = curve2[:, 0]
+
+    # Find the overlapping x range
+    x_min_overlap = max(np.min(x1), np.min(x2))  # max of the minimum x-values
+    x_max_overlap = min(np.max(x1), np.max(x2))  # min of the maximum x-values
+
+    # Filter both arrays to keep points within the overlap range
+    curve1_overlap = curve1[(x1 >= x_min_overlap) & (x1 <= x_max_overlap)]
+    curve2_overlap = curve2[(x2 >= x_min_overlap) & (x2 <= x_max_overlap)]
+
+    return curve1_overlap, curve2_overlap
 
 def direction_between_points(point1, point2):
     tangent = np.array(point2) - np.array(point1)
@@ -317,7 +286,7 @@ def compare_with_eyelid_curves(bezier_points, eye_points, is_upper,num_samples=1
         "overall_similarity": overall_similarity
     } , overlap_length
 
-def score_segment_against_eyelid_shape(segment, tolerance=0.1, to_print = False):
+def score_segment_against_eyelid_shape(segment, to_print = False):
     upper_curve = upper_eyelid_coords
     lower_curve = lower_eyelid_coords
     points = segment.points_array
@@ -643,7 +612,7 @@ def analyse_design_shapes(design, to_print = False):
             if not validate_star_parameters(segment):
                 total_score -=1
             else:
-                total_score +=1
+                total_score +=0.5
 
     penalise_n_of_segments = len(segments) / 4
     if penalise_n_of_segments < 1:
@@ -720,4 +689,31 @@ new_segment = create_segment(
 random_design.add_segment(new_segment)
 """
 
+"""
+point1 = np.array([79.976, 98.784])
+point2 = np.array([79.799, 98.80006])
+point3 = np.array([79.622, 98.816])
+v1 = point2 - point1
+v2 = point3 - point2
+angle1 = np.arctan2(v1[1], v1[0])
+angle2 = np.arctan2(v2[1], v2[0])
+curvature = angle2 - angle1
 
+# Normalize curvature to be between -pi and pi
+if curvature > np.pi:
+    curvature -= 2 * np.pi
+elif curvature < -np.pi:
+    curvature += 2 * np.pi
+
+print(curvature)
+"""
+"""
+point1 = np.array([79.799, 98.8])
+point2 = np.array([79.799, 98.80006])
+
+# Compute the Euclidean distance (norm)
+distance = np.linalg.norm(point1 - point2)
+
+# Print the result
+print(distance)
+"""

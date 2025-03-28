@@ -11,7 +11,6 @@ from AnalyseDesign import analyse_negative, analyse_positive
 from RandomGene import random_gene
 import concurrent.futures
 
-
 def score_gene(gene):
     return gene, analyse_positive(gene)  # overlap_score + any additional scoring
 
