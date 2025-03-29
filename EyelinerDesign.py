@@ -456,6 +456,7 @@ line.render(np.array([line.start]), 0, 'red', line.end_thickness, ax_n)
 cProfile.run('random_random_shape()')
 """
 """"""
+"""
 fig, ax_n = plt.subplots(figsize=(3, 3))
 line = LineSegment(SegmentType.LINE, (50,100), StartMode.JUMP, 70, 0, 2, 1, 'red', 0.7, True, 0.4, 0, 0)
 line2 = LineSegment(SegmentType.LINE, (80,120), StartMode.JUMP, 40, 0, 1, 2, 'blue', 0, False, 0.5, 0.5, 0)
@@ -479,7 +480,7 @@ print("negative_score:",negative_score)
 positive_score = analyse_positive(design,True)
 print("positive_score:",positive_score)
 print(is_outside_face_area(line2))
-""""""
+"""
 
 
 """
