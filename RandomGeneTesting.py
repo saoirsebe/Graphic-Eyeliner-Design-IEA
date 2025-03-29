@@ -145,6 +145,7 @@ def test_random_gene_node(monkeypatch):
 
 # --- Test for random_gene ---
 @pytest.mark.parametrize("gene_n", [2, 4, 7])
+
 def test_random_gene(gene_n, monkeypatch):
     import RandomGene as RG
     import random
