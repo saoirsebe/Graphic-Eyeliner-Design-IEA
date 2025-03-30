@@ -82,12 +82,14 @@ def test_calculate_end(start, length, relative_angle, start_mode, prev_angle, ex
     assert actual_end == expected_end, f"Expected end {expected_end}, got {actual_end}"
 
 # --- Test for curve_between_lines ---
+"""
 @pytest.mark.parametrize("p0, p1, p2, p3, p4, colour, connecting_array", [
     (
         (0,0), (1,2), (2,2), (3,2), (4,0), "red",
         np.array([[0,0], [0.5, 0.5]])
     )
 ])
+
 def test_curve_between_lines(monkeypatch, p0, p1, p2, p3, p4, colour, connecting_array):
     import Segments
     monkeypatch.setattr(Segments, "bezier_curve_t", fake_bezier_curve_t)
@@ -115,6 +117,73 @@ def test_curve_between_lines(monkeypatch, p0, p1, p2, p3, p4, colour, connecting
     right_curve = fake_bezier_curve_t(np.linspace(0,1,20), p2, p3, p4)
     expected = np.concatenate((left_curve, right_curve, seg.points_array), axis=0)
     assert np.allclose(result, expected), "curve_between_lines did not return the expected concatenated array."
+"""
+@pytest.mark.parametrize("p0, p1, p2, p3, p4, colour", [
+    ((0, 0), (1, 2), (2, 2), (3, 2), (4, 0), "red")
+])
+def test_curve_between_lines(monkeypatch, p0, p1, p2, p3, p4, colour):
+    import Segments
+    # Patch bezier_curve_t in Segments.
+    monkeypatch.setattr(Segments, "bezier_curve_t", fake_bezier_curve_t)
+
+    # Capture plt.fill arguments.
+    captured = {}
+
+    def fake_fill(x, y, color, alpha):
+        captured["boundary_x"] = x
+        captured["boundary_y"] = y
+        captured["color"] = color
+        captured["alpha"] = alpha
+
+    monkeypatch.setattr(plt, "fill", fake_fill)
+
+    # Create a LineSegment and set its points_array to a known fixed array.
+    seg = LineSegment(
+        segment_type=SegmentType.LINE,
+        start=(0, 0),
+        start_mode=StartMode.CONNECT,
+        length=10,
+        relative_angle=45,
+        start_thickness=2,
+        end_thickness=1,
+        colour="red",
+        curviness=0,  # so no bezier curve in render
+        curve_left=True,
+        curve_location=0.5,
+        start_location=1,
+        split_point=0
+    )
+    # Set points_array to a fixed array with 5 points.
+    seg.points_array = np.array([
+        [10, 10],
+        [20, 20],
+        [30, 30],
+        [40, 40],
+        [50, 50]
+    ])
+
+    curve_start_point = 1
+    curve_end_point = 3
+    connecting_array = seg.points_array[curve_start_point: curve_end_point ]  # points_array[1:3]
+
+    # Call curve_between_lines.
+    result = seg.curve_between_lines(p0, p1, p2, p3, p4, colour, connecting_array)
+
+    # Check that plt.fill was called with a boundary computed as:
+    # boundary = np.concatenate([expected_connecting_array[::-1], left_curve, right_curve], axis=0)
+    t_values = np.linspace(0, 1, 20)
+    left_curve = fake_bezier_curve_t(t_values, p0, p1, p2)
+    right_curve = fake_bezier_curve_t(t_values, p2, p3, p4)
+    expected_boundary = np.concatenate([connecting_array[::-1], left_curve, right_curve], axis=0)
+
+    # Reconstruct the boundary from captured x and y.
+    captured_boundary = np.column_stack((captured["boundary_x"], captured["boundary_y"]))
+    assert np.allclose(captured_boundary, expected_boundary), "plt.fill was called with an incorrect boundary."
+
+    # The function returns np.concatenate((left_curve, right_curve, self.points_array), axis=0)
+    expected_return = np.concatenate((left_curve, right_curve, seg.points_array), axis=0)
+    assert np.allclose(result, expected_return), "curve_between_lines did not return the expected concatenated array."
+
 
 # --- Test for render ---
 @pytest.mark.parametrize("start, length, relative_angle, prev_angle, prev_array", [
@@ -241,7 +310,7 @@ def test_mutate(monkeypatch, mutation_rate):
 
 
 def test_line_mutation_attributes_within_range():
-    # Create a LineSegment with valid attributes; note length is now set to 60 (within length_range, e.g., (0,60)).
+    # Create a LineSegment with valid attributes
     line = LineSegment(SegmentType.LINE, (50,100), StartMode.JUMP, 60, 0, 2, 1, 'red', 0.7, True, 0.4, 0, 0)
     # Run mutation several times and check that mutated attributes remain within defined ranges.
     for count in range(10):
