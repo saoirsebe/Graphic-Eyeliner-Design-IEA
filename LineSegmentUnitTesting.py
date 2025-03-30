@@ -82,42 +82,6 @@ def test_calculate_end(start, length, relative_angle, start_mode, prev_angle, ex
     assert actual_end == expected_end, f"Expected end {expected_end}, got {actual_end}"
 
 # --- Test for curve_between_lines ---
-"""
-@pytest.mark.parametrize("p0, p1, p2, p3, p4, colour, connecting_array", [
-    (
-        (0,0), (1,2), (2,2), (3,2), (4,0), "red",
-        np.array([[0,0], [0.5, 0.5]])
-    )
-])
-
-def test_curve_between_lines(monkeypatch, p0, p1, p2, p3, p4, colour, connecting_array):
-    import Segments
-    monkeypatch.setattr(Segments, "bezier_curve_t", fake_bezier_curve_t)
-    # We don't want actual plotting, so patch plt.fill.
-    monkeypatch.setattr(plt, "fill", lambda x, y, color, alpha: None)
-    seg = LineSegment(
-        segment_type=SegmentType.LINE,
-        start=(0,0),
-        start_mode=StartMode.CONNECT,
-        length=10,
-        relative_angle=45,
-        start_thickness=2,
-        end_thickness=1,
-        colour="red",
-        curviness=0,
-        curve_left=True,
-        curve_location=0.5,
-        start_location=1,
-        split_point=0
-    )
-    # Set a known points_array for later concatenation.
-    seg.points_array = np.array([[10,10], [20,20]])
-    result = seg.curve_between_lines(p0, p1, p2, p3, p4, colour, connecting_array)
-    left_curve = fake_bezier_curve_t(np.linspace(0,1,20), p0, p1, p2)
-    right_curve = fake_bezier_curve_t(np.linspace(0,1,20), p2, p3, p4)
-    expected = np.concatenate((left_curve, right_curve, seg.points_array), axis=0)
-    assert np.allclose(result, expected), "curve_between_lines did not return the expected concatenated array."
-"""
 @pytest.mark.parametrize("p0, p1, p2, p3, p4, colour", [
     ((0, 0), (1, 2), (2, 2), (3, 2), (4, 0), "red")
 ])
@@ -167,10 +131,9 @@ def test_curve_between_lines(monkeypatch, p0, p1, p2, p3, p4, colour):
     connecting_array = seg.points_array[curve_start_point: curve_end_point ]  # points_array[1:3]
 
     # Call curve_between_lines.
-    result = seg.curve_between_lines(p0, p1, p2, p3, p4, colour, connecting_array)
+    seg.curve_between_lines(p0, p1, p2, p3, p4, colour, connecting_array)
 
     # Check that plt.fill was called with a boundary computed as:
-    # boundary = np.concatenate([expected_connecting_array[::-1], left_curve, right_curve], axis=0)
     t_values = np.linspace(0, 1, 20)
     left_curve = fake_bezier_curve_t(t_values, p0, p1, p2)
     right_curve = fake_bezier_curve_t(t_values, p2, p3, p4)
@@ -179,10 +142,6 @@ def test_curve_between_lines(monkeypatch, p0, p1, p2, p3, p4, colour):
     # Reconstruct the boundary from captured x and y.
     captured_boundary = np.column_stack((captured["boundary_x"], captured["boundary_y"]))
     assert np.allclose(captured_boundary, expected_boundary), "plt.fill was called with an incorrect boundary."
-
-    # The function returns np.concatenate((left_curve, right_curve, self.points_array), axis=0)
-    expected_return = np.concatenate((left_curve, right_curve, seg.points_array), axis=0)
-    assert np.allclose(result, expected_return), "curve_between_lines did not return the expected concatenated array."
 
 
 # --- Test for render ---
@@ -209,7 +168,7 @@ def test_render(monkeypatch, start, length, relative_angle, prev_angle, prev_arr
         start_location=1,
         split_point=0
     )
-    seg.calculate_end(prev_angle)
+
     seg.render(prev_array, prev_angle, "green", np.array([2,2]), scale=1, ax_n=None)
     expected_points = np.column_stack((
         np.linspace(seg.start[0], seg.end[0], line_num_points),
@@ -217,6 +176,244 @@ def test_render(monkeypatch, start, length, relative_angle, prev_angle, prev_arr
     ))
     expected_points = np.round(expected_points, 3)
     assert np.allclose(seg.points_array, expected_points), "render did not create the expected points_array for a straight line."
+
+# --- Test for update_start_from_prev ---
+import numpy as np
+import pytest
+from Segments import LineSegment
+from A import StartMode
+
+
+# We'll create a fake point_in_array that returns a fixed index if provided.
+def fake_point_in_array_factory(fixed_index):
+    def fake_point_in_array(array, threshold):
+        return fixed_index
+
+    return fake_point_in_array
+
+
+@pytest.mark.parametrize("mode, prev_length, fixed_index, exp_mode_branch", [
+    #num_points_range[1] = 8
+    # Case A: CONNECT, length > 8: branch 1 should be taken.
+    (StartMode.CONNECT, 20, None, "branch1"),
+    # Case B: CONNECT, length <= 8: branch 2.
+    (StartMode.CONNECT, 7, 3, "branch2"),
+    # Case C: SPLIT, length > 8: branch 1.
+    (StartMode.SPLIT, 20, None, "branch1"),
+    # Case D: SPLIT, length <= 8: branch 2.
+    (StartMode.SPLIT, 7, 3, "branch2"),
+    # Case E: CONNECT_MID, length > 0.
+    (StartMode.CONNECT_MID, 10, 2, "connect_mid"),
+])
+def test_update_start_from_prev(monkeypatch, mode, prev_length, fixed_index, exp_mode_branch):
+    # Create a previous array as a list of tuples: e.g., [(0,0), (1,1), ..., (n-1, n-1)]
+    prev_array = [(i, i) for i in range(prev_length)]
+    # Create a thickness array as a numpy array of 0,1,2,...,prev_length-1
+    prev_thickness_array = np.array(list(range(prev_length)))
+
+    # Create a dummy LineSegment. (Other attributes are not relevant for this test.)
+    seg = LineSegment(
+        segment_type=None,  # not used here
+        start=(999, 999),  # dummy initial value
+        start_mode=mode,
+        length=10,
+        relative_angle=45,
+        start_thickness=0,
+        end_thickness=1,
+        colour="black",
+        curviness=0,
+        curve_left=True,
+        curve_location=0.5,
+        start_location=0.5,
+        split_point=0.3
+    )
+
+    # For branches where fixed_index is needed, patch point_in_array accordingly.
+    # Otherwise, we don't care (it won't be used).
+    if fixed_index is not None:
+        monkeypatch.setattr("Segments.point_in_array", fake_point_in_array_factory(fixed_index))
+    else:
+        # Provide a default fake that returns 0.
+        monkeypatch.setattr("Segments.point_in_array", fake_point_in_array_factory(0))
+
+    # Call update_start_from_prev
+    ret = seg.update_start_from_prev(prev_array, prev_thickness_array, prev_length)
+
+    # Now, check based on the expected branch.
+    if exp_mode_branch == "branch1":
+        # For CONNECT or SPLIT with length > 15:
+        expected_start = prev_array[-1]
+        expected_thickness = prev_thickness_array[-1]
+        assert seg.start == expected_start, f"Expected start {expected_start}, got {seg.start}"
+        assert seg.start_thickness == expected_thickness, f"Expected start_thickness {expected_thickness}, got {seg.start_thickness}"
+        assert ret is None, f"Expected return None, got {ret}"
+    elif exp_mode_branch == "branch2":
+        # For CONNECT or SPLIT with length <= 15:
+        # The fake point_in_array returns fixed_index.
+        expected_start = prev_array[fixed_index]
+        assert seg.start == expected_start, f"Expected start {expected_start}, got {seg.start}"
+        # start_thickness is not updated in this branch.
+        assert ret is None, f"Expected return None, got {ret}"
+    elif exp_mode_branch == "connect_mid":
+        # For CONNECT_MID with len(prev_array) > 0:
+        # We expect point_in_array to be called with self.start_location and return fixed_index.
+        expected_start = prev_array[fixed_index]
+        assert seg.start == expected_start, f"Expected start {expected_start}, got {seg.start}"
+        assert ret == fixed_index, f"Expected return {fixed_index}, got {ret}"
+    else:
+        pytest.fail("Unexpected branch.")
+
+
+@pytest.mark.parametrize("prev_length", [0])
+def test_update_start_from_prev_empty_array(monkeypatch, prev_length):
+    # When prev_array is empty, the method should raise a ValueError.
+    prev_array = []
+    prev_thickness_array = np.array([])
+    seg = LineSegment(
+        segment_type=None,
+        start=(999, 999),
+        start_mode=StartMode.CONNECT,
+        length=10,
+        relative_angle=45,
+        start_thickness=0,
+        end_thickness=1,
+        colour="black",
+        curviness=0,
+        curve_left=True,
+        curve_location=0.5,
+        start_location=0.5,
+        split_point=0.3
+    )
+    with pytest.raises(ValueError):
+        seg.update_start_from_prev(prev_array, prev_thickness_array, prev_length)
+
+
+# --- Test for compute_points_array_straight ---
+def test_compute_points_array_straight():
+    # Create a segment with a known start and end.
+    seg = LineSegment(
+        segment_type=SegmentType.LINE,
+        start=(0, 0),
+        start_mode=StartMode.CONNECT,
+        length=10,
+        relative_angle=0,
+        start_thickness=2,
+        end_thickness=1,
+        colour="blue",
+        curviness=0,
+        curve_left=True,
+        curve_location=0.5,
+        start_location=1,
+        split_point=0
+    )
+    # Manually set end.
+    seg.end = (10, 0)
+    x_vals, y_vals = seg.compute_points_array_straight()
+    expected_x = np.linspace(0, 10, line_num_points)
+    expected_y = np.linspace(0, 0, line_num_points)
+    expected = np.column_stack((expected_x, expected_y))
+    expected = np.round(expected, 3)
+    assert np.allclose(seg.points_array,
+                       expected), "compute_points_array_straight did not produce expected points_array."
+    # Also, verify that x_vals and y_vals match.
+    assert np.allclose(x_vals, expected_x)
+    assert np.allclose(y_vals, expected_y)
+
+
+# --- Test for compute_points_array_curved ---
+def test_compute_points_array_curved(monkeypatch):
+    import Segments
+    # Patch un_normalised_vector_direction and bezier_curve_t.
+    monkeypatch.setattr(Segments, "un_normalised_vector_direction", lambda p0, p2: np.array(p2) - np.array(p0))
+    monkeypatch.setattr(Segments, "bezier_curve_t", fake_bezier_curve_t)
+    seg = LineSegment(
+        segment_type=SegmentType.LINE,
+        start=(0, 0),
+        start_mode=StartMode.CONNECT,
+        length=10,
+        relative_angle=0,
+        start_thickness=2,
+        end_thickness=1,
+        colour="blue",
+        curviness=0.5,  # curved
+        curve_left=True,
+        curve_location=0.5,
+        start_location=1,
+        split_point=0
+    )
+    # Set an end point.
+    seg.end = (10, 0)
+    x_vals, y_vals = seg.compute_points_array_curved()
+    # Our fake_bezier_curve_t does linear interpolation between p0 and p2.
+    t = np.linspace(0, 1, line_num_points)
+    expected = np.column_stack(((0 + (10 - 0) * t), (0 + (0 - 0) * t)))
+    assert np.allclose(seg.points_array, expected), "compute_points_array_curved did not produce expected points_array."
+    # Also check returned x_vals, y_vals.
+    assert np.allclose(x_vals, expected[:, 0])
+    assert np.allclose(y_vals, expected[:, 1])
+
+
+# --- Test for apply_split_adjustments ---
+@pytest.mark.parametrize("ax_n, prev_array, prev_angle", [
+    # Case 1: ax_n is None -> blending branch skipped.
+    (None, np.array([[0, 0], [1, 1], [2, 2], [3, 3]]), 0),
+    # Case 2: ax_n is provided and prev_array length > 5.
+    (object(), np.array([[0, 0], [1, 1], [2, 2], [3, 3], [4, 4], [5, 5], [6, 6], [7, 7], [8, 8], [9, 9]]), 10)
+])
+def test_apply_split_adjustments(monkeypatch, ax_n, prev_array, prev_angle):
+    # For testing, patch point_in_array to always return a fixed index, e.g. 1.
+    monkeypatch.setattr("Segments.point_in_array", fake_point_in_array_factory(1))
+    # Patch un_normalised_vector_direction to return a fixed vector, e.g., (5,5).
+    monkeypatch.setattr("Segments.un_normalised_vector_direction", lambda p0, p2: np.array([5, 5]))
+    # For simplicity, also patch curve_between_lines to do nothing.
+    called_args = {}
+
+    def fake_curve_between_lines(self, p0, p1, p2, p3, p4, prev_colour, connecting_array):
+        called_args.update({"p0": p0, "p1": p1, "p2": p2, "p3": p3, "p4": p4, "prev_colour": prev_colour,
+                            "connecting_array": connecting_array})
+
+    monkeypatch.setattr("Segments.LineSegment.curve_between_lines", fake_curve_between_lines)
+
+    # Create a dummy segment with a known points_array and start.
+    seg = LineSegment(
+        segment_type=SegmentType.LINE,
+        start=(0, 0),
+        start_mode=StartMode.SPLIT,
+        length=10,
+        relative_angle=45,
+        start_thickness=2,
+        end_thickness=1,
+        colour="red",
+        curviness=0,  # use straight line for simplicity.
+        curve_left=True,
+        curve_location=0.5,
+        start_location=1,
+        split_point=0.3
+    )
+    # Set a fixed points_array.
+    seg.points_array = np.array([[10, 10], [20, 20], [30, 30], [40, 40]])
+
+    # Before any blend adjustments, apply the transformation:
+    # transformation_vector = un_normalised_vector_direction(self.points_array[fixed_index], self.start)
+    # With fixed_index=1, self.points_array[1] = [20,20], self.start = (0,0), so transformation_vector = [20,20]?
+    # However, our patched un_normalised_vector_direction returns (5,5) regardless.
+    # So new points_array = original points_array + (5,5):
+    expected_points = seg.points_array + np.array([5, 5])
+    expected_x = expected_points[:, 0]
+    expected_y = expected_points[:, 1]
+
+    # For this test, len_prev_array is provided as parameter.
+    x_vals, y_vals = seg.apply_split_adjustments("blue", prev_array, prev_angle, ax_n, len(prev_array))
+
+    # If ax_n is None, the blend branch is not executed.
+    assert np.allclose(x_vals, expected_x), "apply_split_adjustments (no blend): x values not as expected."
+    assert np.allclose(y_vals, expected_y), "apply_split_adjustments (no blend): y values not as expected."
+    if ax_n:
+        # When ax_n is provided, the function calls curve_between_lines.
+        # Our fake_curve_between_lines simply captures its arguments.
+        # Additionally, we can check that curve_between_lines was called by verifying our captured arguments.
+        assert "p0" in called_args, "curve_between_lines was not called in blend branch."
+
 
 # --- Test for mutate ---
 # We assume that mutate calls instance methods mutate_choice, mutate_val, and mutate_colour.

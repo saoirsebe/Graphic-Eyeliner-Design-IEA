@@ -41,230 +41,195 @@ class LineSegment(Segment):
         end_y = self.start[1] + self.length * math.sin(radians)
         self.end = (end_x, end_y)
 
-
     def curve_between_lines(self, p0, p1, p2, p3, p4, colour,connecting_array):
         t_values = np.linspace(0, 1, 20)
         left_curve = bezier_curve_t(t_values, p0, p1, p2)
-        # np.array((prev_array[start_array_point_index+2]) - np.array(self.points_array[2]))/2
         right_curve = bezier_curve_t(t_values, p2, p3, p4)
-        #left_x, left_y = left_curve[:, 0], left_curve[:, 1]
-        #right_x, right_y = right_curve[:, 0], right_curve[:, 1]
 
-        # Combine the points to form a closed boundary
-        #boundary_x = np.concatenate([left_x, right_x[::1]])  # Combine left and reversed right x
-        #boundary_y = np.concatenate([left_y, right_y[::1]])  # Combine left and reversed right y
-        #plt.fill(boundary_x, boundary_y, color=colour, alpha=1)
-        #return np.concatenate((left_curve, right_curve, self.points_array), axis=0)
         boundary = np.concatenate([connecting_array[::-1], left_curve, right_curve], axis=0)
         plt.fill(boundary[:, 0], boundary[:, 1], color=colour, alpha=1)
 
-        return np.concatenate((left_curve, right_curve[::1], self.points_array), axis=0)
-
-    def render(self, prev_array, prev_angle, prev_colour, prev_thickness_array, scale = 1, ax_n=None):
-        # TESTING:
-        if self.colour == False:
-            print("1) self.colour == False prev_colour: ", prev_colour)
-            self.colour = prev_colour
-        new_array = []
-        len_prev_array = len(prev_array)
-        if self.start_mode == StartMode.CONNECT and len_prev_array>15 or self.start_mode == StartMode.SPLIT and len_prev_array>15:
+    def update_start_from_prev(self, prev_array, prev_thickness_array, len_prev_array):
+        if self.start_mode == StartMode.CONNECT and len_prev_array > num_points_range[1] or self.start_mode == StartMode.SPLIT and len_prev_array > 15:
             self.start = (prev_array[-1][0], prev_array[-1][1])
             if prev_thickness_array.size == 1:
-                print("prev_thickness_array:",prev_thickness_array)
-                print("prev_array:",prev_array)
+                print("prev_thickness_array:", prev_thickness_array)
+                print("prev_array:", prev_array)
             self.start_thickness = prev_thickness_array[len_prev_array - 1]
-        elif self.start_mode == StartMode.CONNECT and len_prev_array<=15 or self.start_mode == StartMode.SPLIT and len_prev_array<=15:
+        elif self.start_mode == StartMode.CONNECT and num_points_range[0]<= len_prev_array <= num_points_range[1] or self.start_mode == StartMode.SPLIT and len_prev_array <= 15:
             end_index = point_in_array(prev_array, 0.5)
             self.start = (prev_array[end_index][0], prev_array[end_index][1])
-        elif len(prev_array)<=0:
-            raise ValueError("len(prev_array)<=0....")
-        elif self.start_mode == StartMode.CONNECT_MID and len_prev_array>0:
+        elif len(prev_array) <= 1:
+            raise ValueError("len(prev_array)<=1....")
+        elif self.start_mode == StartMode.CONNECT_MID and len_prev_array > 1:
             start_array_point_index = point_in_array(prev_array, self.start_location)
             start_array_point = prev_array[start_array_point_index]
             self.start = (start_array_point[0], start_array_point[1])
+            return start_array_point_index
+        return None
 
-        self.calculate_end(prev_angle)  # Calculate the endpoint
+    def compute_points_array_straight(self):
+        # For curviness == 0: simple linear interpolation between start and end.
+        x_values = np.linspace(self.start[0], self.end[0], line_num_points)
+        y_values = np.linspace(self.start[1], self.end[1], line_num_points)
+        self.points_array = np.column_stack((x_values, y_values))
+        self.points_array = np.round(self.points_array, 3)
+        return x_values, y_values
 
-        if self.curviness>0:
-            p0 = np.array(self.start)
-            p2 = np.array(self.end)
-            p1 = p0 + (self.curve_location * un_normalised_vector_direction(p0,p2)) #moves curve_location away from P0 towards P2 relative to length of curve segment
-            if self.curve_left:
-                curve_direction = 90 #curve direction in degrees
-            else:
-                curve_direction = -90
-            relative_curve_direction = self.absolute_angle + curve_direction
-            curve_dir_radians = np.radians(relative_curve_direction)
-            # Calculate x and y offsets
-            dx = self.length * self.curviness * np.cos(curve_dir_radians)
-            dy = self.length * self.curviness * np.sin(curve_dir_radians)
-            p1 = p1 + np.array([dx, dy])
-            t_values = np.linspace(0, 1, line_num_points)
-            self.points_array = bezier_curve_t(t_values, p0, p1, p2 )
-            x_values, y_values = self.points_array[:, 0], self.points_array[:, 1]
+    def compute_points_array_curved(self):
+        # For curviness > 0, compute bezier curve.
+        p0 = np.array(self.start)
+        p2 = np.array(self.end)
+        p1 = p0 + (self.curve_location * un_normalised_vector_direction(p0, p2))  # moves curve_location away from P0 towards P2 relative to length of curve segment
+        if self.curve_left:
+            curve_direction = 90  # curve direction in degrees
         else:
-            x_values = np.linspace(self.start[0], self.end[0], line_num_points)
-            y_values = np.linspace(self.start[1], self.end[1], line_num_points)
-            self.points_array = np.column_stack((x_values, y_values))
-            self.points_array = np.round(self.points_array, 3)
+            curve_direction = -90
+        relative_curve_direction = self.absolute_angle + curve_direction
+        curve_dir_radians = np.radians(relative_curve_direction)
+        # Calculate x and y offsets
+        dx = self.length * self.curviness * np.cos(curve_dir_radians)
+        dy = self.length * self.curviness * np.sin(curve_dir_radians)
+        p1 = p1 + np.array([dx, dy])
+        t_values = np.linspace(0, 1, line_num_points)
+        self.points_array = bezier_curve_t(t_values, p0, p1, p2)
+        x_values, y_values = self.points_array[:, 0], self.points_array[:, 1]
+        return x_values, y_values
 
-        """Set self.points_array and move line if split type"""
-        if self.start_mode == StartMode.SPLIT:
-            split_point_point_index = point_in_array(self.points_array, self.split_point)
-            split_point_point = self.points_array[split_point_point_index]
-            transformation_vector = un_normalised_vector_direction(split_point_point,self.start)
+    def apply_split_adjustments(self, prev_colour, prev_array, prev_angle, ax_n, len_prev_array):
+        split_point_point_index = point_in_array(self.points_array, self.split_point)
+        split_point_point = self.points_array[split_point_point_index]
+        transformation_vector = un_normalised_vector_direction(split_point_point, self.start)
 
-            self.points_array = np.array([(point[0] + transformation_vector[0], point[1] + transformation_vector[1]) for point in self.points_array])
-            x_values, y_values = self.points_array[:, 0], self.points_array[:, 1]
+        self.points_array = np.array(
+            [(point[0] + transformation_vector[0], point[1] + transformation_vector[1]) for point in self.points_array])
+        x_values, y_values = self.points_array[:, 0], self.points_array[:, 1]
 
-            #len_prev_array = len(prev_array)
-            """Add curve from 10% from end of prev line to split point"""
-            if ax_n and len_prev_array > num_points_range[1]: #If prev array is a line
-                percent_30_prev = int(len_prev_array * 0.3)
-                p2 = np.array(prev_array[-percent_30_prev])
+        """Add curve from 10% from end of prev line to split point"""
+        if ax_n and len_prev_array > num_points_range[1]:  # If prev array is a line
+            percent_30_prev = int(len_prev_array * 0.3)
+            p2 = np.array(prev_array[-percent_30_prev])
 
-                # p0 index is -10% from connect point or start of current line:
-                len_self_array = len(self.points_array)
-                percent_30_current = int(len_self_array * 0.3)
-                if split_point_point_index <= percent_30_current:
-                    curve_start_point = 0
-                else:
-                    curve_start_point = split_point_point_index - percent_30_current
-                p0 = np.array(self.points_array[curve_start_point])
-
-                # p1 is 5% of average line length in direction half-way from  point
-                average_line_length_25 = int(((len_prev_array + len_self_array) // 2)*0.015)
-                c = (self.absolute_angle - prev_angle) % 360
-                p1_angle = self.absolute_angle + (180 - c//2)
-                p1_dir_radians = np.radians(p1_angle)
-                dx = average_line_length_25 * np.cos(p1_dir_radians)
-                dy = average_line_length_25 * np.sin(p1_dir_radians)
-                p1 = np.array(self.start)
-                p1 = p1 + np.array([dx, dy])
-
-                # p4 index is +30% from connect point or ond of current line:
-                if len_self_array <= (split_point_point_index + percent_30_current):
-                    curve_end_point = len_prev_array - 1
-                else:
-                    curve_end_point = split_point_point_index + percent_30_current
-                p4 = np.array(self.points_array[curve_end_point])
-
-                # p3 is 5% of average line length in direction half w
-                p3_angle = self.absolute_angle + ((180 - c) // 2)
-                p3_dir_radians = np.radians(p3_angle)
-                dx = average_line_length_25 * np.cos(p3_dir_radians)
-                dy = average_line_length_25 * np.sin(p3_dir_radians)
-                p3 = np.array(self.start)
-                p3 = p3 + np.array([dx, dy])
-
-                connecting_array = self.points_array[curve_start_point: curve_end_point+1]
-                new_array = self.curve_between_lines(p0, p1, p2, p3, p4, prev_colour, connecting_array)
-                #x_values, y_values = new_array[:, 0], new_array[:, 1]
-
-        self.thickness_array = np.linspace(self.start_thickness, self.end_thickness, line_num_points) #Render a line segment with thickness tapering from start to end
-        """Add curve from 10% from each side of connect (start) point on previous line to 10% up current line"""
-        len_prev_array = len(prev_array)
-        if ax_n and self.start_mode == StartMode.CONNECT_MID and len_prev_array>num_points_range[1]:#If prev array is a line
+            # p0 index is -10% from connect point or start of current line:
             len_self_array = len(self.points_array)
             percent_30_current = int(len_self_array * 0.3)
-            p2 = np.array(self.points_array[percent_30_current])
-
-            # p0 index is -30% from connect point or start of the previous line:
-            percent_30_prev = int(len_prev_array * 0.3)
-            if start_array_point_index <= percent_30_prev:
+            if split_point_point_index <= percent_30_current:
                 curve_start_point = 0
             else:
-                curve_start_point = start_array_point_index - percent_30_prev
-            p0 = np.array(prev_array[curve_start_point])
+                curve_start_point = split_point_point_index - percent_30_current
+            p0 = np.array(self.points_array[curve_start_point])
 
-            # p1 is 2.5% of average line length in direction half way from current line to previous line, away from the connect point
-            average_line_length_25 = int(((len_prev_array + len_self_array) // 2)*0.015)
+            # p1 is 5% of average line length in direction half-way from  point
+            average_line_length_25 = int(((len_prev_array + len_self_array) // 2) * 0.015)
             c = (self.absolute_angle - prev_angle) % 360
-            p1_angle = self.absolute_angle + ((180-c)//2)
+            p1_angle = self.absolute_angle + (180 - c // 2)
             p1_dir_radians = np.radians(p1_angle)
             dx = average_line_length_25 * np.cos(p1_dir_radians)
             dy = average_line_length_25 * np.sin(p1_dir_radians)
             p1 = np.array(self.start)
             p1 = p1 + np.array([dx, dy])
 
-            # p4 index is +10% from connect point or end of the previous line:
-            if len(prev_array) <= (start_array_point_index + percent_30_prev):
-                curve_end_point = len(prev_array) - 1
+            # p4 index is +30% from connect point or ond of current line:
+            if len_self_array <= (split_point_point_index + percent_30_current):
+                curve_end_point = len_prev_array - 1
             else:
-                curve_end_point = start_array_point_index + percent_30_prev
-            p4 = np.array(prev_array[curve_end_point])
+                curve_end_point = split_point_point_index + percent_30_current
+            p4 = np.array(self.points_array[curve_end_point])
 
-            # p1 is 5% of average line length in direction half-way from previous line to current line, away from the connect point
-            p3_angle = prev_angle + c//2
+            # p3 is 5% of average line length in direction half w
+            p3_angle = self.absolute_angle + ((180 - c) // 2)
             p3_dir_radians = np.radians(p3_angle)
             dx = average_line_length_25 * np.cos(p3_dir_radians)
             dy = average_line_length_25 * np.sin(p3_dir_radians)
             p3 = np.array(self.start)
             p3 = p3 + np.array([dx, dy])
 
-            connecting_array = prev_array[curve_start_point: curve_end_point + 1]
-            new_array = self.curve_between_lines(p0, p1, p2, p3, p4, self.colour,connecting_array)
-            #x_values, y_values = new_array[:, 0], new_array[:, 1]
+            connecting_array = self.points_array[curve_start_point: curve_end_point + 1]
+            self.curve_between_lines(p0, p1, p2, p3, p4, prev_colour, connecting_array)
+        return x_values, y_values
+
+    def connect_mid_blend_lines(self, len_prev_array, start_array_point_index, prev_array, prev_angle):
+        len_self_array = len(self.points_array)
+        percent_30_current = int(len_self_array * 0.3)
+        p2 = np.array(self.points_array[percent_30_current])
+
+        # p0 index is -30% from connect point or start of the previous line:
+        percent_30_prev = int(len_prev_array * 0.3)
+        if start_array_point_index <= percent_30_prev:
+            curve_start_point = 0
+        else:
+            curve_start_point = start_array_point_index - percent_30_prev
+        p0 = np.array(prev_array[curve_start_point])
+
+        # p1 is 2.5% of average line length in direction half way from current line to previous line, away from the connect point
+        average_line_length_25 = int(((len_prev_array + len_self_array) // 2) * 0.015)
+        c = (self.absolute_angle - prev_angle) % 360
+        p1_angle = self.absolute_angle + ((180 - c) // 2)
+        p1_dir_radians = np.radians(p1_angle)
+        dx = average_line_length_25 * np.cos(p1_dir_radians)
+        dy = average_line_length_25 * np.sin(p1_dir_radians)
+        p1 = np.array(self.start)
+        p1 = p1 + np.array([dx, dy])
+
+        # p4 index is +10% from connect point or end of the previous line:
+        if len_prev_array <= (start_array_point_index + percent_30_prev):
+            curve_end_point = len_prev_array - 1
+        else:
+            curve_end_point = start_array_point_index + percent_30_prev
+        p4 = np.array(prev_array[curve_end_point])
+
+        # p1 is 5% of average line length in direction half-way from previous line to current line, away from the connect point
+        p3_angle = prev_angle + c // 2
+        p3_dir_radians = np.radians(p3_angle)
+        dx = average_line_length_25 * np.cos(p3_dir_radians)
+        dy = average_line_length_25 * np.sin(p3_dir_radians)
+        p3 = np.array(self.start)
+        p3 = p3 + np.array([dx, dy])
+
+        connecting_array = prev_array[curve_start_point: curve_end_point + 1]
+        self.curve_between_lines(p0, p1, p2, p3, p4, self.colour, connecting_array)
+
+    def render(self, prev_array, prev_angle, prev_colour, prev_thickness_array, scale = 1, ax_n=None):
+        len_prev_array = len(prev_array)
+        # TESTING:
+        if not self.colour:
+            print("1) self.colour == False prev_colour: ", prev_colour)
+            self.colour = prev_colour
+
+        start_array_point_index = self.update_start_from_prev(prev_array, prev_thickness_array, len_prev_array) #Sets correct start and start thickness
+        self.calculate_end(prev_angle)  # Calculate the endpoint
+
+        if self.curviness>0:
+            x_values, y_values = self.compute_points_array_curved()
+        else:
+            x_values, y_values = self.compute_points_array_straight()
+
+        if self.start_mode == StartMode.SPLIT:
+            """Set self.points_array and move line if split type"""
+            x_values, y_values = self.apply_split_adjustments(prev_colour, prev_array, prev_angle, ax_n, len_prev_array)
+
+        self.thickness_array = np.linspace(self.start_thickness, self.end_thickness, line_num_points) #Render a line segment with thickness tapering from start to end
+
+        if ax_n and self.start_mode == StartMode.CONNECT_MID and len_prev_array>num_points_range[1]:#If prev array is a line
+            """Add curve from 10% from each side of connect (start) point on previous line to 10% up current line"""
+            self.connect_mid_blend_lines(len_prev_array, start_array_point_index, prev_array, prev_angle)
 
         #TESTING:
         if self.colour == False:
             print("2) self.colour == False prev_colour: ", prev_colour)
 
-        #len_new_array=len(new_array)
-        len_new_array = 0
-        # Plot each segment with the varying thickness
-        if len_new_array > 0 and ax_n:
-            # Plot the first 40 points as one segment (blend lines)
-            if self.start_mode == StartMode.CONNECT_MID:
-                blend_thicknesses = np.linspace(prev_thickness_array[start_array_point_index], self.thickness_array[percent_30_current], 20)
-            for i in range(min(39, len(x_values))):
-                this_colour = self.colour
-                if self.start_mode == StartMode.CONNECT_MID:
-                    if i<20:
-                        thickness = blend_thicknesses[i]
-                    else:
-                        thickness = blend_thicknesses[-(i-19)]
-                elif self.start_mode == StartMode.SPLIT:
-                    thickness = self.thickness_array [0]
-                    this_colour = prev_colour
-                else:
-                    thickness = self.thickness_array [i]
+        if ax_n:
+            # Plot points array:
+            for i in range(len(x_values)-1):
+                thickness = self.thickness_array[i]
 
                 ax_n.plot(
                     [x_values[i], x_values[i + 1]], [y_values[i], y_values[i + 1]],
-                    color=this_colour,
+                    color=self.colour,
                     linewidth=thickness * scale,
                     solid_capstyle='butt',
-                    alpha = 1
+                    alpha=1
                 )
-
-            # Plot remaining points (segment)
-            for i in range(40, len(x_values)-1):
-                if self.start_mode == StartMode.CONNECT_MID or self.start_mode == StartMode.SPLIT:
-                    thickness = self.thickness_array[i - 40]
-                else:
-                    thickness = self.thickness_array[i]
-
-                if ax_n:
-                    ax_n.plot(
-                        [x_values[i], x_values[i + 1]], [y_values[i], y_values[i + 1]],
-                        color=self.colour,
-                        linewidth=thickness * scale,
-                        solid_capstyle='butt',
-                        alpha=1
-                    )
-        else:
-            # Plot normally if no new_array exists (Start type is jump or connect so no blend between lines needed)
-            for i in range(len(x_values)-1):
-                thickness = self.thickness_array[i]
-                if ax_n:
-                    ax_n.plot(
-                        [x_values[i], x_values[i + 1]], [y_values[i], y_values[i + 1]],
-                        color=self.colour,
-                        linewidth=thickness * scale,
-                        solid_capstyle='butt',
-                        alpha=1
-                    )
 
 
     def mutate(self, mutation_rate=0.1):
@@ -304,7 +269,6 @@ class LineSegment(Segment):
 
         self.curve_left = self.mutate_choice(self.curve_left, [True, False], mutation_rate)
         self.curve_location = self.mutate_val(self.curve_location,relative_location_range,mutation_rate)
-
 
 
 class StarSegment(Segment):
