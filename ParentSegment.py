@@ -38,10 +38,24 @@ class Segment:
         """Base mutate method to override in subclasses."""
         raise NotImplementedError("Subclasses should implement this!")
 
-    def mutate_val(self,value ,range ,mutation_rate):
+    def mutate_val(self, value, range ,mutation_rate):
         if np.random.random() < mutation_rate:
             mutation_magnitude = mutation_rate * (range[1]-range[0])
-            return min(range[1], max(range[0], value * (1 + np.random.normal(-mutation_magnitude, mutation_magnitude))))
+
+            # If value is 0, add a normally distributed offset.
+            if value == 0:
+                new_val = value + abs(np.random.normal(mutation_magnitude, mutation_magnitude))
+            # If value is at or below the minimum, force mutation upward.
+            elif value <= range[0]:
+                new_val = value + abs(np.random.normal(mutation_magnitude, mutation_magnitude))
+            # If value is at or above the maximum, force mutation downward.
+            elif value >= range[1]:
+                new_val = value - abs(np.random.normal(-mutation_magnitude, mutation_magnitude))
+            else:
+                # For intermediate values, add a percentage-based offset.
+                new_val = value * (1 + np.random.normal(0, mutation_magnitude))
+                # Ensure new_val is within allowed_range.
+            return min(range[1], max(range[0], new_val))
         else:
             return value
 

@@ -29,7 +29,7 @@ class LineSegment(Segment):
             self.split_point = 0
         self.thickness_array = []
 
-    def calculate_end(self, prev_angle):
+    def _calculate_end(self, prev_angle):
         """Calculate the end point based on start, length, and direction."""
         if self.start_mode == StartMode.JUMP:
             self.absolute_angle = self.relative_angle
@@ -41,7 +41,7 @@ class LineSegment(Segment):
         end_y = self.start[1] + self.length * math.sin(radians)
         self.end = (end_x, end_y)
 
-    def curve_between_lines(self, p0, p1, p2, p3, p4, colour,connecting_array):
+    def _curve_between_lines(self, p0, p1, p2, p3, p4, colour,connecting_array):
         t_values = np.linspace(0, 1, 20)
         left_curve = bezier_curve_t(t_values, p0, p1, p2)
         right_curve = bezier_curve_t(t_values, p2, p3, p4)
@@ -49,7 +49,7 @@ class LineSegment(Segment):
         boundary = np.concatenate([connecting_array[::-1], left_curve, right_curve], axis=0)
         plt.fill(boundary[:, 0], boundary[:, 1], color=colour, alpha=1)
 
-    def update_start_from_prev(self, prev_array, prev_thickness_array, len_prev_array):
+    def _update_start_from_prev(self, prev_array, prev_thickness_array, len_prev_array):
         if self.start_mode == StartMode.CONNECT and len_prev_array > num_points_range[1] or self.start_mode == StartMode.SPLIT and len_prev_array > 15:
             self.start = (prev_array[-1][0], prev_array[-1][1])
             if prev_thickness_array.size == 1:
@@ -68,7 +68,7 @@ class LineSegment(Segment):
             return start_array_point_index
         return None
 
-    def compute_points_array_straight(self):
+    def _compute_points_array_straight(self):
         # For curviness == 0: simple linear interpolation between start and end.
         x_values = np.linspace(self.start[0], self.end[0], line_num_points)
         y_values = np.linspace(self.start[1], self.end[1], line_num_points)
@@ -76,7 +76,7 @@ class LineSegment(Segment):
         self.points_array = np.round(self.points_array, 3)
         return x_values, y_values
 
-    def compute_points_array_curved(self):
+    def _compute_points_array_curved(self):
         # For curviness > 0, compute bezier curve.
         p0 = np.array(self.start)
         p2 = np.array(self.end)
@@ -96,7 +96,7 @@ class LineSegment(Segment):
         x_values, y_values = self.points_array[:, 0], self.points_array[:, 1]
         return x_values, y_values
 
-    def apply_split_adjustments(self, prev_colour, prev_array, prev_angle, ax_n, len_prev_array):
+    def _apply_split_adjustments(self, prev_colour, prev_array, prev_angle, ax_n, len_prev_array):
         split_point_point_index = point_in_array(self.points_array, self.split_point)
         split_point_point = self.points_array[split_point_point_index]
         transformation_vector = un_normalised_vector_direction(split_point_point, self.start)
@@ -148,7 +148,7 @@ class LineSegment(Segment):
             self.curve_between_lines(p0, p1, p2, p3, p4, prev_colour, connecting_array)
         return x_values, y_values
 
-    def connect_mid_blend_lines(self, len_prev_array, start_array_point_index, prev_array, prev_angle):
+    def _connect_mid_blend_lines(self, len_prev_array, start_array_point_index, prev_array, prev_angle):
         len_self_array = len(self.points_array)
         percent_30_current = int(len_self_array * 0.3)
         p2 = np.array(self.points_array[percent_30_current])
@@ -187,7 +187,7 @@ class LineSegment(Segment):
         p3 = p3 + np.array([dx, dy])
 
         connecting_array = prev_array[curve_start_point: curve_end_point + 1]
-        self.curve_between_lines(p0, p1, p2, p3, p4, self.colour, connecting_array)
+        self._curve_between_lines(p0, p1, p2, p3, p4, self.colour, connecting_array)
 
     def render(self, prev_array, prev_angle, prev_colour, prev_thickness_array, scale = 1, ax_n=None):
         len_prev_array = len(prev_array)
@@ -196,26 +196,26 @@ class LineSegment(Segment):
             print("1) self.colour == False prev_colour: ", prev_colour)
             self.colour = prev_colour
 
-        start_array_point_index = self.update_start_from_prev(prev_array, prev_thickness_array, len_prev_array) #Sets correct start and start thickness
-        self.calculate_end(prev_angle)  # Calculate the endpoint
+        start_array_point_index = self._update_start_from_prev(prev_array, prev_thickness_array, len_prev_array) #Sets correct start and start thickness
+        self._calculate_end(prev_angle)  # Calculate the endpoint
 
         if self.curviness>0:
-            x_values, y_values = self.compute_points_array_curved()
+            x_values, y_values = self._compute_points_array_curved()
         else:
-            x_values, y_values = self.compute_points_array_straight()
+            x_values, y_values = self._compute_points_array_straight()
 
         if self.start_mode == StartMode.SPLIT:
             """Set self.points_array and move line if split type"""
-            x_values, y_values = self.apply_split_adjustments(prev_colour, prev_array, prev_angle, ax_n, len_prev_array)
+            x_values, y_values = self._apply_split_adjustments(prev_colour, prev_array, prev_angle, ax_n, len_prev_array)
 
         self.thickness_array = np.linspace(self.start_thickness, self.end_thickness, line_num_points) #Render a line segment with thickness tapering from start to end
 
         if ax_n and self.start_mode == StartMode.CONNECT_MID and len_prev_array>num_points_range[1]:#If prev array is a line
             """Add curve from 10% from each side of connect (start) point on previous line to 10% up current line"""
-            self.connect_mid_blend_lines(len_prev_array, start_array_point_index, prev_array, prev_angle)
+            self._connect_mid_blend_lines(len_prev_array, start_array_point_index, prev_array, prev_angle)
 
         #TESTING:
-        if self.colour == False:
+        if not self.colour:
             print("2) self.colour == False prev_colour: ", prev_colour)
 
         if ax_n:
@@ -287,27 +287,47 @@ class StarSegment(Segment):
         self.arm_points_array = []
         self.fill = fill
 
-    def render(self, prev_array, prev_angle, prev_colour, prev_end_thickness,  scale = 1, ax_n=None):
-        if self.start_mode == StartMode.CONNECT and len(prev_array)>15:
-            self.start = (prev_array[-1][0], prev_array[-1][1])
+    def _update_start_and_center(self, prev_array):
+        """Update the segment’s start and center based on prev_array and start_mode."""
+        if self.start_mode == StartMode.CONNECT:
+            if len(prev_array) > num_points_range[1]:
+                self.start = (prev_array[-1][0], prev_array[-1][1])
+            else:
+                end_index = point_in_array(prev_array, 0.5)
+                self.start = (prev_array[end_index][0], prev_array[end_index][1])
             self.center = self.start
-        elif self.start_mode == StartMode.CONNECT and len(prev_array)<=15:
-            end_index = point_in_array(prev_array, 0.5)
-            self.start = (prev_array[end_index][0], prev_array[end_index][1])
-            self.center = self.start
-        #elif self.start_mode == StartMode.CONNECT_MID and prev_array:
 
+    def _compute_absolute_angle(self, prev_angle):
+        """Set absolute_angle based on start_mode and prev_angle."""
         if self.start_mode == StartMode.JUMP:
             self.absolute_angle = self.relative_angle
         else:
-            self.absolute_angle = (prev_angle + self.relative_angle)%360
+            self.absolute_angle = (prev_angle + self.relative_angle) % 360
 
-        star_points, star_arm_points = StarGeneration.create_star(self.num_points, self.center, self.radius, self.arm_length, self.asymmetry, self.star_type, self.absolute_angle, self.fill)
+    def _compute_star_geometry(self):
+        """
+        Call StarGeneration.create_star to get star points and arm points,
+        then compute a transformation vector so that the star’s geometry is centered.
+        Returns the transformed star points and arm points.
+        """
+        star_points, star_arm_points = StarGeneration.create_star(self.num_points, self.center, self.radius,
+                                                                  self.arm_length, self.asymmetry, self.star_type,
+                                                                  self.absolute_angle, self.fill)
         start_coord = star_arm_points[-1]
         transformation_vector = (self.center[0] - start_coord[0], self.center[1] - start_coord[1])
-        #self.end = (end_coord[0]+transformation_vector[0], end_coord[1]+transformation_vector[1])
+
         transformed_star_points = np.array([(point[0] + transformation_vector[0], point[1] + transformation_vector[1]) for point in star_points])
+        transformed_arm_points = np.array(
+                [(pt[0] + transformation_vector[0], pt[1] + transformation_vector[1]) for pt in star_arm_points]
+            )
+        return transformed_star_points, transformed_arm_points
+
+    def render(self, prev_array, prev_angle, prev_colour, prev_end_thickness,  scale = 1, ax_n=None):
+        self._update_start_and_center(prev_array)
+        self._compute_absolute_angle(prev_angle)
+        transformed_star_points, transformed_arm_points = self._compute_star_geometry()
         self.points_array = transformed_star_points
+        self.arm_points_array = transformed_arm_points
         if ax_n:
             if self.fill == True:
                 x, y = transformed_star_points[:, 0], transformed_star_points[:, 1]
@@ -315,8 +335,7 @@ class StarSegment(Segment):
             else:
                 ax_n.plot(transformed_star_points[:, 0], transformed_star_points[:, 1], self.colour, lw=self.end_thickness * scale)  # Plot all points as a single object
 
-        transformed_arm_points = np.array([(point[0] + transformation_vector[0], point[1] + transformation_vector[1]) for point in star_arm_points])
-        self.arm_points_array = transformed_arm_points
+
 
     def mutate(self,mutation_rate=0.1):
         #(self, segment_type, start, colour, star_type, radius, arm_length, num_points, asymmetry, start_mode, end_thickness, relative_angle)

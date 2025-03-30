@@ -1,10 +1,7 @@
 import numpy as np
 import pytest
 import math
-
 from Segments import Segment, point_in_array
-
-# We'll need to import our enums and any constants from module A.
 from A import SegmentType, StartMode, colour_options, similar_colours
 
 # --- Dummy subclass for testing the base methods ---
@@ -50,8 +47,12 @@ def test_children_management():
     (10, (0, 20), 1.0, 0.0, 0, 10),
     # np.random.normal returns 0.1, so value becomes 10 * (1+0.1)=11
     (10, (0, 20), 1.0, 0.0, 0.1, 11),
-    # np.random.normal returns 1, so value becomes 19 * (1+0.2)=22.8 (but bounded by max)
+    # np.random.normal returns 0.2, so value becomes 19 * (1+0.2)=22.8 (but bounded by max)
     (19, (0, 20), 1.0, 0.0, 0.2, 20),
+    # np.random.normal returns 0.2 and value is 0, so value becomes 0.2
+    (0, (0, 20), 1.0, 0.0, 0.2, 0.2),
+    # np.random.normal returns 0.2 and value is max of range, so value becomes 20 - 0.2 = 19.8
+    (20, (0, 20), 1.0, 0.0, 0.2, 19.8),
 ])
 def test_mutate_val(monkeypatch, value, value_range, mutation_rate, fixed_random, fixed_normal, expected):
     # Monkeypatch np.random.random and np.random.normal.
