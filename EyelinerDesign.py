@@ -504,6 +504,7 @@ print("analyse_negative score:", negative_score)
 print("Positive Score:", positive_score)
 
 """
+"""
 new_segment = create_segment(
         segment_type=SegmentType.LINE,
         start = (50,110),
@@ -527,3 +528,5 @@ fig.show()
 shape_similarity, direction_similarity = compair_overlapping_sections(new_segment.points_array, upper_eyelid_coords)
 print("shape_similarity", shape_similarity)
 print("direction_similarity", direction_similarity)
+"""
+

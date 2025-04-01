@@ -131,7 +131,7 @@ def test_curve_between_lines(monkeypatch, p0, p1, p2, p3, p4, colour):
     connecting_array = seg.points_array[curve_start_point: curve_end_point ]  # points_array[1:3]
 
     # Call curve_between_lines.
-    seg.curve_between_lines(p0, p1, p2, p3, p4, colour, connecting_array)
+    seg._curve_between_lines(p0, p1, p2, p3, p4, colour, connecting_array)
 
     # Check that plt.fill was called with a boundary computed as:
     t_values = np.linspace(0, 1, 20)

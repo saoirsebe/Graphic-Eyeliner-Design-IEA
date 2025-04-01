@@ -334,6 +334,7 @@ def compair_overlapping_sections(overlapping_points_segment, overlapping_points_
         #direction_similarity = 1 - abs(eye_deflection - bezier_deflection) / max(eye_deflection, bezier_deflection)
     """
 
+
     return shape_similarity, direction_similarity
 
 def compare_with_eyelid_curves(bezier_points, eye_points, is_upper,num_samples=100):

@@ -148,7 +148,7 @@ class LineSegment(Segment):
             p3 = p3 + np.array([dx, dy])
 
             connecting_array = self.points_array[curve_start_point: curve_end_point + 1]
-            self.curve_between_lines(p0, p1, p2, p3, p4, prev_colour, connecting_array)
+            self._curve_between_lines(p0, p1, p2, p3, p4, prev_colour, connecting_array)
         return x_values, y_values
 
     def _connect_mid_blend_lines(self, len_prev_array, start_array_point_index, prev_array, prev_angle):
