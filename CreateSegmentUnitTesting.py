@@ -16,7 +16,7 @@ from A import SegmentType, StarType, StartMode
             "start_thickness": 3,
             "length": 10,
             "curviness": 0.5,
-            "curve_90": False,  # used to set curve_left
+            "curve_left": False,  # used to set curve_left
             "curve_location": 0.7,
             "start_location": 0.8,  # provided value, but should be ignored
             "split_point": 0.6,     # provided value, but should be overridden to 0
@@ -50,7 +50,7 @@ from A import SegmentType, StarType, StartMode
             "start_thickness": 2,
             "length": 8,
             "curviness": 0.2,
-            "curve_90": True,   # so curve_left True
+            "curve_left": True,   # so curve_left True
             "curve_location": 0.65,
             "start_location": 0.9,  # in CONNECT_MID, this value is used
             "split_point": 0.3,     # for CONNECT_MID, split_point is forced to 0
@@ -84,7 +84,7 @@ from A import SegmentType, StarType, StartMode
             "start_thickness": 4,
             "length": 15,
             "curviness": 0.4,
-            "curve_90": True,   # so curve_left True
+            "curve_left": True,   # so curve_left True
             "curve_location": 0.8,
             "start_location": 0.5,  # provided value ignored for SPLIT
             "split_point": 0.25,    # this value is used in SPLIT mode

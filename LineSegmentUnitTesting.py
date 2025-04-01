@@ -44,7 +44,7 @@ def test_line_segment_init(start_mode, provided_start_location, provided_split_p
         end_thickness=1.5,
         colour="red",
         curviness=0.3,
-        curve_left=True,  # this value is used if curve_90 is not provided
+        curve_left=True,
         curve_location=0.7,
         start_location=provided_start_location,
         split_point=provided_split_point

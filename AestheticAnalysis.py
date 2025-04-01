@@ -7,6 +7,7 @@ import numpy as np
 from scipy.interpolate import interp1d
 
 
+
 def check_points_left(points_array, is_left, threshold=0.8, x_limit=eye_corner_start[0]):
     """Check if at least `threshold` percent of points are on the left/right of x_limit."""
     total_points = len(points_array)
@@ -89,21 +90,6 @@ def calculate_curvature(points, threshold=0.0001):
 
     return curvatures
 
-def get_overlapping_points_old(curve1, curve2, tolerance=0.1):
-    overlapping_points_curve1 = []
-    overlapping_points_curve2 = []
-
-    for point1 in curve1:
-        # Find points in curve2 with x-value within the tolerance range
-        mask = np.abs(curve2[:, 0] - point1[0]) <= tolerance
-        if np.any(mask):
-            # Get the corresponding point(s) from curve2
-            overlapping_points_curve2.append(curve2[mask][0])  # Just take the first match
-            overlapping_points_curve1.append(point1)
-
-    return np.array(overlapping_points_curve1), np.array(overlapping_points_curve2)
-
-
 def get_overlapping_points(curve1, curve2):
     # Get the x-values of both curves
     x1 = curve1[:, 0]
@@ -181,13 +167,18 @@ def compair_overlapping_sections(overlapping_points_segment, overlapping_points_
     else:
         bezier_curvature_resampled = resample_curvatures(bezier_curvature,num_resize)
         eye_curvature_resampled = resample_curvatures(eye_curvature,num_resize)
+        #print("segment curvatures:", bezier_curvature_resampled)
+        #print("eye curvatures:", eye_curvature_resampled)
         # shape_similarity = 1 - np.mean(np.abs(bezier_curvature - eye_curvature))
-        shape_similarity = 1 - np.sqrt(np.mean((bezier_curvature_resampled - eye_curvature_resampled) ** 2))
+        #shape_similarity = 1 - np.sqrt(np.mean((bezier_curvature_resampled - eye_curvature_resampled) ** 2))
+        shape_distance = np.linalg.norm(bezier_curvature_resampled - eye_curvature_resampled)
+        shape_similarity = np.exp(-2 * shape_distance)
+        #shape_similarity = 1 / (1 + shape_distance)
 
     segment_direction = compute_global_direction(overlapping_points_segment)#compute_directions(overlapping_points_segment)
     eye_curve_direction = compute_global_direction(overlapping_points_eye_shape)#compute_directions(overlapping_points_eye_shape)
-    direction_difference = 1 - np.abs(segment_direction - eye_curve_direction)
-    #print("direction_difference",direction_difference)
+    direction_similarity = 1 - np.abs(segment_direction - eye_curve_direction)
+    #print("direction_similarity",direction_similarity)
     """
     if segment_directions.size == 0:
         print("bezier_directions.size == 0")
@@ -219,7 +210,7 @@ def compair_overlapping_sections(overlapping_points_segment, overlapping_points_
         #direction_similarity = 1 - abs(eye_deflection - bezier_deflection) / max(eye_deflection, bezier_deflection)
     """
 
-    return shape_similarity, direction_difference
+    return shape_similarity, direction_similarity
 
 def compare_with_eyelid_curves(bezier_points, eye_points, is_upper,num_samples=100):
     """

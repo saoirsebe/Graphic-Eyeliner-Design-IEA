@@ -59,8 +59,11 @@ class LineSegment(Segment):
         elif self.start_mode == StartMode.CONNECT and num_points_range[0]<= len_prev_array <= num_points_range[1] or self.start_mode == StartMode.SPLIT and len_prev_array <= 15:
             end_index = point_in_array(prev_array, 0.5)
             self.start = (prev_array[end_index][0], prev_array[end_index][1])
-        elif len(prev_array) <= 1:
-            raise ValueError("len(prev_array)<=1....")
+        elif len(prev_array) == 1:
+            # Root node start set from itself
+            self.start = prev_array[0]
+        elif len(prev_array) <= 0:
+            raise ValueError("len(prev_array)<=0....")
         elif self.start_mode == StartMode.CONNECT_MID and len_prev_array > 1:
             start_array_point_index = point_in_array(prev_array, self.start_location)
             start_array_point = prev_array[start_array_point_index]
@@ -380,7 +383,7 @@ def create_segment(start, start_mode, segment_type, end_thickness, relative_angl
             start_thickness=kwargs.get('start_thickness', 1),
             length = kwargs.get('length', 1),
             curviness=kwargs.get('curviness', 0),
-            curve_left=kwargs.get('curve_90', True),
+            curve_left=kwargs.get('curve_left', True),
             curve_location=kwargs.get('curve_location', 0.5),
             start_location = kwargs.get('start_location', 1),
             split_point = kwargs.get('split_point', 0.5)

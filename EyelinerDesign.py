@@ -7,6 +7,7 @@ import cProfile
 from IrregularPolygonSegment import are_points_collinear
 from PIL import Image, ImageTk
 from A import set_prev_array
+from AestheticAnalysis import compair_overlapping_sections
 
 
 class EyelinerDesign:   #Creates overall design, calculates start points, renders each segment by calling their render function
@@ -503,3 +504,26 @@ print("analyse_negative score:", negative_score)
 print("Positive Score:", positive_score)
 
 """
+new_segment = create_segment(
+        segment_type=SegmentType.LINE,
+        start = (60,110),
+        start_mode=StartMode.JUMP,
+        length=50,
+        relative_angle=0,
+        start_thickness=2.5,
+        end_thickness=1,
+        colour="blue",
+        curviness= 0.5 ,
+        curve_left=True,
+        curve_location=0.5,
+        start_location=0.6,
+        split_point=0
+
+)
+design = EyelinerDesign(new_segment)
+fig, ax_n = plt.subplots(figsize=(3, 3))
+fig = design.render_design()
+fig.show()
+shape_similarity, direction_similarity = compair_overlapping_sections(new_segment.points_array, upper_eyelid_coords)
+print("shape_similarity", shape_similarity)
+print("direction_similarity", direction_similarity)
