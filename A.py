@@ -162,7 +162,7 @@ def set_prev_array(parent):
             else:
                 raise ValueError("Wrong number of corners for eyeliner wing")
 
-upper_eyelid_coords =  bezier_curve(np.array([28,82]), np.array([70,123]), np.array([118,93]))
+upper_eyelid_coords =  bezier_curve(np.array([29,80]), np.array([70,123]), np.array([118,93]))
 upper_eyelid_x = [coord[0] for coord in upper_eyelid_coords]
 upper_eyelid_y = [coord[1] for coord in upper_eyelid_coords]
 upper_len = len(upper_eyelid_coords)
@@ -173,7 +173,7 @@ abs_min = upper_len - upper_eyelid_coords_40
 abs_max = upper_len - upper_eyelid_coords_10
 allowed_indices = np.arange(abs_min, abs_max + 1)
 
-lower_eyelid_coords =  bezier_curve(np.array([28,82]), np.array([100,60]), np.array([118,93]))
+lower_eyelid_coords =  bezier_curve(np.array([29,80]), np.array([98,62]), np.array([118,93]))
 lower_eyelid_x = [coord[0] for coord in lower_eyelid_coords]
 lower_eyelid_y = [coord[1] for coord in lower_eyelid_coords]
 lower_len = len(lower_eyelid_coords)

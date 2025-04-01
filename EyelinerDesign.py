@@ -506,15 +506,15 @@ print("Positive Score:", positive_score)
 """
 new_segment = create_segment(
         segment_type=SegmentType.LINE,
-        start = (60,110),
+        start = (50,110),
         start_mode=StartMode.JUMP,
         length=50,
-        relative_angle=0,
+        relative_angle=90,
         start_thickness=2.5,
         end_thickness=1,
         colour="blue",
-        curviness= 0.5 ,
-        curve_left=True,
+        curviness= 0.4 ,
+        curve_left=False,
         curve_location=0.5,
         start_location=0.6,
         split_point=0

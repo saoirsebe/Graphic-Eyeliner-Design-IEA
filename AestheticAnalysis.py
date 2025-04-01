@@ -1,11 +1,9 @@
 import math
-
-from matplotlib import pyplot as plt
+from scipy.ndimage import uniform_filter1d
 from A import SegmentType, StartMode, get_quadratic_points, eye_corner_start, upper_eyelid_coords, lower_eyelid_coords, \
     eyeliner_curve1, eyeliner_curve2, middle_curve_upper, middle_curve_lower, StarType
 import numpy as np
 from scipy.interpolate import interp1d
-
 
 
 def check_points_left(points_array, is_left, threshold=0.8, x_limit=eye_corner_start[0]):
@@ -44,6 +42,106 @@ def resample_curvatures(curvature, num_points):
     return np.interp(new_indices, original_indices, curvature)
 
 
+def compute_curvature(curve):
+    """
+    Compute curvature of a 2D curve.
+
+    Parameters:
+        curve (np.ndarray): Array of shape (N, 2) containing x,y points.
+
+    Returns:
+        np.ndarray: Curvature values at each point.
+    """
+    curve = re_parameterise_curve(curve)
+    x = curve[:, 0]
+    y = curve[:, 1]
+
+    # Since points are now uniformly spaced, we can use a constant spacing.
+    # We use the mean spacing as the step size (should be nearly constant).
+    ds = np.mean(np.sqrt(np.diff(x) ** 2 + np.diff(y) ** 2))
+
+    # Compute first derivatives using central differences
+    dx = np.gradient(x, ds)
+    dy = np.gradient(y, ds)
+
+    # Compute second derivatives
+    ddx = np.gradient(dx)
+    ddy = np.gradient(dy)
+
+    # Compute curvature using the formula:
+    # kappa = (dx * ddy - dy * ddx) / ((dx^2 + dy^2)^(3/2))
+    curvature = (dx * ddy - dy * ddx) / np.power(dx ** 2 + dy ** 2, 1.5)
+    return curvature
+
+
+def smooth_curve(curve, window_size=5):
+    """
+    Smooth a 1D array using a uniform (moving average) filter.
+
+    Parameters:
+        curve (np.ndarray): Input array to smooth.
+        window_size (int): Window size for the filter.
+
+    Returns:
+        np.ndarray: Smoothed array.
+    """
+    return uniform_filter1d(curve, size=window_size)
+
+
+def normalise_curvature(k):
+    """
+    Normalise a curvature array so that its maximum absolute value is 1.
+
+    Parameters:
+        k (np.ndarray): Curvature array.
+
+    Returns:
+        np.ndarray: Normalised curvature array.
+    """
+    max_val = np.max(np.abs(k))
+    if max_val < 1e-8:
+        return k
+    return k / max_val
+
+def curvature_similarity(curve1, curve2, smoothing=True, window_size=3):
+    """
+    Calculate a distance metric between two curves based on their curvature profiles.
+
+    Parameters:
+        curve1 (np.ndarray): First curve of shape (N, 2).
+        curve2 (np.ndarray): Second curve of shape (N, 2).
+        smoothing (bool): Whether to smooth the curvature profiles.
+        window_size (int): Smoothing window size.
+
+    Returns:
+        tuple: (distance, curvature1, curvature2)
+            - distance: Euclidean norm of the difference between curvature profiles.
+            - curvature1: Curvature profile of the first curve.
+            - curvature2: Curvature profile of the second curve.
+    """
+    # Compute curvature for both curves
+    k1 = compute_curvature(curve1)
+    k2 = compute_curvature(curve2)
+
+    # Optionally smooth the curvature profiles to reduce noise
+    if smoothing:
+        k1 = smooth_curve(k1, window_size)
+        k2 = smooth_curve(k2, window_size)
+    #print("")
+    #k1 = normalise_curvature(k1)
+    #k2 = normalise_curvature(k2)
+    #print("normalised curvature profiles: k1 = {}, k2 = {}".format(k1, k2))
+
+    # If the curves have different number of points, interpolate k2 to match k1
+    if len(k1) != len(k2):
+        t1 = np.linspace(0, 1, len(k1))
+        t2 = np.linspace(0, 1, len(k2))
+        k2 = np.interp(t1, t2, k2)
+
+    # Calculate the Euclidean distance between the curvature profiles
+    distance = np.linalg.norm(k1 - k2)
+    return  np.exp(-2.5 * distance)
+
 def calculate_curvature(points, threshold=0.0001):
     """
     Calculate curvature for a sequence of points.
@@ -76,19 +174,62 @@ def calculate_curvature(points, threshold=0.0001):
         # Compute vectors from the chosen neighbors to the current point
         v1 = points[i] - points[prev_idx]
         v2 = points[next_idx] - points[i]
+        # Calculate the angles of these vectors
         angle1 = np.arctan2(v1[1], v1[0])
         angle2 = np.arctan2(v2[1], v2[0])
-        curvature = angle2 - angle1
-
+        # Compute turning angle at the point
+        curvature_angle = angle2 - angle1
+        """
         # Normalize curvature to be between -pi and pi
-        if curvature > np.pi:
-            curvature -= 2 * np.pi
-        elif curvature < -np.pi:
-            curvature += 2 * np.pi
+        if curvature_angle > np.pi:
+            curvature_angle -= 2 * np.pi
+        elif curvature_angle < -np.pi:
+            curvature_angle += 2 * np.pi
 
-        curvatures[i - 1] = curvature
+        
+        # Compute the approximate arc length between the two neighbors (s1 + s2)
+        s1 = np.linalg.norm(v1)
+        s2 = np.linalg.norm(v2)
+        arc_length = s1 + s2
+
+        # Avoid division by zero and compute normalized curvature
+        if arc_length < 1e-8:
+            normalized_curvature = 0.0
+        else:
+            normalized_curvature = curvature_angle / arc_length
+        """
+
+        curvatures[i - 1] = curvature_angle
 
     return curvatures
+
+
+def re_parameterise_curve(curve, num_points=None):
+    """
+    Re parameterises a curve by its arc length so that points are uniformly spaced.
+
+    Parameters:
+        curve (np.ndarray): Array of shape (N, 2) representing the curve.
+        num_points (int, optional): Number of points for the reparameterised curve.
+                                    If None, uses the original number of points.
+
+    Returns:
+        np.ndarray: Reparameterised curve with uniformly spaced points.
+    """
+    if num_points is None:
+        num_points = len(curve)
+    # Compute the cumulative arc length
+    distances = np.sqrt(np.sum(np.diff(curve, axis=0) ** 2, axis=1))
+    s = np.concatenate(([0], np.cumsum(distances)))
+
+    # Generate uniformly spaced arc-length values
+    s_uniform = np.linspace(0, s[-1], num_points)
+
+    # Interpolate x and y coordinates on the uniform grid
+    x_uniform = np.interp(s_uniform, s, curve[:, 0])
+    y_uniform = np.interp(s_uniform, s, curve[:, 1])
+
+    return np.stack((x_uniform, y_uniform), axis=1)
 
 def get_overlapping_points(curve1, curve2):
     # Get the x-values of both curves
@@ -156,24 +297,7 @@ def compair_overlapping_sections(overlapping_points_segment, overlapping_points_
     if overlapping_points_eye_shape[0][0]>overlapping_points_eye_shape[-1][0]:
         overlapping_points_eye_shape = overlapping_points_eye_shape[::-1]
 
-    bezier_curvature = calculate_curvature(overlapping_points_segment)
-    eye_curvature = calculate_curvature(overlapping_points_eye_shape)
-    # Compute shape similarity (curvature comparison)
-    num_resize = max(len(overlapping_points_segment), len(overlapping_points_eye_shape))
-    if len(bezier_curvature) <= 1:
-        print("len(bezier_curvature) <=1:")
-        print("overlapping_points_bezier:", overlapping_points_segment)
-        shape_similarity = 0
-    else:
-        bezier_curvature_resampled = resample_curvatures(bezier_curvature,num_resize)
-        eye_curvature_resampled = resample_curvatures(eye_curvature,num_resize)
-        #print("segment curvatures:", bezier_curvature_resampled)
-        #print("eye curvatures:", eye_curvature_resampled)
-        # shape_similarity = 1 - np.mean(np.abs(bezier_curvature - eye_curvature))
-        #shape_similarity = 1 - np.sqrt(np.mean((bezier_curvature_resampled - eye_curvature_resampled) ** 2))
-        shape_distance = np.linalg.norm(bezier_curvature_resampled - eye_curvature_resampled)
-        shape_similarity = np.exp(-2 * shape_distance)
-        #shape_similarity = 1 / (1 + shape_distance)
+    shape_similarity = curvature_similarity(overlapping_points_segment, overlapping_points_eye_shape)
 
     segment_direction = compute_global_direction(overlapping_points_segment)#compute_directions(overlapping_points_segment)
     eye_curve_direction = compute_global_direction(overlapping_points_eye_shape)#compute_directions(overlapping_points_eye_shape)
