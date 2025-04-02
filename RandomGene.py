@@ -49,7 +49,7 @@ def random_gene_node(design, parent, prev_colour, segment_number=1, depth=0):
     prev_array = set_prev_array(parent)
     prev_angle = parent.absolute_angle
     new_node.render(prev_array, prev_angle, prev_colour, prev_end_thickness_array)
-
+    """
     #Print FOR TESTING:
     fig, ax_n = plt.subplots(figsize=(3, 3))
     parent.children.append(new_node)
@@ -57,7 +57,7 @@ def random_gene_node(design, parent, prev_colour, segment_number=1, depth=0):
     fig.show()
     plt.close(fig)
     parent.children.remove(new_node)
-    """"""
+    """
 
     regen_count = 0
 
@@ -65,7 +65,7 @@ def random_gene_node(design, parent, prev_colour, segment_number=1, depth=0):
     while new_segment_score < min_fitness_score and regen_count < node_re_gen_max:
         new_node = random_segment( prev_colour=prev_colour)
         new_node.render(prev_array, prev_angle, prev_colour, prev_end_thickness_array)
-
+        """
         # Print FOR TESTING:
         fig, ax_n = plt.subplots(figsize=(3, 3))
         parent.children.append(new_node)
@@ -73,7 +73,7 @@ def random_gene_node(design, parent, prev_colour, segment_number=1, depth=0):
         fig.show()
         plt.close(fig)
         parent.children.remove(new_node)
-        """"""
+        """
         regen_count+=1
         new_segment_score = check_new_segments_negative_score(design, new_node)
     if regen_count >=node_re_gen_max:
@@ -113,11 +113,12 @@ def random_gene(gene_n):
             segment_number = 0
             prev_end_thickness_array = root_node.end_thickness
             root_node.render(np.array([root_node.start]), 0, prev_colour, prev_end_thickness_array)
-            """"""
+            """
             fig, ax_n = plt.subplots(figsize=(3, 3))
             fig = design.render_design()
             fig.show()
             plt.close(fig)
+            """
 
             if is_outside_face_area(root_node):
                 root_score = 2*min_fitness_score

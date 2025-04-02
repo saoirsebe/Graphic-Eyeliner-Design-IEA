@@ -56,8 +56,6 @@ similar_colours = {
     "darkgrey": ["grey", "black"],
 }
 
-
-
 curviness_range = (0, 1)
 relative_location_range = (0, 1)
 radius_range = (0, 25)

@@ -50,13 +50,15 @@ class LineSegment(Segment):
         plt.fill(boundary[:, 0], boundary[:, 1], color=colour, alpha=1)
 
     def _update_start_from_prev(self, prev_array, prev_thickness_array, len_prev_array):
-        if self.start_mode == StartMode.CONNECT and len_prev_array > num_points_range[1] or self.start_mode == StartMode.SPLIT and len_prev_array > 15:
+        #Connects to (or Splits from) a line segment:
+        if self.start_mode == StartMode.CONNECT and len_prev_array > num_points_range[1] or self.start_mode == StartMode.SPLIT and len_prev_array > num_points_range[1]:
             self.start = (prev_array[-1][0], prev_array[-1][1])
             if prev_thickness_array.size == 1:
                 print("prev_thickness_array:", prev_thickness_array)
                 print("prev_array:", prev_array)
             self.start_thickness = prev_thickness_array[len_prev_array - 1]
-        elif self.start_mode == StartMode.CONNECT and num_points_range[0]<= len_prev_array <= num_points_range[1] or self.start_mode == StartMode.SPLIT and len_prev_array <= 15:
+        # Connects to (or Splits from) a shape segment:
+        elif self.start_mode == StartMode.CONNECT and num_points_range[0]<= len_prev_array <= num_points_range[1] or self.start_mode == StartMode.SPLIT and num_points_range[0]<= len_prev_array <= num_points_range[1]:
             end_index = point_in_array(prev_array, 0.5)
             self.start = (prev_array[end_index][0], prev_array[end_index][1])
         elif len(prev_array) == 1:
@@ -64,6 +66,7 @@ class LineSegment(Segment):
             self.start = prev_array[0]
         elif len(prev_array) <= 0:
             raise ValueError("len(prev_array)<=0....")
+        # Connects from middle (not end) of previous segment:
         elif self.start_mode == StartMode.CONNECT_MID and len_prev_array > 1:
             start_array_point_index = point_in_array(prev_array, self.start_location)
             start_array_point = prev_array[start_array_point_index]
