@@ -201,8 +201,9 @@ class LineSegment(Segment):
         if not self.colour:
             print("1) self.colour == False prev_colour: ", prev_colour)
             self.colour = prev_colour
-
+        print(self.start)
         start_array_point_index = self._update_start_from_prev(prev_array, prev_thickness_array, len_prev_array) #Sets correct start and start thickness
+        print(self.start)
         self._calculate_end(prev_angle)  # Calculate the endpoint
 
         if self.curviness>0:
@@ -894,4 +895,106 @@ line.points_array = np.array([
 ])
 print(is_in_eye(line))
 
+"""
+
+prev_angle= 90
+start=(0,9)
+start_mode = StartMode.SPLIT
+relative_angle=100
+length=30
+
+if start_mode == StartMode.JUMP:
+    absolute_angle = relative_angle
+else:
+    absolute_angle = (prev_angle + relative_angle) % 360
+radians = math.radians(absolute_angle)  # Convert to radians
+
+end_x = start[0] + length * math.cos(radians)
+end_y = start[1] + length * math.sin(radians)
+end = (end_x, end_y)
+#print(end)
+
+x_values = np.linspace(start[0], end[0], 10)
+y_values = np.linspace(start[1], end[1], 10)
+points_array = np.column_stack((x_values, y_values))
+points_array = np.round(points_array, 3)
+
+#print(points_array)
+""""""
+
+"""
+curve_location=0.5
+curve_left = True
+curviness = 0.4
+
+p0 = np.array(start)
+p2 = np.array(end)
+p1 = p0 + (curve_location * un_normalised_vector_direction(p0, p2))  # moves curve_location away from P0 towards P2 relative to length of curve segment
+if curve_left:
+    curve_direction = 90  # curve direction in degrees
+else:
+    curve_direction = -90
+relative_curve_direction = absolute_angle + curve_direction
+curve_dir_radians = np.radians(relative_curve_direction)
+# Calculate x and y offsets
+dx = length * curviness * np.cos(curve_dir_radians)
+dy = length * curviness * np.sin(curve_dir_radians)
+p1 = p1 + np.array([dx, dy])
+t_values = np.linspace(0, 1, 10)
+points_array = bezier_curve_t(t_values, p0, p1, p2)
+print(points_array)
+"""
+
+split_point = 0.6
+
+split_point_point_index = point_in_array(points_array, split_point)
+split_point_point = points_array[split_point_point_index]
+transformation_vector = un_normalised_vector_direction(split_point_point, start)
+
+points_array = np.array([(point[0] + transformation_vector[0], point[1] + transformation_vector[1]) for point in points_array])
+print(points_array)
+""""""
+"""
+#curve bled lines:
+len_prev_array = 10
+if ax_n and len_prev_array > num_points_range[1]:  # If prev array is a line
+    percent_30_prev = int(len_prev_array * 0.3)
+    p2 = np.array(prev_array[-percent_30_prev])
+
+    # p0 index is -10% from connect point or start of current line:
+    len_self_array = len(points_array)
+    percent_30_current = int(len_self_array * 0.3)
+    if split_point_point_index <= percent_30_current:
+        curve_start_point = 0
+    else:
+        curve_start_point = split_point_point_index - percent_30_current
+    p0 = np.array(points_array[curve_start_point])
+
+    # p1 is 5% of average line length in direction half-way from  point
+    average_line_length_25 = int(((len_prev_array + len_self_array) // 2) * 0.015)
+    c = (absolute_angle - prev_angle) % 360
+    p1_angle = absolute_angle + (180 - c // 2)
+    p1_dir_radians = np.radians(p1_angle)
+    dx = average_line_length_25 * np.cos(p1_dir_radians)
+    dy = average_line_length_25 * np.sin(p1_dir_radians)
+    p1 = np.array(start)
+    p1 = p1 + np.array([dx, dy])
+
+    # p4 index is +30% from connect point or ond of current line:
+    if len_self_array <= (split_point_point_index + percent_30_current):
+        curve_end_point = len_prev_array - 1
+    else:
+        curve_end_point = split_point_point_index + percent_30_current
+    p4 = np.array(points_array[curve_end_point])
+
+    # p3 is 5% of average line length in direction half w
+    p3_angle = absolute_angle + ((180 - c) // 2)
+    p3_dir_radians = np.radians(p3_angle)
+    dx = average_line_length_25 * np.cos(p3_dir_radians)
+    dy = average_line_length_25 * np.sin(p3_dir_radians)
+    p3 = np.array(start)
+    p3 = p3 + np.array([dx, dy])
+
+    connecting_array = points_array[curve_start_point: curve_end_point + 1]
+    #_curve_between_lines(p0, p1, p2, p3, p4, prev_colour, connecting_array)
 """

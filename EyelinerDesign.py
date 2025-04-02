@@ -457,11 +457,11 @@ line.render(np.array([line.start]), 0, 'red', line.end_thickness, ax_n)
 cProfile.run('random_random_shape()')
 """
 """"""
-"""
+
 fig, ax_n = plt.subplots(figsize=(3, 3))
-line = LineSegment(SegmentType.LINE, (50,100), StartMode.JUMP, 70, 0, 2, 1, 'red', 0.7, True, 0.4, 0, 0)
-line2 = LineSegment(SegmentType.LINE, (80,120), StartMode.JUMP, 40, 0, 1, 2, 'blue', 0, False, 0.5, 0.5, 0)
-line3 = LineSegment(SegmentType.LINE, (20,80), StartMode.JUMP, 50, 60, 1, 1.5, 'green', 0.3, False, 0.5, 0, 0.5)
+line = LineSegment(SegmentType.LINE, (50,100), StartMode.JUMP, 70, 0, 1, 2, 'red', 0, True, 0.4, 0, 0)
+line2 = LineSegment(SegmentType.LINE, (80,120), StartMode.CONNECT_MID, 40, 90, 1, 2, 'blue', 0, False, 0.5, 0.8, 0)
+line3 = LineSegment(SegmentType.LINE, (20,80), StartMode.SPLIT, 50, 90, 1, 1.5, 'green', 0.3, False, 0.5, 0, 0.2)
 
 
 design = EyelinerDesign(line)
@@ -475,7 +475,7 @@ fig = design.render_design()
 #b,c = generate_middle_curve_lines()
 fig.show()
 
-
+"""
 negative_score = analyse_negative(design)
 print("negative_score:",negative_score)
 positive_score = analyse_positive(design,True)
@@ -529,4 +529,5 @@ shape_similarity, direction_similarity = compair_overlapping_sections(new_segmen
 print("shape_similarity", shape_similarity)
 print("direction_similarity", direction_similarity)
 """
-
+#line = LineSegment(SegmentType.LINE, (50,100), StartMode.JUMP, 70, 0, 1, 2, 'red', 0, True, 0.4, 0, 0)
+#line.render(np.array([[i, 0] for i in range(0, 100)]), 0, 'red', np.linspace(1, 101, 100) )
