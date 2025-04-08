@@ -73,6 +73,7 @@ class LineSegment(Segment):
             return start_array_point_index
         if self.start_mode == StartMode.CONNECT:
             self.start_thickness = prev_thickness_array[- 1]
+
         return None
 
 
@@ -533,8 +534,8 @@ def make_eyeliner_wing(random_colour):
         prev_array = np.array([new_segment.start])
         prev_angle = 0
         prev_colour = new_segment.colour
-        prev_end_thickness = new_segment.end_thickness
-        new_segment.render(prev_array, prev_angle, prev_colour, prev_end_thickness)
+        prev_thickness_array = np.array(new_segment.end_thickness)
+        new_segment.render(prev_array, prev_angle, prev_colour, prev_thickness_array)
         new_shape_overlaps = fix_overlaps_shape_overlaps(new_segment, new_segment.lines_list)
         #print("Eyeliner shape overlaps:", new_shape_overlaps)
         if not new_shape_overlaps > max_shape_overlaps:
@@ -716,7 +717,7 @@ def set_prev_end_thickness_array(parent):
     if parent.segment_type == SegmentType.LINE:
         prev_end_thickness_array = parent.thickness_array
     else:
-        prev_end_thickness_array = np.array(parent.end_thickness)
+        prev_end_thickness_array = np.array([parent.end_thickness])
 
     # Check if prev_end_thickness_array is a numpy array and ensure it's iterable
     if isinstance(prev_end_thickness_array, np.ndarray):

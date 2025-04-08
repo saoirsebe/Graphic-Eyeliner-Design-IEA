@@ -111,7 +111,7 @@ def random_gene(gene_n):
             root_node = design.root
             prev_colour = root_node.colour
             segment_number = 0
-            prev_end_thickness_array = root_node.end_thickness
+            prev_end_thickness_array = np.array([root_node.end_thickness])
             root_node.render(np.array([root_node.start]), 0, prev_colour, prev_end_thickness_array)
             """
             fig, ax_n = plt.subplots(figsize=(3, 3))

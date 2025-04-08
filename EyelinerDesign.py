@@ -196,10 +196,7 @@ class EyelinerDesign:   #Creates overall design, calculates start points, render
         prev_colour = prev_segment.colour
         if prev_colour == False:
             print("prev_colour == False")
-        if prev_segment.segment_type == SegmentType.LINE:
-            prev_end_thickness_array = prev_segment.thickness_array
-        else:
-            prev_end_thickness_array = np.array(prev_segment.end_thickness)
+        prev_end_thickness_array = set_prev_end_thickness_array(prev_segment)
 
         for child in node.children:
             self.render_node( child, prev_array, prev_angle, prev_colour, prev_end_thickness_array, scale = scale,ax_n = ax_n)
@@ -212,7 +209,7 @@ class EyelinerDesign:   #Creates overall design, calculates start points, render
         prev_colour = root_node.colour
         if prev_colour == False:
             print("root colour == False")
-        prev_end_thickness_array = root_node.end_thickness
+        prev_end_thickness_array = np.array([root_node.end_thickness])
 
         if show:
             fig, ax_n = plt.subplots(figsize=(self.eye_image.width / 100, self.eye_image.height / 100), dpi=150)
