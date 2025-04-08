@@ -15,20 +15,23 @@ def score_gene(gene):
     return gene, analyse_positive(gene)  # overlap_score + any additional scoring
 
 def initialise_gene_pool():
-    #start_time = time.time()
-    #gene_pool = [random_gene(i) for i in range(initial_gene_pool_size)]
+    start_time = time.time()
     with multiprocessing.Pool() as pool:
         gene_pool = pool.map(random_gene, range(initial_gene_pool_size))
 
-    #end_time = time.time()
-    #elapsed_time = end_time - start_time
-    #print(f"       >>>>    Time taken: {elapsed_time:.6f} seconds  <<<<<<<<     ")
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+    print(f"       >>>>    Time taken initial 200: {elapsed_time:.6f} seconds  <<<<<<<<     ")
 
+    start_time = time.time()
     # Score genes concurrently
     with multiprocessing.Pool() as pool:
         scored_genes = pool.map(score_gene, gene_pool)
 
     scored_genes.sort(key=lambda x: x[1], reverse=True)  # Sort by the gene score
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+    print(f"       >>>>    Time taken scoring and sorting: {elapsed_time:.6f} seconds  <<<<<<<<     ")
     """
     #FOR TESTING:
     for i, (gene, score) in enumerate(scored_genes):

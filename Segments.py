@@ -51,13 +51,11 @@ class LineSegment(Segment):
 
     def _update_start_from_prev(self, prev_array, prev_thickness_array, len_prev_array):
         #Connects to (or Splits from) a line segment:
-        if self.start_mode == StartMode.CONNECT and len_prev_array > num_points_range[1]:
+        if self.start_mode == StartMode.CONNECT and len_prev_array > num_points_range[1] or self.start_mode == StartMode.SPLIT and len_prev_array > num_points_range[1]:
             self.start = (prev_array[-1][0], prev_array[-1][1])
             if prev_thickness_array.size == 1:
                 print("prev_thickness_array:", prev_thickness_array)
                 print("prev_array:", prev_array)
-            if self.start_mode == StartMode.CONNECT:
-                self.start_thickness = prev_thickness_array[- 1]
         # Connects to (or Splits from) a shape segment:
         elif self.start_mode == StartMode.CONNECT and num_points_range[0]<= len_prev_array <= num_points_range[1] or self.start_mode == StartMode.SPLIT and num_points_range[0]<= len_prev_array <= num_points_range[1]:
             end_index = point_in_array(prev_array, 0.5)
@@ -73,7 +71,8 @@ class LineSegment(Segment):
             start_array_point = prev_array[start_array_point_index]
             self.start = (start_array_point[0], start_array_point[1])
             return start_array_point_index
-
+        if self.start_mode == StartMode.CONNECT:
+            self.start_thickness = prev_thickness_array[- 1]
         return None
 
 

@@ -116,6 +116,11 @@ def test_render_integration(monkeypatch, prev_array, prev_angle, start_point, st
     assert hasattr(line, 'points_array'), "points_array was not set during rendering."
     assert line.points_array.shape == (10 , 2), "points_array does not have the expected shape."
     # Assert that the computed points_array is close to the expected points.
+    if not np.allclose(line.points_array, expected_points_array, atol=1e-3):
+        print("Expected points_array:")
+        print(expected_points_array)
+        print("Actual points_array:")
+        print(line.points_array)
     np.testing.assert_allclose(line.points_array, expected_points_array, atol=1e-3,
                                err_msg="points_array does not match expected values.")
 
