@@ -94,8 +94,8 @@ def check_segment_overlaps(segment1, segment2, segment1_tree = None):
     if segment2.segment_type == SegmentType.LINE:
         if segment2.start_mode == StartMode.SPLIT:
             #Remove the split point from array as it will overlap with the previous segment:
-            split_point_point_index = point_in_array(segment2.points_array, segment2.split_point)
-            segment2_array = np.delete(segment2_array, split_point_point_index, axis=0)
+            split_location_point_index = point_in_array(segment2.points_array, segment2.split_location)
+            segment2_array = np.delete(segment2_array, split_location_point_index, axis=0)
         segment2_array = remove_both_ends(segment2_array)
 
     segment1_array = segment1.points_array

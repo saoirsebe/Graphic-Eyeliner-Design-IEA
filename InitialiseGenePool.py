@@ -15,20 +15,22 @@ def score_gene(gene):
     return gene, analyse_positive(gene)  # overlap_score + any additional scoring
 
 def initialise_gene_pool():
-    start_time = time.time()
+    #start_time = time.time()
     #gene_pool = [random_gene(i) for i in range(initial_gene_pool_size)]
     with multiprocessing.Pool() as pool:
         gene_pool = pool.map(random_gene, range(initial_gene_pool_size))
 
-    end_time = time.time()
-    elapsed_time = end_time - start_time
-    print(f"       >>>>    Time taken: {elapsed_time:.6f} seconds  <<<<<<<<     ")
+    #end_time = time.time()
+    #elapsed_time = end_time - start_time
+    #print(f"       >>>>    Time taken: {elapsed_time:.6f} seconds  <<<<<<<<     ")
 
     # Score genes concurrently
     with multiprocessing.Pool() as pool:
         scored_genes = pool.map(score_gene, gene_pool)
 
     scored_genes.sort(key=lambda x: x[1], reverse=True)  # Sort by the gene score
+    """
+    #FOR TESTING:
     for i, (gene, score) in enumerate(scored_genes):
         if i >= 6:
             break
@@ -38,7 +40,7 @@ def initialise_gene_pool():
         print(f"negative Score: {ned_score}")
 
     gene_pool = [gene for gene, score in scored_genes[:6]]
-
+    """
     """
     #FOR TESTING!!!:
     top_3_genes = [gene for gene, _ in scored_genes[:3]]
@@ -91,7 +93,7 @@ for i in range(5):
         curve_direction=random.uniform(*curve_direction_range),
         curve_location=random.uniform(*curve_location_range),
         start_location=random.uniform(*curve_location_range),
-        split_point=random.uniform(*curve_location_range)
+        split_location=random.uniform(*curve_location_range)
 
     )
     print("start mode:", new_segment.start_mode)
@@ -113,7 +115,7 @@ new_segment = create_segment(
         curve_direction=0.2,
         curve_location=0.5,
         start_location=0.6,
-        split_point=0.2
+        split_location=0.2
 
 )
 design.add_segment(new_segment)
@@ -130,7 +132,7 @@ new_segment = create_segment(
         curve_direction=0.2,
         curve_location=0.5,
         start_location=0.6,
-        split_point=0.2
+        split_location=0.2
 
 )
 design.add_segment(new_segment)
@@ -147,7 +149,7 @@ new_segment = create_segment(
         curve_direction=0,
         curve_location=0.5,
         start_location=0.6,
-        split_point=0.2
+        split_location=0.2
 
 )
 design.add_segment(new_segment)
@@ -168,7 +170,7 @@ new_segment = create_segment(
         curve_direction=random.uniform(*curve_direction_range),
         curve_location=random.uniform(*curve_location_range),
         start_location=random.uniform(*curve_location_range),
-        split_point=random.uniform(*curve_location_range)
+        split_location=random.uniform(*curve_location_range)
 
 )
 design.add_segment(new_segment)
@@ -187,7 +189,7 @@ new_segment = create_segment(
         curve_direction=random.uniform(*curve_direction_range),
         curve_location=random.uniform(*curve_location_range),
         start_location=random.uniform(*curve_location_range),
-        split_point=random.uniform(*curve_location_range)
+        split_location=random.uniform(*curve_location_range)
 
 )
 design.add_segment(new_segment)
@@ -206,7 +208,7 @@ new_segment = create_segment(
         curve_direction=random.uniform(*curve_direction_range),
         curve_location=random.uniform(*curve_location_range),
         start_location=random.uniform(*curve_location_range),
-        split_point=random.uniform(*curve_location_range)
+        split_location=random.uniform(*curve_location_range)
 
 )
 design.add_segment(new_segment)

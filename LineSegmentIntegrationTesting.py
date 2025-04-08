@@ -12,9 +12,9 @@ class DummyAx:
         self.plot_calls.append((x, y, kwargs))
 
 @pytest.mark.parametrize(
-    "prev_array, prev_angle, start_point, start_mode, length, relative_angle, start_thickness, end_thickness, colour, curve_location, curve_left, curviness, split_point, start_location, expected_points_array",
+    "prev_array, prev_angle, start_point, start_mode, length, relative_angle, start_thickness, end_thickness, colour, curve_location, curve_left, curviness, split_location, start_location, expected_points_array",
     [
-        # First case: basic jump with no curviness.
+        # Case 1: basic jump with no curviness.
         (np.array([[i, 0] for i in range(0, 10)]), 0, (50,100), StartMode.JUMP, 70, 0, 1, 2, 'red', 0, True, 0, 0, 0,np.array([
     [50.0, 100.0],
     [57.778, 100.0],
@@ -26,7 +26,7 @@ class DummyAx:
     [104.444, 100.0],
     [112.222, 100.0],
     [120.0, 100.0] ]) ),
-        # Second case: different length and angle, different colour and curvature.
+        # Case 2: different length and angle, different colour and curvature.
         (np.array([[0, i] for i in range(0, 10)]), 90, (10,10), StartMode.JUMP, 50, 45, 3, 2, 'green', 0.5, True, 0.4, 0, 0, np.array([
     [10.0, 10.0],
     [11.135, 16.722],
@@ -39,7 +39,7 @@ class DummyAx:
     [38.633, 44.22],
     [45.355, 45.355]
 ]) ),
-        # Third case: CONNECT type.
+        # Case 3: CONNECT type.
         (np.array([[0, i] for i in range(0, 10)]), 90, (10,10), StartMode.CONNECT, 100, 45, 3, 2, 'green', 0, True, 0, 0, 0, np.array([
     [0.0, 9.0],
     [-7.857, 16.857],
@@ -52,7 +52,7 @@ class DummyAx:
     [-62.854, 71.854],
     [-70.711, 79.711]
 ]) ),
-        # Forth case: CONNECT_MID type.
+        # Case 4: CONNECT_MID type.
         (np.array([[0, i] for i in range(0, 10)]), 30, (10,10), StartMode.CONNECT_MID, 60, 45, 3, 2, 'green', 0, True, 0, 0, 0.1, np.array([
     [0.0, 1.0],
     [1.725, 7.44],
@@ -65,7 +65,7 @@ class DummyAx:
     [13.804, 52.516],
     [15.529, 58.956]
 ]) ),
-        # Fifth case: SPLIT type.
+        # Case 5: SPLIT type.
         (np.array([[0, i] for i in range(0, 10)]), 90, (10,10), StartMode.SPLIT, 30, 100, 3, 2, 'green', 0, True, 0, 0.6, 0, np.array([
     [16.413, 11.894],
     [13.13, 11.315],
@@ -81,7 +81,7 @@ class DummyAx:
     ]
 )
 def test_render_integration(monkeypatch, prev_array, prev_angle, start_point, start_mode, length, relative_angle, start_thickness, end_thickness, colour,
-                            curve_location, curve_left, curviness, split_point, start_location, expected_points_array):
+                            curve_location, curve_left, curviness, split_location, start_location, expected_points_array):
     import Segments
     import numpy as np
     monkeypatch.setattr(Segments, "line_num_points", 10)
@@ -91,21 +91,21 @@ def test_render_integration(monkeypatch, prev_array, prev_angle, start_point, st
 
     dummy_ax = DummyAx()
 
-    # Create the LineSegment instance with parameterized values.
+    # Create the LineSegment instance with parameterised values.
     line = LineSegment(
-        SegmentType.LINE,  # segment type
-        start_point,  # start point
-        start_mode,  # start mode from parameter
-        length,  # length from parameter
-        relative_angle,  # relative angle from parameter
-        start_thickness,  # start thickness from parameter
-        end_thickness,  # end thickness from parameter
-        colour,  # colour from parameter
-        curviness,  # curviness from parameter
-        curve_left,  # curve_left flag from parameter
-        curve_location,  # curve_location from parameter
-        start_location,  # start location for CONNECT_MID if needed
-        split_point # split point from parameter
+        SegmentType.LINE,
+        start_point,
+        start_mode,
+        length,
+        relative_angle,
+        start_thickness,
+        end_thickness,
+        colour,
+        curviness,
+        curve_left,
+        curve_location,  # curve_location for if curviness > 0
+        start_location,  # start location for CONNECT_MID
+        split_location # split point for SPLIT
 
     )
 
@@ -115,38 +115,21 @@ def test_render_integration(monkeypatch, prev_array, prev_angle, start_point, st
     # Validate that points_array exists and is correctly shaped.
     assert hasattr(line, 'points_array'), "points_array was not set during rendering."
     assert line.points_array.shape == (10 , 2), "points_array does not have the expected shape."
-    #np.testing.assert_allclose(line.points_array, expected_points_array, atol=1e-3,
-    #                           err_msg="points_array does not match expected values.")
-    import numpy as np
-
-    # Assume line.points_array and expected_points_array are defined
-    if not np.allclose(line.points_array, expected_points_array, atol=1e-3):
-        print("Mismatch detected:")
-        print("Expected points_array:")
-        print(expected_points_array)
-        print("\nComputed (real) points_array:")
-        print(line.points_array)
-        print("\nDifference (Real - Expected):")
-        print(line.points_array - expected_points_array)
-
-    # Now assert that the arrays are close (this will fail if they aren't)
+    # Assert that the computed points_array is close to the expected points.
     np.testing.assert_allclose(line.points_array, expected_points_array, atol=1e-3,
                                err_msg="points_array does not match expected values.")
 
-    # Validate that thickness_array exists and has the expected length.
+    # Validate that thickness_array exists and has the expected values.
+    if start_mode == StartMode.CONNECT:
+        start_thickness = prev_thickness_array[-1]
+    expected_thickness_array = np.linspace(start_thickness, end_thickness, 10)
     assert hasattr(line, 'thickness_array'), "thickness_array was not set during rendering."
-    assert line.thickness_array.shape == (10,), "thickness_array does not have the expected length."
+    np.testing.assert_allclose(line.thickness_array, expected_thickness_array, atol=1e-3,
+                               err_msg="thickness_array does not match expected values.")
 
-    # Verify the number of plot calls equals (line_num_points - 1).
-    expected_calls = 10 - 1
-    assert len(
-        dummy_ax.plot_calls) == expected_calls, f"Expected {expected_calls} plot calls but got {len(dummy_ax.plot_calls)}."
-
-    # Check that the first plot call uses the first two computed points.
-    x_values = line.points_array[:, 0]
-    y_values = line.points_array[:, 1]
-    first_call = dummy_ax.plot_calls[0]
-    np.testing.assert_allclose(first_call[0], [x_values[0], x_values[1]], atol=1e-3,
-                               err_msg="X coordinates in the first plot call do not match expected values.")
-    np.testing.assert_allclose(first_call[1], [y_values[0], y_values[1]], atol=1e-3,
-                               err_msg="Y coordinates in the first plot call do not match expected values.")
+    # Check that each plot call uses the computed points_array.
+    for i, (x_vals, y_vals, _) in enumerate(dummy_ax.plot_calls):
+        np.testing.assert_allclose(x_vals, line.points_array[i:i + 2, 0], atol=1e-3,
+                                   err_msg=f"X coordinates in plot call {i} do not match expected values.")
+        np.testing.assert_allclose(y_vals, line.points_array[i:i + 2, 1], atol=1e-3,
+                                   err_msg=f"Y coordinates in plot call {i} do not match expected values.")

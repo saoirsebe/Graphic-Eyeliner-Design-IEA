@@ -456,17 +456,19 @@ line.render(np.array([line.start]), 0, 'red', line.end_thickness, ax_n)
 
 cProfile.run('random_random_shape()')
 """
-""""""
+"""
 
 fig, ax_n = plt.subplots(figsize=(3, 3))
-line = LineSegment(SegmentType.LINE, (50,100), StartMode.JUMP, 70, 0, 1, 2, 'red', 0, True, 0.4, 0, 0)
-line2 = LineSegment(SegmentType.LINE, (80,120), StartMode.CONNECT_MID, 40, 90, 1, 2, 'blue', 0, False, 0.5, 0.8, 0)
-line3 = LineSegment(SegmentType.LINE, (20,80), StartMode.SPLIT, 50, 90, 1, 1.5, 'green', 0.3, False, 0.5, 0, 0.2)
+star = StarSegment(SegmentType.STAR, upper_eyelid_coords[-1], "red", StarType.STRAIGHT, 7,7,5,0.3,StartMode.CONNECT,1.5,260,True)
+#line = LineSegment(SegmentType.LINE, upper_eyelid_coords[-1], StartMode.JUMP, 30, 30, 1, 2, 'red', 0, True, 0.4, 0, 0)
+#line3 = LineSegment(SegmentType.LINE, (80,120), StartMode.CONNECT_MID, 20, 90, 1, 2, 'blue', 0, False, 0.5, 0.7, 0)
+#line3 = LineSegment(SegmentType.LINE, (20,80), StartMode.SPLIT, 30, 90, 1, 1.5, 'blue', 0.3, False, 0.5, 0, 0.3)
+line3 = LineSegment(SegmentType.LINE, (20,80), StartMode.CONNECT_MID, 30, 325, 1, 1.5, 'blue', 0.1, True, 0.5, 0.1, 0)
+#line3 = LineSegment(SegmentType.LINE, (100,120), StartMode.JUMP, 40, 0, 1, 1.5, 'blue', 0.1, False, 0.5, 0, 0.3)
 
-
-design = EyelinerDesign(line)
-line.add_child_segment(line2)
-line2.add_child_segment(line3)
+design = EyelinerDesign(star)
+star.add_child_segment(line3)
+#line2.add_child_segment(line3)
 fig = design.render_design()
 #print(design.root.points_array)
 #print(upper_eyelid_coords)
@@ -474,6 +476,7 @@ fig = design.render_design()
 #a,b = generate_eyeliner_curve_lines()
 #b,c = generate_middle_curve_lines()
 fig.show()
+"""
 
 """
 negative_score = analyse_negative(design)
@@ -507,18 +510,18 @@ print("Positive Score:", positive_score)
 """
 new_segment = create_segment(
         segment_type=SegmentType.LINE,
-        start = (50,110),
+        start = (60,110),
         start_mode=StartMode.JUMP,
         length=50,
-        relative_angle=90,
+        relative_angle=0,
         start_thickness=2.5,
         end_thickness=1,
         colour="blue",
-        curviness= 0.4 ,
+        curviness= 0.5,
         curve_left=False,
         curve_location=0.5,
         start_location=0.6,
-        split_point=0
+        split_location=0
 
 )
 design = EyelinerDesign(new_segment)
@@ -528,6 +531,7 @@ fig.show()
 shape_similarity, direction_similarity = compair_overlapping_sections(new_segment.points_array, upper_eyelid_coords)
 print("shape_similarity", shape_similarity)
 print("direction_similarity", direction_similarity)
-"""
+
 #line = LineSegment(SegmentType.LINE, (50,100), StartMode.JUMP, 70, 0, 1, 2, 'red', 0, True, 0.4, 0, 0)
 #line.render(np.array([[i, 0] for i in range(0, 100)]), 0, 'red', np.linspace(1, 101, 100) )
+"""

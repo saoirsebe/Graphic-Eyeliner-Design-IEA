@@ -25,14 +25,14 @@ def fake_point_in_array(array, threshold):
     return 0
 
 # --- Tests for __init__ ---
-@pytest.mark.parametrize("start_mode, provided_start_location, provided_split_point, expected_start_location, expected_split_point", [
+@pytest.mark.parametrize("start_mode, provided_start_location, provided_split_location, expected_start_location, expected_split_location", [
     (StartMode.CONNECT_MID, 0.75, 0.3, 0.75, 0),
     (StartMode.SPLIT, 0.4, 0.25, 1, 0.25),
     (StartMode.CONNECT, 0.2, 0.9, 1, 0),
     (StartMode.JUMP, 0.8, 0.1, 1, 0),
 ])
-def test_line_segment_init(start_mode, provided_start_location, provided_split_point,
-                             expected_start_location, expected_split_point):
+def test_line_segment_init(start_mode, provided_start_location, provided_split_location,
+                             expected_start_location, expected_split_location):
     seg = LineSegment(
         segment_type=SegmentType.LINE,
         start=(0, 0),
@@ -46,10 +46,10 @@ def test_line_segment_init(start_mode, provided_start_location, provided_split_p
         curve_left=True,
         curve_location=0.7,
         start_location=provided_start_location,
-        split_point=provided_split_point
+        split_location=provided_split_location
     )
     assert seg.start_location == expected_start_location, f"Expected start_location {expected_start_location}, got {seg.start_location}"
-    assert seg.split_point == expected_split_point, f"Expected split_point {expected_split_point}, got {seg.split_point}"
+    assert seg.split_location == expected_split_location, f"Expected split_location {expected_split_location}, got {seg.split_location}"
 
 # --- Test for calculate_end ---
 @pytest.mark.parametrize("start, length, relative_angle, start_mode, prev_angle, expected_absolute_angle, expected_end", [
@@ -72,7 +72,7 @@ def test_calculate_end(start, length, relative_angle, start_mode, prev_angle, ex
         curve_left=True,
         curve_location=0.5,
         start_location=1,
-        split_point=0
+        split_location=0
     )
     seg._calculate_end(prev_angle)
     assert math.isclose(seg.absolute_angle, expected_absolute_angle, rel_tol=1e-5), f"Expected absolute_angle {expected_absolute_angle}, got {seg.absolute_angle}"
@@ -114,7 +114,7 @@ def test_curve_between_lines(monkeypatch, p0, p1, p2, p3, p4, colour):
         curve_left=True,
         curve_location=0.5,
         start_location=1,
-        split_point=0
+        split_location=0
     )
     # Set points_array to a fixed array with 5 points.
     seg.points_array = np.array([
@@ -165,7 +165,7 @@ def test_render(monkeypatch, start, length, relative_angle, prev_angle, prev_arr
         curve_left=True,
         curve_location=0.5,
         start_location=1,
-        split_point=0
+        split_location=0
     )
 
     seg.render(prev_array, prev_angle, "green", np.array([2,2]), scale=1, ax_n=None)
@@ -193,16 +193,18 @@ def fake_point_in_array_factory(fixed_index):
 
 @pytest.mark.parametrize("start_mode, prev_length, fixed_index", [
     #num_points_range[1] = 8
-    # Case A: CONNECT, prev_length > 8 (representing line segment).
+    # Case 1: CONNECT, prev_length > 8 (representing line segment).
     (StartMode.CONNECT, 20, None),
-    # Case B: CONNECT, prev_length <= 8 (representing shape segment).
+    # Case 2: CONNECT, prev_length <= 8 (representing shape segment).
     (StartMode.CONNECT, 7, 3),
-    # Case C: SPLIT, prev_length > 8 (representing line segment).
+    # Case 3: SPLIT, prev_length > 8 (representing line segment).
     (StartMode.SPLIT, 20, None),
-    # Case D: SPLIT, prev_length <= 8 (representing shape segment).
+    # Case 4: SPLIT, prev_length <= 8 (representing shape segment).
     (StartMode.SPLIT, 7, 3,),
-    # Case E: CONNECT_MID, length > 0.
+    # Case 5: CONNECT_MID, length > 0.
     (StartMode.CONNECT_MID, 10, 2,),
+    # Case 6: CONNECT_MID, length > 0.
+    (StartMode.JUMP, 5, None,),
 ])
 def test_update_start_from_prev(monkeypatch, start_mode, prev_length, fixed_index):
     # Create a previous array as a list of tuples: [(0,0), (1,1), ..., (n-1, n-1)]
@@ -217,14 +219,14 @@ def test_update_start_from_prev(monkeypatch, start_mode, prev_length, fixed_inde
         start_mode=start_mode,
         length=10,
         relative_angle=45,
-        start_thickness=0,
-        end_thickness=1,
+        start_thickness=1,
+        end_thickness=2,
         colour="black",
         curviness=0,
         curve_left=True,
         curve_location=0.5,
         start_location=0.5,
-        split_point=0.3
+        split_location=0.3
     )
 
     # For branches where fixed_index is needed, patch point_in_array to return fixed_index.
@@ -238,29 +240,42 @@ def test_update_start_from_prev(monkeypatch, start_mode, prev_length, fixed_inde
     # Call update_start_from_prev
     ret = seg._update_start_from_prev(prev_array, prev_thickness_array, prev_length)
 
+    expected_start_thickness = 1
     # Now, check based on the expected branch (using previous type (based on prev_array length) and start_mode).
     if (start_mode==StartMode.CONNECT or start_mode==StartMode.SPLIT) and prev_length > 8:
         # For CONNECT or SPLIT with len(prev_array) > 8:
         expected_start = prev_array[-1]
-        expected_thickness = prev_thickness_array[-1]
+        if start_mode == StartMode.CONNECT:
+            # For CONNECT start_thickness should be updated
+            expected_start_thickness = prev_thickness_array[-1]
         assert seg.start == expected_start, f"Expected start {expected_start}, got {seg.start}"
-        assert seg.start_thickness == expected_thickness, f"Expected start_thickness {expected_thickness}, got {seg.start_thickness}"
+        assert seg.start_thickness == expected_start_thickness, f"Expected start_thickness {expected_start_thickness}, got {seg.start_thickness}"
         assert ret is None, f"Expected return None, got {ret}"
     elif (start_mode==StartMode.CONNECT or start_mode==StartMode.SPLIT) and prev_length <= 8:
         # For CONNECT or SPLIT with len(prev_array) <= 8:
         # The fake point_in_array returns fixed_index.
         expected_start = prev_array[fixed_index]
+        if start_mode == StartMode.CONNECT:
+            # For CONNECT start_thickness should be updated
+            expected_start_thickness = prev_thickness_array[-1]
         assert seg.start == expected_start, f"Expected start {expected_start}, got {seg.start}"
+        assert seg.start_thickness == expected_start_thickness, f"Expected start_thickness {expected_start_thickness}, got {seg.start_thickness}"
         assert ret is None, f"Expected return None, got {ret}"
     elif start_mode == StartMode.CONNECT_MID:
         # For CONNECT_MID with len(prev_array) > 0:
         # We expect point_in_array to be called with self.start_location and return fixed_index.
+        # start_thickness shouldn't change
         expected_start = prev_array[fixed_index]
         assert seg.start == expected_start, f"Expected start {expected_start}, got {seg.start}"
+        assert seg.start_thickness == expected_start_thickness, f"Expected start_thickness {expected_start_thickness}, got {seg.start_thickness}"
         assert ret == fixed_index, f"Expected return {fixed_index}, got {ret}"
+    elif start_mode == StartMode.JUMP:
+        # For JUMP start and start_thickness shouldn't change
+        expected_start = (999,999)
+        assert seg.start == expected_start, f"Expected start {expected_start}, got {seg.start}"
+        assert seg.start_thickness == expected_start_thickness, f"Expected start_thickness {expected_start_thickness}, got {seg.start_thickness}"
     else:
         pytest.fail("Unexpected branch.")
-
 
 @pytest.mark.parametrize("prev_length", [0])
 def test_update_start_from_prev_empty_array(monkeypatch, prev_length):
@@ -280,7 +295,7 @@ def test_update_start_from_prev_empty_array(monkeypatch, prev_length):
         curve_left=True,
         curve_location=0.5,
         start_location=0.5,
-        split_point=0.3
+        split_location=0.3
     )
     with pytest.raises(ValueError):
         seg._update_start_from_prev(prev_array, prev_thickness_array, prev_length)
@@ -302,7 +317,7 @@ def test_compute_points_array_straight():
         curve_left=True,
         curve_location=0.5,
         start_location=1,
-        split_point=0
+        split_location=0
     )
     # Manually set end.
     seg.end = (10, 0)
@@ -337,7 +352,7 @@ def test_compute_points_array_curved(monkeypatch):
         curve_left=True,
         curve_location=0.5,
         start_location=1,
-        split_point=0
+        split_location=0
     )
     # Set an end point.
     seg.end = (10, 0)
@@ -386,7 +401,7 @@ def test_apply_split_adjustments(monkeypatch, ax_n, prev_array, prev_angle):
         curve_left=True,
         curve_location=0.5,
         start_location=1,
-        split_point=0.3
+        split_location=0.3
     )
     # Set a fixed points_array.
     seg.points_array = np.array([[10, 10], [20, 20], [30, 30], [40, 40]])
@@ -433,7 +448,7 @@ def test_mutate(monkeypatch, mutation_rate):
         curve_left=True,
         curve_location=0.4,
         start_location=1,
-        split_point=0
+        split_location=0
     )
     seg.mutate_choice = lambda val, options, rate: val
     seg.mutate_val = lambda val, value_range, rate: val
@@ -449,7 +464,7 @@ def test_mutate(monkeypatch, mutation_rate):
         "curve_left": seg.curve_left,
         "curve_location": seg.curve_location,
         "start_location": seg.start_location,
-        "split_point": seg.split_point,
+        "split_location": seg.split_location,
     }
     seg.mutate(mutation_rate)
     for attr, original in orig_values.items():
@@ -475,7 +490,7 @@ def test_mutate(monkeypatch, mutation_rate):
         curve_left=False,
         curve_location=0.7,
         start_location=1,
-        split_point=0
+        split_location=0
     )
     # Monkeypatch the mutation helper methods on the instance.
     seg.mutate_choice = lambda val, options, rate: val
@@ -494,7 +509,7 @@ def test_mutate(monkeypatch, mutation_rate):
         "curve_left": seg.curve_left,
         "curve_location": seg.curve_location,
         "start_location": seg.start_location,
-        "split_point": seg.split_point,
+        "split_location": seg.split_location,
     }
     # Call mutate.
     seg.mutate(mutation_rate)
@@ -515,7 +530,7 @@ def test_line_mutation_attributes_within_range():
         assert start_x_range[0] <= line.start[0] <= start_x_range[1]
         assert start_y_range[0] <= line.start[1] <= start_y_range[1]
         assert relative_location_range[0] <= line.start_location <= relative_location_range[1]
-        assert relative_location_range[0] <= line.split_point <= relative_location_range[1]
+        assert relative_location_range[0] <= line.split_location <= relative_location_range[1]
         assert thickness_range[0] <= line.end_thickness <= thickness_range[1]
         assert direction_range[0] <= line.relative_angle <= direction_range[1]
         assert line.colour in colour_options

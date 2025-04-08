@@ -146,7 +146,7 @@ def random_gene(gene_n):
             return design
 
 """"""
-""""""
+"""
 #design = random_gene(1)
 design =random_gene(170)
 #design = random_gene(190)
@@ -160,6 +160,7 @@ print("Positive Score:", positive_score)
 
 negative_score = analyse_negative(design, True)
 print("analyse_negative score:", negative_score)
+"""
 """
 print("New design:")
 design2 = design.mutate_design(0.05)

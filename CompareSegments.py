@@ -34,7 +34,7 @@ def compare_segments(seg1, seg2):
                     relative_location_range[1] - relative_location_range[0])
         diff += abs(seg1.start_location - seg2.start_location) / (
                     relative_location_range[1] - relative_location_range[0])
-        diff += abs(seg1.split_point - seg2.split_point) / (relative_location_range[1] - relative_location_range[0])
+        diff += abs(seg1.split_location - seg2.split_location) / (relative_location_range[1] - relative_location_range[0])
 
         # Categorical attributes
         if seg1.start_mode != seg2.start_mode:

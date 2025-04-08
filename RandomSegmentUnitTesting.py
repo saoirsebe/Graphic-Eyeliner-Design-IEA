@@ -101,7 +101,7 @@ def test_random_segment(forced_random, expected_segment_type, monkeypatch):
         #   - curviness: since another random.random() call returns 0.5 (and 0.5 >= 0.3),
         #     it uses random_curviness() → random_normal_within_range(0.3,0.15,curviness_range) → 0.3.
         #   - curve_left = random.choice([True, False]) → True.
-        #   - curve_location, start_location, split_point all equal 0.5.
+        #   - curve_location, start_location, split_location all equal 0.5.
         expected_line_attrs = {
             "start_mode": StartMode.CONNECT,
             "relative_angle": 135,
@@ -112,7 +112,7 @@ def test_random_segment(forced_random, expected_segment_type, monkeypatch):
             "curve_left": True,
             "curve_location": 0.5,
             "start_location": 0.5,
-            "split_point": 0.5,
+            "split_location": 0.5,
         }
         for attr, expected_value in expected_line_attrs.items():
             actual = getattr(segment, attr, None)

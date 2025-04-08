@@ -303,6 +303,7 @@ def compair_overlapping_sections(overlapping_points_segment, overlapping_points_
     eye_curve_direction = compute_global_direction(overlapping_points_eye_shape)#compute_directions(overlapping_points_eye_shape)
     direction_similarity = 1 - np.abs(segment_direction - eye_curve_direction)
     #print("direction_similarity",direction_similarity)
+
     """
     if segment_directions.size == 0:
         print("bezier_directions.size == 0")
@@ -765,7 +766,7 @@ new_segment = create_segment(
         curve_direction=0.5,
         curve_location=0.5,
         start_location=0.6,
-        split_point=0.2
+        split_location=0.2
 
 )
 random_design.add_segment(new_segment)
@@ -782,7 +783,7 @@ new_segment = create_segment(
         curve_direction=20,
         curve_location=0.5,
         start_location=0.6,
-        split_point=0
+        split_location=0
 
 )
 random_design.add_segment(new_segment)
@@ -799,7 +800,7 @@ new_segment = create_segment(
         curve_direction=90,
         curve_location=0.5,
         start_location=0.6,
-        split_point=0
+        split_location=0
 
 )
 random_design.add_segment(new_segment)

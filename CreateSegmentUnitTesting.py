@@ -19,7 +19,7 @@ from A import SegmentType, StarType, StartMode
             "curve_left": False,  # used to set curve_left
             "curve_location": 0.7,
             "start_location": 0.8,  # provided value, but should be ignored
-            "split_point": 0.6,     # provided value, but should be overridden to 0
+            "split_location": 0.6,     # provided value, but should be overridden to 0
         },
         {
             "segment_type": SegmentType.LINE,
@@ -34,8 +34,8 @@ from A import SegmentType, StarType, StartMode
             "curve_location": 0.7,
             # For a CONNECT mode (and not CONNECT_MID), start_location is forced to 1.
             "start_location": 1,
-            # And split_point is forced to 0.
-            "split_point": 0,
+            # And split_location is forced to 0.
+            "split_location": 0,
         }
     ),
     # Test for a LineSegment with start_mode CONNECT_MID.
@@ -53,7 +53,7 @@ from A import SegmentType, StarType, StartMode
             "curve_left": True,   # so curve_left True
             "curve_location": 0.65,
             "start_location": 0.9,  # in CONNECT_MID, this value is used
-            "split_point": 0.3,     # for CONNECT_MID, split_point is forced to 0
+            "split_location": 0.3,     # for CONNECT_MID, split_location is forced to 0
         },
         {
             "segment_type": SegmentType.LINE,
@@ -68,8 +68,8 @@ from A import SegmentType, StarType, StartMode
             "curve_location": 0.65,
             # For CONNECT_MID, start_location is preserved.
             "start_location": 0.9,
-            # And split_point is forced to 0.
-            "split_point": 0,
+            # And split_location is forced to 0.
+            "split_location": 0,
         }
     ),
     # Test for a LineSegment with start_mode SPLIT.
@@ -87,7 +87,7 @@ from A import SegmentType, StarType, StartMode
             "curve_left": True,   # so curve_left True
             "curve_location": 0.8,
             "start_location": 0.5,  # provided value ignored for SPLIT
-            "split_point": 0.25,    # this value is used in SPLIT mode
+            "split_location": 0.25,    # this value is used in SPLIT mode
         },
         {
             "segment_type": SegmentType.LINE,
@@ -102,8 +102,8 @@ from A import SegmentType, StarType, StartMode
             "curve_location": 0.8,
             # For SPLIT mode, start_location is forced to 1.
             "start_location": 1,
-            # And split_point is taken from the kwargs.
-            "split_point": 0.25,
+            # And split_location is taken from the kwargs.
+            "split_location": 0.25,
         }
     ),
     # Test for a StarSegment.

@@ -8,7 +8,7 @@ import random
 
 class LineSegment(Segment):
     """Line segment with additional properties specific to a line."""
-    def __init__(self, segment_type, start, start_mode, length, relative_angle, start_thickness, end_thickness, colour, curviness, curve_left, curve_location, start_location, split_point):
+    def __init__(self, segment_type, start, start_mode, length, relative_angle, start_thickness, end_thickness, colour, curviness, curve_left, curve_location, start_location, split_location):
         super().__init__(segment_type, start, start_mode, end_thickness, relative_angle, colour)
         self.segment_type = SegmentType.LINE
         self.end = None  # Calculated in render
@@ -20,13 +20,13 @@ class LineSegment(Segment):
 
         if start_mode == StartMode.CONNECT_MID:
             self.start_location = start_location
-            self.split_point = 0
+            self.split_location = 0
         elif start_mode == StartMode.SPLIT:
-            self.split_point = split_point  #if mode is split then set split_point else splits from 0 (i.e. no split)
+            self.split_location = split_location  #if mode is split then set split_location else splits from 0 (i.e. no split)
             self.start_location = 1
         else:
             self.start_location = 1
-            self.split_point = 0
+            self.split_location = 0
         self.thickness_array = []
 
     def _calculate_end(self, prev_angle):
@@ -51,12 +51,13 @@ class LineSegment(Segment):
 
     def _update_start_from_prev(self, prev_array, prev_thickness_array, len_prev_array):
         #Connects to (or Splits from) a line segment:
-        if self.start_mode == StartMode.CONNECT and len_prev_array > num_points_range[1] or self.start_mode == StartMode.SPLIT and len_prev_array > num_points_range[1]:
+        if self.start_mode == StartMode.CONNECT and len_prev_array > num_points_range[1]:
             self.start = (prev_array[-1][0], prev_array[-1][1])
             if prev_thickness_array.size == 1:
                 print("prev_thickness_array:", prev_thickness_array)
                 print("prev_array:", prev_array)
-            self.start_thickness = prev_thickness_array[len_prev_array - 1]
+            if self.start_mode == StartMode.CONNECT:
+                self.start_thickness = prev_thickness_array[- 1]
         # Connects to (or Splits from) a shape segment:
         elif self.start_mode == StartMode.CONNECT and num_points_range[0]<= len_prev_array <= num_points_range[1] or self.start_mode == StartMode.SPLIT and num_points_range[0]<= len_prev_array <= num_points_range[1]:
             end_index = point_in_array(prev_array, 0.5)
@@ -72,7 +73,9 @@ class LineSegment(Segment):
             start_array_point = prev_array[start_array_point_index]
             self.start = (start_array_point[0], start_array_point[1])
             return start_array_point_index
+
         return None
+
 
     def _compute_points_array_straight(self):
         # For curviness == 0: simple linear interpolation between start and end.
@@ -103,9 +106,9 @@ class LineSegment(Segment):
         return x_values, y_values
 
     def _apply_split_adjustments(self, prev_colour, prev_array, prev_angle, ax_n, len_prev_array):
-        split_point_point_index = point_in_array(self.points_array, self.split_point)
-        split_point_point = self.points_array[split_point_point_index]
-        transformation_vector = un_normalised_vector_direction(split_point_point, self.start)
+        split_location_point_index = point_in_array(self.points_array, self.split_location)
+        split_location_point = self.points_array[split_location_point_index]
+        transformation_vector = un_normalised_vector_direction(split_location_point, self.start)
 
         self.points_array = np.array(
             [(point[0] + transformation_vector[0], point[1] + transformation_vector[1]) for point in self.points_array])
@@ -119,10 +122,10 @@ class LineSegment(Segment):
             # p0 index is -10% from connect point or start of current line:
             len_self_array = len(self.points_array)
             percent_30_current = int(len_self_array * 0.3)
-            if split_point_point_index <= percent_30_current:
+            if split_location_point_index <= percent_30_current:
                 curve_start_point = 0
             else:
-                curve_start_point = split_point_point_index - percent_30_current
+                curve_start_point = split_location_point_index - percent_30_current
             p0 = np.array(self.points_array[curve_start_point])
 
             # p1 is 5% of average line length in direction half-way from  point
@@ -136,10 +139,10 @@ class LineSegment(Segment):
             p1 = p1 + np.array([dx, dy])
 
             # p4 index is +30% from connect point or ond of current line:
-            if len_self_array <= (split_point_point_index + percent_30_current):
+            if len_self_array <= (split_location_point_index + percent_30_current):
                 curve_end_point = len_prev_array - 1
             else:
-                curve_end_point = split_point_point_index + percent_30_current
+                curve_end_point = split_location_point_index + percent_30_current
             p4 = np.array(self.points_array[curve_end_point])
 
             # p3 is 5% of average line length in direction half w
@@ -201,9 +204,9 @@ class LineSegment(Segment):
         if not self.colour:
             print("1) self.colour == False prev_colour: ", prev_colour)
             self.colour = prev_colour
-        print(self.start)
+
         start_array_point_index = self._update_start_from_prev(prev_array, prev_thickness_array, len_prev_array) #Sets correct start and start thickness
-        print(self.start)
+
         self._calculate_end(prev_angle)  # Calculate the endpoint
 
         if self.curviness>0:
@@ -249,13 +252,13 @@ class LineSegment(Segment):
 
         if self.start_mode == StartMode.CONNECT_MID:
             self.start_location = self.mutate_val(self.start_location,relative_location_range,mutation_rate)
-            self.split_point = 0
+            self.split_location = 0
         elif self.start_mode == StartMode.SPLIT:
-            self.split_point = self.mutate_val(self.split_point, relative_location_range, mutation_rate)
+            self.split_location = self.mutate_val(self.split_location, relative_location_range, mutation_rate)
             self.start_location = 1
         else:
             self.start_location = 1
-            self.split_point = 0
+            self.split_location = 0
 
         self.end_thickness = self.mutate_val(self.end_thickness,thickness_range,mutation_rate)
         self.relative_angle =  self.mutate_val(self.relative_angle,direction_range,mutation_rate)
@@ -390,7 +393,7 @@ def create_segment(start, start_mode, segment_type, end_thickness, relative_angl
             curve_left=kwargs.get('curve_left', True),
             curve_location=kwargs.get('curve_location', 0.5),
             start_location = kwargs.get('start_location', 1),
-            split_point = kwargs.get('split_point', 0.5)
+            split_location = kwargs.get('split_location', 0.5)
 
         )
     elif segment_type == SegmentType.STAR:
@@ -662,7 +665,7 @@ def random_segment(prev_colour=None, segment_start=None):
             curve_left=random.choice([True, False]),
             curve_location=random_curve_location(),
             start_location=random_normal_within_range(0.5,0.25,relative_location_range),
-            split_point=random_normal_within_range(0.5,0.25,relative_location_range)
+            split_location=random_normal_within_range(0.5,0.25,relative_location_range)
         )
     elif new_segment_type == SegmentType.STAR:
         new_star_type = random.choice([StarType.STRAIGHT, StarType.CURVED, StarType.FLOWER])
@@ -896,7 +899,7 @@ line.points_array = np.array([
 print(is_in_eye(line))
 
 """
-
+"""
 prev_angle= 90
 start=(0,9)
 start_mode = StartMode.SPLIT
@@ -918,7 +921,7 @@ x_values = np.linspace(start[0], end[0], 10)
 y_values = np.linspace(start[1], end[1], 10)
 points_array = np.column_stack((x_values, y_values))
 points_array = np.round(points_array, 3)
-
+"""
 #print(points_array)
 """"""
 
@@ -944,16 +947,16 @@ t_values = np.linspace(0, 1, 10)
 points_array = bezier_curve_t(t_values, p0, p1, p2)
 print(points_array)
 """
+"""
+split_location = 0.6
 
-split_point = 0.6
-
-split_point_point_index = point_in_array(points_array, split_point)
-split_point_point = points_array[split_point_point_index]
-transformation_vector = un_normalised_vector_direction(split_point_point, start)
+split_location_point_index = point_in_array(points_array, split_location)
+split_location_point = points_array[split_location_point_index]
+transformation_vector = un_normalised_vector_direction(split_location_point, start)
 
 points_array = np.array([(point[0] + transformation_vector[0], point[1] + transformation_vector[1]) for point in points_array])
 print(points_array)
-""""""
+"""
 """
 #curve bled lines:
 len_prev_array = 10
@@ -964,10 +967,10 @@ if ax_n and len_prev_array > num_points_range[1]:  # If prev array is a line
     # p0 index is -10% from connect point or start of current line:
     len_self_array = len(points_array)
     percent_30_current = int(len_self_array * 0.3)
-    if split_point_point_index <= percent_30_current:
+    if split_location_point_index <= percent_30_current:
         curve_start_point = 0
     else:
-        curve_start_point = split_point_point_index - percent_30_current
+        curve_start_point = split_location_point_index - percent_30_current
     p0 = np.array(points_array[curve_start_point])
 
     # p1 is 5% of average line length in direction half-way from  point
@@ -981,10 +984,10 @@ if ax_n and len_prev_array > num_points_range[1]:  # If prev array is a line
     p1 = p1 + np.array([dx, dy])
 
     # p4 index is +30% from connect point or ond of current line:
-    if len_self_array <= (split_point_point_index + percent_30_current):
+    if len_self_array <= (split_location_point_index + percent_30_current):
         curve_end_point = len_prev_array - 1
     else:
-        curve_end_point = split_point_point_index + percent_30_current
+        curve_end_point = split_location_point_index + percent_30_current
     p4 = np.array(points_array[curve_end_point])
 
     # p3 is 5% of average line length in direction half w
