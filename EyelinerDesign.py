@@ -177,7 +177,7 @@ class EyelinerDesign:   #Creates overall design, calculates start points, render
     def render_node(self, node, prev_array, prev_angle, prev_colour, prev_end_thickness_array, scale = 1, ax_n=None):
 
         try:
-            node.render(prev_array, prev_angle, prev_colour, prev_end_thickness_array, scale = scale, ax_n=ax_n)
+            node.render(prev_array, prev_angle, prev_colour, prev_end_thickness_array, scale, ax_n)
         except AttributeError as e:
             print(f"AttributeError occurred: {e}")
             print(f"node object: {node}")
@@ -199,7 +199,7 @@ class EyelinerDesign:   #Creates overall design, calculates start points, render
         prev_end_thickness_array = set_prev_end_thickness_array(prev_segment)
 
         for child in node.children:
-            self.render_node( child, prev_array, prev_angle, prev_colour, prev_end_thickness_array, scale = scale,ax_n = ax_n)
+            self.render_node( child, prev_array, prev_angle, prev_colour, prev_end_thickness_array, scale, ax_n)
 
     def render_design(self, scale = 1, show = True):
         """Render the eyeliner design"""
@@ -288,7 +288,7 @@ class EyelinerDesign:   #Creates overall design, calculates start points, render
             #Ensure new segment doesnt overlap with other segments (try 12 times):
             regen_count = 0
             new_segment_score = check_new_segments_negative_score(self, new_segment)
-            while new_segment_score < min_fitness_score and regen_count < node_re_gen_max:
+            while new_segment_score < min_negative_score and regen_count < node_re_gen_max:
                 new_segment = random_segment(prev_colour=new_parent_colour)
                 new_segment.render(new_parent_array, new_parent_angle, new_parent_colour, prev_end_thickness_array)
                 regen_count += 1
@@ -310,7 +310,7 @@ class EyelinerDesign:   #Creates overall design, calculates start points, render
         overlap_score = analyse_negative(new_gene)
         new_positive_score = analyse_positive(new_gene)
         #print("overlap_score", overlap_score)
-        while overlap_score < min_fitness_score or new_positive_score < old_positive_score:
+        while overlap_score < min_negative_score or new_positive_score < old_positive_score:
             old_gene = copy.deepcopy(self)
             new_gene = old_gene.mutate_self(mutation_rate)
             new_gene.render_design(show=False)
@@ -326,7 +326,7 @@ class EyelinerDesign:   #Creates overall design, calculates start points, render
         new_gene.render_design(show=False)
         overlap_score = analyse_negative(new_gene)
         #print("overlap_score", overlap_score)
-        while overlap_score < min_fitness_score:
+        while overlap_score < min_negative_score:
             old_gene = copy.deepcopy(self)
             new_gene = old_gene.mutate_self(mutation_rate, delete)
             new_gene.render_design(show=False)
@@ -453,19 +453,21 @@ line.render(np.array([line.start]), 0, 'red', line.end_thickness, ax_n)
 
 cProfile.run('random_random_shape()')
 """
+
 """
-
 fig, ax_n = plt.subplots(figsize=(3, 3))
-star = StarSegment(SegmentType.STAR, upper_eyelid_coords[-1], "red", StarType.STRAIGHT, 7,7,5,0.3,StartMode.CONNECT,1.5,260,True)
-#line = LineSegment(SegmentType.LINE, upper_eyelid_coords[-1], StartMode.JUMP, 30, 30, 1, 2, 'red', 0, True, 0.4, 0, 0)
-#line3 = LineSegment(SegmentType.LINE, (80,120), StartMode.CONNECT_MID, 20, 90, 1, 2, 'blue', 0, False, 0.5, 0.7, 0)
-#line3 = LineSegment(SegmentType.LINE, (20,80), StartMode.SPLIT, 30, 90, 1, 1.5, 'blue', 0.3, False, 0.5, 0, 0.3)
+#star = StarSegment(SegmentType.STAR, upper_eyelid_coords[-1], "red", StarType.STRAIGHT, 7,7,5,0.3,StartMode.CONNECT,1.5,260,True)
+line = LineSegment(SegmentType.LINE, upper_eyelid_coords[-1], StartMode.JUMP, 30, 30, 1, 2, 'red', 0, True, 0.4, 0, 0)
+#line = LineSegment(SegmentType.LINE, (144, 108), StartMode.CONNECT, 30, 210, 1, 2, 'red', 0, True, 0.4, 0, 0)
+line1 = LineSegment(SegmentType.LINE, (80,120), StartMode.CONNECT_MID, 20, 90, 1, 2, 'blue', 0, False, 0.5, 0.7, 0)
+line2 = LineSegment(SegmentType.LINE, (20,80), StartMode.SPLIT, 30, 90, 1, 1.5, 'blue', 0.3, False, 0.5, 0, 0.3)
 line3 = LineSegment(SegmentType.LINE, (20,80), StartMode.CONNECT_MID, 30, 325, 1, 1.5, 'blue', 0.1, True, 0.5, 0.1, 0)
-#line3 = LineSegment(SegmentType.LINE, (100,120), StartMode.JUMP, 40, 0, 1, 1.5, 'blue', 0.1, False, 0.5, 0, 0.3)
+line3 = LineSegment(SegmentType.LINE, (100,120), StartMode.JUMP, 40, 0, 1, 1.5, 'blue', 0.1, False, 0.5, 0, 0.3)
 
-design = EyelinerDesign(star)
-star.add_child_segment(line3)
-#line2.add_child_segment(line3)
+design = EyelinerDesign(line)
+line.add_child_segment(line1)
+line1.add_child_segment(line2)
+line2.add_child_segment(line3)
 fig = design.render_design()
 #print(design.root.points_array)
 #print(upper_eyelid_coords)
@@ -473,14 +475,15 @@ fig = design.render_design()
 #a,b = generate_eyeliner_curve_lines()
 #b,c = generate_middle_curve_lines()
 fig.show()
-"""
 
-"""
+
 negative_score = analyse_negative(design)
 print("negative_score:",negative_score)
 positive_score = analyse_positive(design,True)
 print("positive_score:",positive_score)
-print(is_outside_face_area(line2))
+
+#print(is_outside_face_area(line2))
+
 """
 
 

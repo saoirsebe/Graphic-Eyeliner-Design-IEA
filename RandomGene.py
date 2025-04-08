@@ -62,7 +62,7 @@ def random_gene_node(design, parent, prev_colour, segment_number=1, depth=0):
     regen_count = 0
 
     new_segment_score = check_new_segments_negative_score(design, new_node)
-    while new_segment_score < min_fitness_score and regen_count < node_re_gen_max:
+    while new_segment_score < min_negative_score and regen_count < node_re_gen_max:
         new_node = random_segment( prev_colour=prev_colour)
         new_node.render(prev_array, prev_angle, prev_colour, prev_end_thickness_array)
         """
@@ -77,7 +77,7 @@ def random_gene_node(design, parent, prev_colour, segment_number=1, depth=0):
         regen_count+=1
         new_segment_score = check_new_segments_negative_score(design, new_node)
     if regen_count >=node_re_gen_max:
-        return False, min_fitness_score *2
+        return False, min_negative_score * 2
 
     parent.children.append(new_node)
     n_of_children = n_of_children_decreasing_likelihood(segment_number, depth, max_segments, 1.6,0.6, number_of_children_range)
@@ -88,8 +88,8 @@ def random_gene_node(design, parent, prev_colour, segment_number=1, depth=0):
         segment_number += 1
         success,child_score = random_gene_node(design, new_node, prev_colour, segment_number=segment_number, depth=depth)
         new_segment_score += child_score
-        if not success or new_segment_score < min_fitness_score:
-            return False , min_fitness_score *2  # Propagate failure if child generation fails.
+        if not success or new_segment_score < min_negative_score:
+            return False , min_negative_score * 2  # Propagate failure if child generation fails.
 
     return True, new_segment_score
 
@@ -108,6 +108,7 @@ def random_gene(gene_n):
             else:
                 design = EyelinerDesign(random_segment())
 
+            design.root.start_mode = StartMode.CONNECT
             root_node = design.root
             prev_colour = root_node.colour
             segment_number = 0
@@ -121,7 +122,7 @@ def random_gene(gene_n):
             """
 
             if is_outside_face_area(root_node):
-                root_score = 2*min_fitness_score
+                root_score = 2 * min_negative_score
             else:
                 root_score = -is_in_eye(root_node)
 
@@ -133,11 +134,11 @@ def random_gene(gene_n):
             total_score+=child_score
             #print("child_score", child_score)
             #print("Total score:",total_score)
-            if not success or total_score < min_fitness_score:
+            if not success or total_score < min_negative_score:
                 success = False
 
         design.render_design(show = False)
-        if analyse_negative(design)<min_fitness_score:
+        if analyse_negative(design)<min_negative_score:
             success = False
 
         if success:
@@ -146,12 +147,12 @@ def random_gene(gene_n):
             return design
 
 """"""
-"""
+
 #design = random_gene(1)
 design =random_gene(170)
 #design = random_gene(190)
-#fig = design.render_design()
-#fig.show()
+fig = design.render_design()
+fig.show()
 
 
 positive_score = analyse_positive(design, True)
@@ -160,6 +161,7 @@ print("Positive Score:", positive_score)
 
 negative_score = analyse_negative(design, True)
 print("analyse_negative score:", negative_score)
+"""
 """
 """
 print("New design:")

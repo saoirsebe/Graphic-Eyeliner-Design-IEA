@@ -1,5 +1,6 @@
 import pickle
 import customtkinter as ctk
+from matplotlib import pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 from AnalyseDesign import analyse_positive, analyse_negative
@@ -85,18 +86,20 @@ class SaveDesignPage(ctk.CTkFrame):
             design_frame.grid(row=i // num_columns, column=i % num_columns, padx=10, pady=10, sticky="nsew")
 
             fig = design.render_design(scale=1)
+
             for ax in fig.get_axes():
                 ax.set_axis_off()
 
-            positive_score = analyse_positive(design, True)
-            negative_score = analyse_negative(design, True)
-            print(f"analyse_positive: {positive_score}")
-            print(f"negative Score: {negative_score}")
+            #positive_score = analyse_positive(design, False)
+            #negative_score = analyse_negative(design, False)
+            #print(f"analyse_positive: {positive_score}")
+            #print(f"negative Score: {negative_score}")
 
             canvas = FigureCanvasTkAgg(fig, master=design_frame)
             canvas.draw()
             canvas_widget = canvas.get_tk_widget()
             canvas_widget.pack(expand=True, fill="both", padx=5, pady=5)
+            plt.close(fig)
 
             canvas_widget.bind("<Button-1>", lambda event, d=design: self.show_design_popup(d))
 

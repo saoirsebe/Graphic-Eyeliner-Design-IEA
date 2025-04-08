@@ -3,6 +3,7 @@ from tkinter import messagebox
 import customtkinter as ctk
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import matplotlib.pyplot as plt
+from statsmodels.tsa.ardl.pss_critical_values import large_p
 
 from DualScrollableFrame import DualScrollableFrame
 from BreedingMechanism import breed_new_designs, breed_new_designs_with_auto_selection
@@ -104,13 +105,11 @@ class DesignPage(ctk.CTkFrame):
 
     def go_home(self):
         # Close and destroy current gene pool figures
-        for fig, widget in self.current_gene_pool_figures:
-            plt.close(fig)
+        for widget in self.current_gene_pool_figures:
             widget.destroy()
         self.current_gene_pool_figures = []
         # Close and destroy saved design figures
-        for fig, widget in self.saved_gene_widgets.values():
-            plt.close(fig)
+        for widget in self.saved_gene_widgets.values():
             widget.destroy()
         self.saved_gene_widgets = {}
         # Reset design lists and indices
@@ -124,13 +123,11 @@ class DesignPage(ctk.CTkFrame):
 
     def finish_designing(self):
         # Close and destroy current gene pool figures
-        for fig, widget in self.current_gene_pool_figures:
-            plt.close(fig)
+        for widget in self.current_gene_pool_figures:
             widget.destroy()
         self.current_gene_pool_figures = []
         # Close and destroy saved design figures
-        for fig, widget in self.saved_gene_widgets.values():
-            plt.close(fig)
+        for widget in self.saved_gene_widgets.values():
             widget.destroy()
         self.saved_gene_widgets = {}
         # Add the saved designs from this page to the global list in the controller.
@@ -158,8 +155,7 @@ class DesignPage(ctk.CTkFrame):
 
     def show_saved_genes(self):
         # Close and destroy any existing saved design figures/widgets
-        for fig, widget in self.saved_gene_widgets.values():
-            plt.close(fig)
+        for widget in self.saved_gene_widgets.values():
             widget.destroy()
         self.saved_gene_widgets = {}
 
@@ -173,6 +169,7 @@ class DesignPage(ctk.CTkFrame):
             canvas.draw()
             canvas_widget = canvas.get_tk_widget()
             canvas_widget.pack(padx=5, pady=5)
+            plt.close(fig)
             # Buttons to add back to pool or un-save.
             into_pool_button = ctk.CTkButton(
                 frame, text="Add back to pool",
@@ -191,11 +188,10 @@ class DesignPage(ctk.CTkFrame):
             )
             un_save_button.pack(pady=2)
             # Store both the figure and its widget for later cleanup
-            self.saved_gene_widgets[gene] = (fig, frame)
+            self.saved_gene_widgets[gene] = frame
 
     def re_generate(self):
-        for fig, widget in self.current_gene_pool_figures:
-            plt.close(fig)
+        for widget in self.current_gene_pool_figures:
             widget.destroy()
         self.gene_pools_previous.append(self.current_gene_pool)
         self.current_gene_pool = initialise_gene_pool()
@@ -238,7 +234,8 @@ class DesignPage(ctk.CTkFrame):
             canvas.draw()
             canvas_widget = canvas.get_tk_widget()
             canvas_widget.pack(expand=True, fill="both", padx=2, pady=2)
-            self.current_gene_pool_figures.append((fig, frame))
+            plt.close(fig)
+            self.current_gene_pool_figures.append(frame)
 
             # Bind click event to show a larger preview
             canvas_widget.bind("<Button-1>", lambda event, index=i: self.show_design_popup(index))
@@ -322,8 +319,7 @@ class DesignPage(ctk.CTkFrame):
         if gene in self.saved_genes:
             self.saved_genes.remove(gene)
             if gene in self.saved_gene_widgets:
-                fig, widget = self.saved_gene_widgets[gene]
-                plt.close(fig)
+                widget = self.saved_gene_widgets[gene]
                 widget.destroy()
                 del self.saved_gene_widgets[gene]
             button.configure(
@@ -341,13 +337,11 @@ class DesignPage(ctk.CTkFrame):
         self.show_saved_genes()
 
     def submit_selection(self):
-        for fig, widget in self.current_gene_pool_figures:
-            plt.close(fig)
+        for widget in self.current_gene_pool_figures:
             widget.destroy()
 
         # Also close saved design figures
-        for fig, widget in self.saved_gene_widgets.values():
-            plt.close(fig)
+        for widget in self.saved_gene_widgets.values():
             widget.destroy()
         self.saved_gene_widgets = {}
 
@@ -369,6 +363,10 @@ class DesignPage(ctk.CTkFrame):
             self.gene_pools_previous = self.gene_pools_previous[:-1]
             self.start_designing()
 
+    def on_close_popup(self, popup, fig):
+        plt.close(fig)
+        popup.destroy()
+
     def show_design_popup(self, index):
         popup = ctk.CTkToplevel(self)
         popup.title("Design Preview")
@@ -382,5 +380,7 @@ class DesignPage(ctk.CTkFrame):
         large_canvas = FigureCanvasTkAgg(large_fig, master=content_frame)
         large_canvas.draw()
         large_canvas.get_tk_widget().pack(expand=True, fill="both", padx=5, pady=5)
-        close_button = ctk.CTkButton(content_frame, text="Close", command=popup.destroy)
+        plt.close(large_fig)
+        close_button = ctk.CTkButton(content_frame, text="Close")
+        close_button.configure(command=lambda the_popup=popup, the_large_fig = large_fig: self.on_close_popup(the_popup, the_large_fig))
         close_button.pack(pady=5)

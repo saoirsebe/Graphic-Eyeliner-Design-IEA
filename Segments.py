@@ -224,9 +224,6 @@ class LineSegment(Segment):
             """Add curve from 10% from each side of connect (start) point on previous line to 10% up current line"""
             self._connect_mid_blend_lines(len_prev_array, start_array_point_index, prev_array, prev_angle)
 
-        #TESTING:
-        if not self.colour:
-            print("2) self.colour == False prev_colour: ", prev_colour)
 
         if ax_n:
             # Plot points array:

@@ -6,7 +6,7 @@ from PIL import Image, ImageTk
 
 import matplotlib.pyplot as plt
 import time
-from A import min_fitness_score, initial_gene_pool_size
+from A import min_negative_score, initial_gene_pool_size
 from AnalyseDesign import analyse_negative, analyse_positive
 from RandomGene import random_gene
 import concurrent.futures
@@ -15,23 +15,24 @@ def score_gene(gene):
     return gene, analyse_positive(gene)  # overlap_score + any additional scoring
 
 def initialise_gene_pool():
-    start_time = time.time()
+    #start_time = time.time()
     with multiprocessing.Pool() as pool:
         gene_pool = pool.map(random_gene, range(initial_gene_pool_size))
+    plt.close('all')
+    #end_time = time.time()
+    #elapsed_time = end_time - start_time
+    #print(f"       >>>>    Time taken initial 200: {elapsed_time:.6f} seconds  <<<<<<<<     ")
 
-    end_time = time.time()
-    elapsed_time = end_time - start_time
-    print(f"       >>>>    Time taken initial 200: {elapsed_time:.6f} seconds  <<<<<<<<     ")
-
-    start_time = time.time()
+    #start_time = time.time()
     # Score genes concurrently
     with multiprocessing.Pool() as pool:
         scored_genes = pool.map(score_gene, gene_pool)
 
     scored_genes.sort(key=lambda x: x[1], reverse=True)  # Sort by the gene score
-    end_time = time.time()
-    elapsed_time = end_time - start_time
-    print(f"       >>>>    Time taken scoring and sorting: {elapsed_time:.6f} seconds  <<<<<<<<     ")
+
+    #end_time = time.time()
+    #elapsed_time = end_time - start_time
+    #print(f"       >>>>    Time taken scoring and sorting: {elapsed_time:.6f} seconds  <<<<<<<<     ")
     """
     #FOR TESTING:
     for i, (gene, score) in enumerate(scored_genes):

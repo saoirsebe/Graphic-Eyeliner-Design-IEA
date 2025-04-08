@@ -199,13 +199,13 @@ class HomePage(ctk.CTkFrame):
             canvas.draw()
             canvas_widget = canvas.get_tk_widget()
             canvas_widget.pack(expand=True, fill="both")
-            self.recent_design_figures.append((fig, canvas_widget))
+            plt.close(fig)
+            self.recent_design_figures.append(canvas_widget)
             canvas_widget.bind("<Button-1>", lambda event, d=design: self.show_design_popup(d))
 
     def cleanup_recent_designs(self):
         """Closes all matplotlib figures and destroys their widgets for recent designs."""
-        for fig, widget in self.recent_design_figures:
-            plt.close(fig)
+        for widget in self.recent_design_figures:
             widget.destroy()
         self.recent_design_figures = []
 

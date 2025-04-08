@@ -46,15 +46,15 @@ def fake_n_of_children_decreasing_likelihood(segment_number, depth, max_segments
 
 # --- For random_gene ---
 def fake_is_outside_face_area(root_node):
-    # Force the branch that sets root_score = 2*min_fitness_score.
+    # Force the branch that sets root_score = 2*min_negative_score.
     return True
 
 def fake_is_in_eye(root_node):
     return 0
 
 def fake_analyse_negative(design):
-    # Return exactly min_fitness_score so that analysis passes.
-    return fake_min_fitness_score
+    # Return exactly min_negative_score so that analysis passes.
+    return fake_min_negative_score
 
 def fake_make_eyeliner_wing(random_colour):
     # Return a dummy segment representing an eyeliner wing.
@@ -79,7 +79,7 @@ def fake_random_normal_within_range_for_gene(mean, std_dev, value_range):
     return mean
 
 # --- Dummy Global Values for Testing ---
-fake_min_fitness_score = 10
+fake_min_negative_score = 10
 fake_node_re_gen_max = 3
 fake_max_segments = 100
 fake_number_of_children_range = (0, 3)
@@ -102,7 +102,7 @@ def test_random_gene_node(monkeypatch):
     monkeypatch.setattr(RandomGene, "set_prev_array", fake_set_prev_array)
     monkeypatch.setattr(RandomGene, "check_new_segments_negative_score", fake_check_new_segments_negative_score)
     monkeypatch.setattr(RandomGene, "n_of_children_decreasing_likelihood", fake_n_of_children_decreasing_likelihood)
-    monkeypatch.setattr(RandomGene, "min_fitness_score", fake_min_fitness_score)
+    monkeypatch.setattr(RandomGene, "min_negative_score", fake_min_negative_score)
     monkeypatch.setattr(RandomGene, "node_re_gen_max", fake_node_re_gen_max)
     monkeypatch.setattr(RandomGene, "max_segments", fake_max_segments)
     monkeypatch.setattr(RandomGene, "number_of_children_range", fake_number_of_children_range)
@@ -162,7 +162,7 @@ def test_random_gene(gene_n, monkeypatch):
     monkeypatch.setattr(RG, "set_prev_array", fake_set_prev_array)
     monkeypatch.setattr(RG, "n_of_children_decreasing_likelihood", lambda *args, **kwargs: 0)
     monkeypatch.setattr(RG, "initial_gene_pool_size", fake_initial_gene_pool_size)
-    monkeypatch.setattr(RG, "min_fitness_score", fake_min_fitness_score)
+    monkeypatch.setattr(RG, "min_negative_score", fake_min_negative_score)
 
     # Force random.random() to return 0.5.
     monkeypatch.setattr(random, "random", lambda: 0.5)

@@ -2,7 +2,7 @@ from itertools import chain
 
 from scipy.spatial import cKDTree
 from seaborn import scatterplot
-from A import SegmentType, StartMode, min_fitness_score, max_shape_overlaps, upper_eyelid_x, lower_eyelid_x, \
+from A import SegmentType, StartMode, min_negative_score, max_shape_overlaps, upper_eyelid_x, lower_eyelid_x, \
     upper_eyelid_y, lower_eyelid_y, SegmentType, face_end_x_values, face_end_y_values
 from AestheticAnalysis import analyse_design_shapes
 import numpy as np
@@ -64,10 +64,10 @@ def any_points_inside_filled_polygon(points, polygon):
 def check_new_segments_negative_score(design, new_segment):
     score = 0
     if is_outside_face_area(new_segment):
-        return min_fitness_score * 2
+        return min_negative_score * 2
     eye_overlaps = is_in_eye(new_segment)
     if eye_overlaps > 0:
-        return min_fitness_score * 2
+        return min_negative_score * 2
 
     average_x = np.mean(new_segment.points_array[:, 0])
     if average_x < 10:
@@ -75,7 +75,7 @@ def check_new_segments_negative_score(design, new_segment):
 
     average_y = np.mean(new_segment.points_array[:, 1])
     if average_y > 190:
-        return min_fitness_score * 2
+        return min_negative_score * 2
     elif average_y > 150:
         score -= 1.5
     elif average_y < 50:
@@ -84,7 +84,7 @@ def check_new_segments_negative_score(design, new_segment):
     current_segments = design.get_all_nodes()
     for segment in current_segments:
         score -= check_segment_overlaps(segment,new_segment)
-        if score < min_fitness_score:
+        if score < min_negative_score:
             return score
 
     return score
@@ -116,7 +116,7 @@ def check_segment_overlaps(segment1, segment2, segment1_tree = None):
     elif segment2.segment_type == SegmentType.STAR or segment2.segment_type == SegmentType.IRREGULAR_POLYGON:
         inside_shape = any_points_inside_filled_polygon(segment1_array,segment2_array)
     if inside_shape:
-        return -min_fitness_score*2
+        return -min_negative_score*2
 
     return overlaps
 
@@ -142,7 +142,7 @@ def check_design_overlaps(i, segments):
             #print("segment.segment_type:",segment.segment_type)
             #print("segment_j.segment_type:",segment_j.segment_type)
             #print("overlaps:", overlaps)
-        if -overlaps < min_fitness_score: #Return if less than min_fitness_score to save processing time
+        if -overlaps < min_negative_score: #Return if less than min_negative_score to save processing time
             return overlaps
 
     return overlaps
@@ -212,23 +212,27 @@ def wing_angle(node1,node2):
 def analyse_negative(design, to_print = False):
     #print("design:")
     segments = design.get_all_nodes()
+    segments_outside_good = 0
     score = 0  # Count how many overlaps there are in this gene
     # Compare each pair of segments for overlap
     len_segments = len(segments)
     #print("N of segments = ",len_segments)
     for i in range(len_segments):
         average_x = np.mean(segments[i].points_array[:, 0])
-        if average_x < 10:
+        if average_x < 15:
+            segments_outside_good+=1
             if to_print:
-                print("average_x < 10")
+                print("average_x < 15")
             score -= 0.5
 
         average_y = np.mean(segments[i].points_array[:, 1])
-        if average_y > 150:
+        if average_y > 140:
+            segments_outside_good += 1
             if to_print:
-                print("average_y > 150")
+                print("average_y > 140")
             score -= 1.5
         elif average_y < 50:
+            segments_outside_good += 1
             if to_print:
                 print("average_y < 50")
             score -= 0.5
@@ -237,15 +241,15 @@ def analyse_negative(design, to_print = False):
         if eye_overlaps>0:
             if to_print:
                 print("eye_overlaps:", eye_overlaps)
-            return min_fitness_score *2
+            return min_negative_score *2
         #else:
         #    score-=eye_overlaps
         if is_outside_face_area(segments[i]):
             if to_print:
                 print("is_outside_face_area")
-            return min_fitness_score * 2
+            return min_negative_score * 2
 
-        if score < min_fitness_score:
+        if score < min_negative_score:
             return score
 
         if i!=len_segments-1:
@@ -253,8 +257,11 @@ def analyse_negative(design, to_print = False):
             score  -= segment_score
             if to_print and segment_score>0:
                 print(f"for {segments[i].colour} {segments[i].segment_type}, overlaps:", segment_score)
-        if score < min_fitness_score:
+        if score < min_negative_score:
             return score
+
+        if segments_outside_good >2:
+            return min_negative_score * 2
     return score
 
 def analyse_positive(design, to_print = False):

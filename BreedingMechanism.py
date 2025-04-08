@@ -4,7 +4,7 @@ import random
 import numpy as np
 from matplotlib import pyplot as plt
 
-from A import min_fitness_score, SegmentType, StartMode, eye_corner_start, random_normal_within_range
+from A import min_negative_score, SegmentType, StartMode, eye_corner_start, random_normal_within_range
 from AnalyseDesign import analyse_negative, analyse_positive
 from CompareSegments import compare_segments, random_irregular_polygon
 from EyelinerDesign import EyelinerDesign
@@ -87,7 +87,7 @@ def produce_correct_crossover(designs):
     new_design.render_design(show=False)
     overlap_score = analyse_negative(new_design)
     #print(f"overlap_score =={overlap_score}")
-    while overlap_score < min_fitness_score :
+    while overlap_score < min_negative_score :
         try_n +=1
         new_design = crossover_designs(designs,try_n)
         new_design.render_design(show=False)
@@ -274,7 +274,7 @@ def breed_new_designs_with_auto_selection(selected_genes, mutation_rate, aesthet
                 # For each batch, call generate_gene_multiple_parents with the current parent's index.
                 new_design = generate_gene_multiple_parents(selected_genes, idx, mutation_rate)
                 batch.append(new_design)
-                print("batch.append(new_design)")
+                #print("batch.append(new_design)")
             # Score each gene in the batch relative to all selected parents.
             scored_batch = []
             for gene in batch:
