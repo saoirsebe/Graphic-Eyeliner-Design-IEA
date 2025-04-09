@@ -258,7 +258,7 @@ def breed_new_designs_with_auto_selection(selected_genes, mutation_rate, aesthet
     n_selected = len(selected_genes)
     if n_selected == 1:
         parent = selected_genes[0]
-        for i in range(30):
+        for i in range(40):
             new_design = parent.mutate_design(mutation_rate, delete=False)
             new_gene_pool.append(new_design)
 
@@ -295,14 +295,14 @@ def breed_new_designs_with_auto_selection(selected_genes, mutation_rate, aesthet
                         new_selected_genes.append(gene)
                     if len(new_selected_genes) >= 3:
                         break
-            if len(new_selected_genes) >= 3:
+            if len(new_selected_genes) >= 6:
                 break  # got enough genes
             else:
                 # Relax the diversity requirement and try again
                 diversity_threshold *= 0.9  # reduce threshold by 10%
                 iteration += 1
     else:
-        batch_size = 30 // n_selected
+        batch_size = 50 // n_selected
         new_selected_genes = []
 
         for idx, parent in enumerate(selected_genes):
@@ -325,8 +325,9 @@ def breed_new_designs_with_auto_selection(selected_genes, mutation_rate, aesthet
             scored_batch.sort(key=lambda x: x[1], reverse=True)
             if scored_batch:
                 new_selected_genes.append(scored_batch[0][0])
-                if len(new_selected_genes) < 4:
-                    new_selected_genes.append(scored_batch[1][0])
+                new_selected_genes.append(scored_batch[1][0])
+        if len(new_selected_genes) < 6:
+            new_selected_genes.append(scored_batch[2][0])
 
     second_new_gene_pool = breed_new_designs(new_selected_genes, mutation_rate)
 
