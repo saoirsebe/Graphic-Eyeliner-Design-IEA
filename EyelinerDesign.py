@@ -240,7 +240,7 @@ class EyelinerDesign:   #Creates overall design, calculates start points, render
 
         if delete:
             # Random chance of deleting a segment:
-            if len(nodes_list) >1 and np.random.random() < mutation_rate:
+            if len(nodes_list) >2 and np.random.random() < mutation_rate:
                 #Assign higher weight to later nodes:
                 delete_node = random.choices(nodes_list[1:], weights=range(1, len(nodes_list)), k=1)[0]
                 original_parent = self.find_the_parent(self.root, delete_node)

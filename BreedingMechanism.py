@@ -6,7 +6,7 @@ from skimage.metrics import structural_similarity as ssim
 import numpy as np
 from matplotlib import pyplot as plt
 
-from A import min_negative_score, SegmentType, StartMode, eye_corner_start, random_normal_within_range
+from A import min_negative_score, SegmentType, StartMode, eye_corner_start, random_normal_within_range, diff_threshold
 from AnalyseDesign import analyse_negative, analyse_positive
 from CompareSegments import compare_segments, random_irregular_polygon
 from EyelinerDesign import EyelinerDesign
@@ -132,37 +132,42 @@ def figure_to_array(fig):
     buf.close()
     return image_array
 
-def compare_design_images(design1, design2):
-    fig1 = design1.render_design()
+def compare_design_images(design2, design1, image1=None):
     fig2 = design2.render_design()
-    image1 = figure_to_array(fig1)
     image2 = figure_to_array(fig2)
-    plt.close(fig1)
     plt.close(fig2)
+    if image1 is None:
+        fig1 = design1.render_design()
+        image1 = figure_to_array(fig1)
+        plt.close(fig1)
+
     genetic_difference = compare_designs(design1,design2)
     if image1.shape == image2.shape:
         err = np.mean((image1.astype("float") - image2.astype("float")) ** 2)
-        return err, genetic_difference * 21
+        return err, genetic_difference * 20
     else:
-        return genetic_difference * 21, genetic_difference * 21
+        return genetic_difference * 20, genetic_difference * 20
 
 
-def generate_sufficiently_different_gene(old_gene, new_gene_pool, mutation_rate, diff_threshold=15, max_attempts=100):
+def generate_sufficiently_different_gene(old_gene, new_gene_pool, mutation_rate, max_attempts=100):
     """
     Generates a mutated gene that is at least `diff_threshold` different from both the parent gene
     and all genes in new_gene_pool.
     """
     attempts = 0
     new_gene = old_gene.mutate_design_positive_check(mutation_rate)
+    fig1 = old_gene.render_design()
+    old_image = figure_to_array(fig1)
+    plt.close(fig1)
 
     while attempts < max_attempts:
-        img_diff, gen_diff = compare_design_images(old_gene, new_gene)
+        img_diff, gen_diff = compare_design_images(new_gene, old_gene, old_image)
         if img_diff < diff_threshold or gen_diff < diff_threshold:
             new_gene = new_gene.mutate_design_positive_check(mutation_rate)
             attempts += 1
             continue
 
-        differences = [compare_design_images(gene, new_gene) for gene in new_gene_pool]
+        differences = [compare_design_images(new_gene, gene) for gene in new_gene_pool]
         if differences and any(img < diff_threshold or gen < diff_threshold for (img, gen) in differences):
             new_gene = new_gene.mutate_design_positive_check(mutation_rate)
             attempts += 1
@@ -172,7 +177,7 @@ def generate_sufficiently_different_gene(old_gene, new_gene_pool, mutation_rate,
 
     return new_gene
 
-def generate_sufficiently_different_positive_gene_multiple_parents(parents, new_gene_pool, i, mutation_rate,  diff_threshold=15, max_attempts=12):
+def generate_sufficiently_different_positive_gene_multiple_parents(parents, new_gene_pool, i, mutation_rate, max_attempts=12):
     """
     Generates a mutated gene that is at least `diff_threshold` different from all parent genes
     and all genes in new_gene_pool.
@@ -196,7 +201,7 @@ def generate_sufficiently_different_positive_gene_multiple_parents(parents, new_
         if any(img_diff < diff_threshold or gen_diff < diff_threshold for (img_diff, gen_diff) in differences):
             new_mutated_design = new_mutated_design.mutate_design_positive_check(mutation_rate)
             attempts += 1
-            print("Parent differences not sufficient")
+            #print("Parent differences not sufficient")
             continue
 
         # Check difference with every gene in the new gene pool
@@ -204,7 +209,7 @@ def generate_sufficiently_different_positive_gene_multiple_parents(parents, new_
         if differences_pool and any(img_diff < diff_threshold or gen_diff < diff_threshold for (img_diff, gen_diff) in differences_pool):
             new_mutated_design = new_mutated_design.mutate_design_positive_check(mutation_rate)
             attempts += 1
-            print("New gene pool differences not sufficient")
+            #print("New gene pool differences not sufficient")
             continue
 
         # Candidate is sufficiently different from both the parent and the pool

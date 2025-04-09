@@ -5,9 +5,10 @@ from matplotlib import pyplot as plt
 from PIL import Image, ImageTk
 from numba import njit
 
+diff_threshold = 12.5
 min_negative_score = -3
 min_segment_score = -2
-initial_gene_pool_size = 20
+initial_gene_pool_size = 200
 node_re_gen_max = 12
 #Parameter ranges:
 start_x_range = (20, 140)
@@ -24,6 +25,12 @@ colour_options = [
     "maroon", "navy", "olive", "teal", "darkred", "darkgreen", "darkblue",
     "darkorange", "darkviolet", "darkgrey"
 ]
+
+dark_colours = [
+    "brown", "grey", "black", "maroon", "navy", "olive", "teal",
+    "darkred", "darkgreen", "darkblue", "darkorange", "darkviolet", "darkgrey"
+]
+
 
 similar_colours = {
     "red": ["orange", "magenta", "pink", "darkred", "maroon", "brown", "black"],
@@ -69,7 +76,7 @@ max_shape_overlaps = 0
 number_of_children_range= (0,3)
 max_segments = 20
 average_branch_length = 5
-eye_corner_start = (118.1,93)
+
 
 line_num_points = 100
 
@@ -176,6 +183,8 @@ lower_eyelid_x = [coord[0] for coord in lower_eyelid_coords]
 lower_eyelid_y = [coord[1] for coord in lower_eyelid_coords]
 lower_len = len(lower_eyelid_coords)
 lower_eyelid_coords_section = int(0.1 * lower_len)
+
+eye_corner_start = (118.5,93)
 
 def draw_eye_shape(ax_n):
     ax_n.plot(lower_eyelid_x, lower_eyelid_y, label=f"$y = 0.5x^2$", color="black")

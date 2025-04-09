@@ -148,8 +148,15 @@ def random_gene(gene_n):
 """
 """
 
-design =random_gene(170)
+design =random_gene(10)
 fig = design.render_design()
+positive_score = analyse_positive(design)
+while positive_score <12:
+    plt.close(fig)
+    design = random_gene(10)
+    fig = design.render_design()
+    positive_score = analyse_positive(design)
+
 fig.show()
 
 positive_score = analyse_positive(design, True)

@@ -29,7 +29,7 @@ def initialise_gene_pool():
         scored_genes = pool.map(score_gene, gene_pool)
 
     scored_genes.sort(key=lambda x: x[1], reverse=True)  # Sort by the gene score
-
+    gene_pool = [gene for gene, score in scored_genes[:6]]
     #end_time = time.time()
     #elapsed_time = end_time - start_time
     #print(f"       >>>>    Time taken scoring and sorting: {elapsed_time:.6f} seconds  <<<<<<<<     ")
@@ -43,7 +43,7 @@ def initialise_gene_pool():
         print(f"Score: {score}")
         print(f"negative Score: {ned_score}")
 
-    gene_pool = [gene for gene, score in scored_genes[:6]]
+    
     """
     """
     #FOR TESTING!!!:

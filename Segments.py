@@ -544,18 +544,18 @@ def generate_radius_arm_lengths(new_star_type):
         new_radius = random_normal_within_range(9, 7, radius_range)  # Radius between 5 and 10
         new_arm_length = random_normal_within_range(9, 7, arm_length_range)  # Arm length between 5 and 10
 
-        if new_arm_length < new_radius * 0.4:
+        if new_arm_length < new_radius * 0.6:
             #new_arm_length = new_radius * 0.4
             diff = new_radius - new_arm_length * 1.5
             new_radius -= diff / 2
             new_arm_length += diff / 2
-        """
+
         #Ensure radius is not significantly larger than arm length
-        if new_radius > new_arm_length * 1.5:
+        if new_radius > new_arm_length * 1.4:
             diff = new_radius - new_arm_length * 1.5
             new_radius -= diff / 2
             new_arm_length += diff / 2
-        """
+
         #Ensure the total does not exceed 20:
         if new_radius + new_arm_length > 20:
             scale_factor = 20 / (new_radius + new_arm_length)

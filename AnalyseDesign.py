@@ -214,9 +214,9 @@ def is_in_eye(segment):
 
 def is_outside_face_area(segment):
     segment_array = segment.points_array
-    if segment.segment_type == SegmentType.LINE:
-        first_2 = int(len(segment_array) * 0.02)
-        segment_array = segment_array[first_2:-first_2]
+    #if segment.segment_type == SegmentType.LINE:
+    #    first_2 = int(len(segment_array) * 0.02)
+    #    segment_array = segment_array[first_2:-first_2]
     x1 = face_end_x_values[0]
     x2 = face_end_x_values[-1]
     y1 = face_end_y_values[0]
@@ -225,7 +225,7 @@ def is_outside_face_area(segment):
     for point in segment_array:
         px, py = point
 
-        # Calculate cross product: (x2 - x1) * (py - y1) - (y2 - y1) * (px - x1)
+        # Calculate cross product:
         cross_product = (x2 - x1) * (py - y1) - (y2 - y1) * (px - x1)
 
         # If cross product is negative, the point is to the right
