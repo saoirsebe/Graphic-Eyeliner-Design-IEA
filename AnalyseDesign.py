@@ -7,7 +7,7 @@ from A import SegmentType, StartMode, min_negative_score, max_shape_overlaps, up
 from AestheticAnalysis import analyse_design_shapes
 import numpy as np
 from ParentSegment import point_in_array
-
+from shapely.geometry import Point, Polygon
 
 def remove_ends_of_line(line1_array, line2_array):
     first_2 = int(len(line1_array) * 0.15)
@@ -39,14 +39,41 @@ def check_shape_edge_overlaps(segment1_array, segment2_array):
     return overlaps , indices_of_line_overlaps
 
 def remove_both_ends(the_segment_array):
-    first_25 = int(len(the_segment_array) * 0.025)
-    return the_segment_array[first_25:-first_25]
+    first_3 = int(len(the_segment_array) * 0.03)
+    return the_segment_array[first_3:-first_3]
 
 
 import numpy as np
 
 
-def any_points_inside_filled_polygon(points, polygon):
+def any_points_inside_filled_polygon(points, polygon, margin=2):
+    """
+    Checks if any point from `points` is sufficiently deep inside the polygon. A point
+    is considered "inside" only if it is contained within the polygon and is at least
+    `margin` distance away from the polygon's boundary.
+
+    :param points: np.array of shape (N, 2) containing N points to check.
+    :param polygon: np.array of shape (M, 2) containing all M points that define the filled polygon.
+    :param margin: float, the minimum distance from the polygon's boundary that a point must be
+                   to be considered "inside". Setting margin=0.0 corresponds to the usual
+                   point-in-polygon test.
+    :return: True if at least one point is located inside the polygon by at least `margin` distance;
+             False otherwise.
+    """
+    # Create a shapely polygon from the vertices.
+    poly = Polygon(polygon)
+
+    # Generate an inner polygon by buffering the original polygon inwards.
+    # This inner_poly represents the area that is at least `margin` distance away from the boundary.
+    inner_poly = poly.buffer(-margin)
+
+    # Loop through each point and check for containment in the inner polygon.
+    for pt in points:
+        if inner_poly.contains(Point(pt)):
+            return True
+    return False
+
+def any_points_inside_filled_polygon_old(points, polygon):
     """
     Efficiently checks if any points exist inside a pre-filled polygon (array of points).
 
@@ -59,7 +86,7 @@ def any_points_inside_filled_polygon(points, polygon):
     points_set = set(map(tuple, points))
 
     # Check for any intersection
-    return len(points_set & polygon_set) > 0
+    return len(points_set & polygon_set) > 5
 
 def check_new_segments_negative_score(design, new_segment):
     score = 0
@@ -89,7 +116,7 @@ def check_new_segments_negative_score(design, new_segment):
 
     return score
 
-def check_segment_overlaps(segment1, segment2, segment1_tree = None):
+def check_segment_overlaps(segment1, segment2, segment1_tree = None, to_print = False):
     segment2_array = segment2.points_array
     if segment2.segment_type == SegmentType.LINE:
         if segment2.start_mode == StartMode.SPLIT:
@@ -112,15 +139,19 @@ def check_segment_overlaps(segment1, segment2, segment1_tree = None):
     #    overlaps = 0
     inside_shape = False
     if segment1.segment_type == SegmentType.STAR or segment1.segment_type == SegmentType.IRREGULAR_POLYGON:
-        inside_shape = any_points_inside_filled_polygon(segment2_array, segment1_array)
+        if segment1.fill:
+            inside_shape = any_points_inside_filled_polygon(segment2_array, segment1_array)
     elif segment2.segment_type == SegmentType.STAR or segment2.segment_type == SegmentType.IRREGULAR_POLYGON:
-        inside_shape = any_points_inside_filled_polygon(segment1_array,segment2_array)
+        if segment2.fill:
+            inside_shape = any_points_inside_filled_polygon(segment1_array,segment2_array)
     if inside_shape:
+        if to_print:
+            print("inside shape")
         return -min_negative_score*2
 
     return overlaps
 
-def check_design_overlaps(i, segments):
+def check_design_overlaps(i, segments, to_print=False):
     segment = segments[i]
     segment_array = segment.points_array
     len_segments = len(segments)
@@ -137,7 +168,7 @@ def check_design_overlaps(i, segments):
     overlaps = 0
     for j in range(i + 1, len_segments):
         segment_j = segments[j]
-        overlaps += check_segment_overlaps(segment, segment_j, segment_tree)
+        overlaps += check_segment_overlaps(segment, segment_j, segment_tree, to_print=to_print)
         #if overlaps > 0:
             #print("segment.segment_type:",segment.segment_type)
             #print("segment_j.segment_type:",segment_j.segment_type)
@@ -223,10 +254,14 @@ def analyse_negative(design, to_print = False):
             segments_outside_good+=1
             if to_print:
                 print("average_x < 15")
-            score -= 0.5
+            score -= 1.5
 
         average_y = np.mean(segments[i].points_array[:, 1])
-        if average_y > 140:
+        if average_y > 160:
+            if to_print:
+                print("average_y > 160")
+            score = min_negative_score * 2
+        elif average_y > 130:
             segments_outside_good += 1
             if to_print:
                 print("average_y > 140")
@@ -235,7 +270,7 @@ def analyse_negative(design, to_print = False):
             segments_outside_good += 1
             if to_print:
                 print("average_y < 50")
-            score -= 0.5
+            score -= 1
 
         eye_overlaps = is_in_eye(segments[i])
         if eye_overlaps>0:
@@ -253,7 +288,7 @@ def analyse_negative(design, to_print = False):
             return score
 
         if i!=len_segments-1:
-            segment_score = check_design_overlaps(i, segments)
+            segment_score = check_design_overlaps(i, segments, to_print)
             score  -= segment_score
             if to_print and segment_score>0:
                 print(f"for {segments[i].colour} {segments[i].segment_type}, overlaps:", segment_score)

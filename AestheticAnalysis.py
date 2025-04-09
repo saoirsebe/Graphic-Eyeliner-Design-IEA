@@ -567,7 +567,7 @@ def analyse_design_shapes(design, to_print = False):
     total_score = 0
     segments = design.get_all_nodes()
     for segment in segments:
-        print("1")
+        #print("1")
         average_x = np.mean(segment.points_array[:, 0])
         if average_x <0:
             total_score -=5
@@ -610,7 +610,7 @@ def analyse_design_shapes(design, to_print = False):
 
             elif check_points_left(segment.points_array,False):
                 # If 80% of segment is right of the eye corner then compare segment with wing shape curves
-                print("checking against eyeliner shape")
+                #print("checking against eyeliner shape")
 
                 line_score = compair_segment_wing_shape(segment, eyeliner_curve1, eyeliner_curve2 ,to_print=to_print)
                 right_score = line_score
@@ -629,7 +629,7 @@ def analyse_design_shapes(design, to_print = False):
                         print(f"line colour:{segment.colour} compair_segment_wing_shape:", line_score)
                     total_score += right_score
             elif check_points_middle(segment.points_array):
-                print("checking middle")
+                #print("checking middle")
                 middle_score = compair_middle_curve_shapes(segment, to_print=to_print)
                 if to_print:
                     print(f"line colour:{segment.colour} middle_score:", middle_score)

@@ -3,7 +3,7 @@ from A import *
 from AnalyseDesign import check_design_overlaps, check_overlaps, analyse_negative, \
     analyse_positive, \
     check_segment_overlaps, is_in_eye, is_outside_face_area, check_new_segments_negative_score
-from BreedingMechanism import compare_designs
+from BreedingMechanism import compare_designs, generate_sufficiently_different_gene, compare_design_images
 from EyelinerDesign import EyelinerDesign
 from Segments import create_segment, random_segment, set_prev_end_thickness_array, make_eyeliner_wing, \
     random_segment_colour
@@ -129,49 +129,51 @@ def random_gene(gene_n):
         n_of_children = round(random_normal_within_range(1.2, 0.2, number_of_children_range))
         total_score = root_score
         for i in range(n_of_children):
-            segment_number +=1
-            success, child_score = random_gene_node(design, root_node, prev_colour, segment_number=segment_number, depth=0)
-            total_score+=child_score
-            #print("child_score", child_score)
-            #print("Total score:",total_score)
-            if not success or total_score < min_negative_score:
-                success = False
+            if  success and total_score >= min_negative_score:
+                segment_number +=1
+                success, child_score = random_gene_node(design, root_node, prev_colour, segment_number=segment_number, depth=0)
+                total_score+=child_score
 
-        design.render_design(show = False)
-        if analyse_negative(design)<min_negative_score:
+                if not success or total_score < min_negative_score:
+                    success = False
+
+        neg_score = analyse_negative(design)
+        if neg_score<min_negative_score:
             success = False
 
         if success:
-            #print(f"success {gene_n}")
-            #print("Score:",total_score)
             return design
 
-""""""
 
-#design = random_gene(1)
+"""
+"""
+
 design =random_gene(170)
-#design = random_gene(190)
 fig = design.render_design()
 fig.show()
 
-
 positive_score = analyse_positive(design, True)
-segments = design.get_all_nodes()
 print("Positive Score:", positive_score)
-
 negative_score = analyse_negative(design, True)
 print("analyse_negative score:", negative_score)
-"""
-"""
-"""
+
+
 print("New design:")
-design2 = design.mutate_design(0.05)
+design2 = generate_sufficiently_different_gene(design, [], 0.05, max_attempts=100)
 fig = design2.render_design()
 
 difference = compare_designs(design, design2)
-print("Difference:", difference)
+print("Genetic difference:", difference)
+
+difference_image = compare_design_images(design,design2)
+print("Image difference:", difference_image)
+
 fig.show()
-"""
+positive_score = analyse_positive(design2)
+print("Positive Score:", positive_score)
+
+negative_score = analyse_negative(design2)
+print("analyse_negative score:", negative_score)
 
 
 

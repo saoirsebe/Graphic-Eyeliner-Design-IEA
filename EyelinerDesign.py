@@ -453,21 +453,29 @@ line.render(np.array([line.start]), 0, 'red', line.end_thickness, ax_n)
 
 cProfile.run('random_random_shape()')
 """
-
 """
-fig, ax_n = plt.subplots(figsize=(3, 3))
-#star = StarSegment(SegmentType.STAR, upper_eyelid_coords[-1], "red", StarType.STRAIGHT, 7,7,5,0.3,StartMode.CONNECT,1.5,260,True)
-line = LineSegment(SegmentType.LINE, upper_eyelid_coords[-1], StartMode.JUMP, 30, 30, 1, 2, 'red', 0, True, 0.4, 0, 0)
-#line = LineSegment(SegmentType.LINE, (144, 108), StartMode.CONNECT, 30, 210, 1, 2, 'red', 0, True, 0.4, 0, 0)
-line1 = LineSegment(SegmentType.LINE, (80,120), StartMode.CONNECT_MID, 20, 90, 1, 2, 'blue', 0, False, 0.5, 0.7, 0)
-line2 = LineSegment(SegmentType.LINE, (20,80), StartMode.SPLIT, 30, 90, 1, 1.5, 'blue', 0.3, False, 0.5, 0, 0.3)
-line3 = LineSegment(SegmentType.LINE, (20,80), StartMode.CONNECT_MID, 30, 325, 1, 1.5, 'blue', 0.1, True, 0.5, 0.1, 0)
-line3 = LineSegment(SegmentType.LINE, (100,120), StartMode.JUMP, 40, 0, 1, 1.5, 'blue', 0.1, False, 0.5, 0, 0.3)
 
+fig, ax_n = plt.subplots(figsize=(3, 3))
+#star = StarSegment(SegmentType.STAR, upper_eyelid_coords[-1], "violet", StarType.STRAIGHT, 7,7,5,0.3,StartMode.CONNECT,1.5,260,True)
+#line = LineSegment(SegmentType.LINE, upper_eyelid_coords[-1], StartMode.JUMP, 20, 30, 1, 2, 'purple', 0, True, 0.4, 0, 0)
+#line1 = LineSegment(SegmentType.LINE, (80,120), StartMode.CONNECT_MID, 30, 230, 1, 2, 'pink', 0.3, False, 0.5, 0.7, 0)
+#line2 = LineSegment(SegmentType.LINE, (100,130), StartMode.JUMP, 60, 330, 3, 1.5, 'green', 0.3, False, 0.5, 0, 0.3)
+#line3 = LineSegment(SegmentType.LINE, (20,80), StartMode.CONNECT_MID, 30, 325, 1, 1.5, 'blue', 0.1, True, 0.5, 0.1, 0)
+#line3 = LineSegment(SegmentType.LINE, (100,120), StartMode.JUMP, 40, 0, 1, 1.5, 'blue', 0.1, False, 0.5, 0, 0.3)
+#line = LineSegment(SegmentType.LINE, (144, 108), StartMode.CONNECT, 30, 210, 1, 2, 'red', 0, True, 0.4, 0, 0)
+#star1 = StarSegment(SegmentType.STAR, (125,97), "violet", StarType.STRAIGHT, 7,7,5,0.3,StartMode.JUMP,1.5,260,True)
+
+line = LineSegment(SegmentType.LINE, (100,150), StartMode.JUMP,
+                       40, 40, 2, 2, 'green', 0, True, 0.5, 0, 0)
+line1 = LineSegment(SegmentType.LINE, (120,160), StartMode.CONNECT_MID,
+                        60, 100, 2, 2, 'purple', 0.8, False, 0.8, 0.8, 0)
 design = EyelinerDesign(line)
 line.add_child_segment(line1)
-line1.add_child_segment(line2)
-line2.add_child_segment(line3)
+
+#design = EyelinerDesign(line)
+#line.add_child_segment(star)
+#star.add_child_segment(line1)
+#line2.add_child_segment(line3)
 fig = design.render_design()
 #print(design.root.points_array)
 #print(upper_eyelid_coords)
@@ -477,13 +485,12 @@ fig = design.render_design()
 fig.show()
 
 
-negative_score = analyse_negative(design)
+negative_score = analyse_negative(design, True)
 print("negative_score:",negative_score)
-positive_score = analyse_positive(design,True)
-print("positive_score:",positive_score)
+#positive_score = analyse_positive(design,True)
+#print("positive_score:",positive_score)
 
 #print(is_outside_face_area(line2))
-
 """
 
 
@@ -505,19 +512,19 @@ positive_score = analyse_positive(design)
 negative_score = analyse_negative(design)
 print("analyse_negative score:", negative_score)
 print("Positive Score:", positive_score)
-
 """
+
 """
 new_segment = create_segment(
         segment_type=SegmentType.LINE,
-        start = (60,110),
+        start = (60,135),
         start_mode=StartMode.JUMP,
         length=50,
         relative_angle=0,
         start_thickness=2.5,
         end_thickness=1,
         colour="blue",
-        curviness= 0.5,
+        curviness= 1,
         curve_left=False,
         curve_location=0.5,
         start_location=0.6,

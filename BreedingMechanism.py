@@ -1,6 +1,8 @@
 import copy
 import random
-
+from io import BytesIO
+from PIL import Image
+from skimage.metrics import structural_similarity as ssim
 import numpy as np
 from matplotlib import pyplot as plt
 
@@ -111,37 +113,66 @@ def compare_designs(parent, new_design):
     return difference
 
 
-def generate_sufficiently_different_gene(old_gene, new_gene_pool, mutation_rate, diff_threshold=0.5, max_attempts=100):
+def figure_to_array(fig):
+    """
+    Convert a matplotlib figure to a NumPy array.
+
+    Parameters:
+        fig: The matplotlib figure to convert.
+        convert_gray: If True, convert the image to grayscale ('L' mode in PIL).
+
+    Returns:
+        image_array: NumPy array of the rendered figure.
+    """
+    buf = BytesIO()
+    fig.savefig(buf, format='png', bbox_inches='tight')
+    buf.seek(0)
+    im = Image.open(buf)
+    image_array = np.array(im)
+    buf.close()
+    return image_array
+
+def compare_design_images(design1, design2):
+    fig1 = design1.render_design()
+    fig2 = design2.render_design()
+    image1 = figure_to_array(fig1)
+    image2 = figure_to_array(fig2)
+    plt.close(fig1)
+    plt.close(fig2)
+    genetic_difference = compare_designs(design1,design2)
+    if image1.shape == image2.shape:
+        err = np.mean((image1.astype("float") - image2.astype("float")) ** 2)
+        return err, genetic_difference * 21
+    else:
+        return genetic_difference * 21, genetic_difference * 21
+
+
+def generate_sufficiently_different_gene(old_gene, new_gene_pool, mutation_rate, diff_threshold=15, max_attempts=100):
     """
     Generates a mutated gene that is at least `diff_threshold` different from both the parent gene
     and all genes in new_gene_pool.
-
-    Keep mutating gene until it differs enough or max_attempts is reached.
     """
     attempts = 0
     new_gene = old_gene.mutate_design_positive_check(mutation_rate)
 
     while attempts < max_attempts:
-        # Check difference with parent gene
-        diff_from_parent = compare_designs(old_gene, new_gene)
-        if diff_from_parent < diff_threshold:
+        img_diff, gen_diff = compare_design_images(old_gene, new_gene)
+        if img_diff < diff_threshold or gen_diff < diff_threshold:
             new_gene = new_gene.mutate_design_positive_check(mutation_rate)
             attempts += 1
             continue
 
-        # Check difference with every gene in the new gene pool
-        differences = [compare_designs(gene, new_gene) for gene in new_gene_pool]
-        if differences and min(differences) < diff_threshold:
+        differences = [compare_design_images(gene, new_gene) for gene in new_gene_pool]
+        if differences and any(img < diff_threshold or gen < diff_threshold for (img, gen) in differences):
             new_gene = new_gene.mutate_design_positive_check(mutation_rate)
             attempts += 1
             continue
 
-        # Candidate is sufficiently different from both the parent and the pool
         return new_gene
 
     return new_gene
 
-def generate_sufficiently_different_positive_gene_multiple_parents(parents, new_gene_pool, i, mutation_rate,  diff_threshold=0.75, max_attempts=12):
+def generate_sufficiently_different_positive_gene_multiple_parents(parents, new_gene_pool, i, mutation_rate,  diff_threshold=15, max_attempts=12):
     """
     Generates a mutated gene that is at least `diff_threshold` different from all parent genes
     and all genes in new_gene_pool.
@@ -161,20 +192,19 @@ def generate_sufficiently_different_positive_gene_multiple_parents(parents, new_
 
     while attempts < max_attempts:
         # Check difference with every parent gene
-        differences = [compare_designs(parent, new_mutated_design) for parent in to_breed]
-        min_difference = min(differences)
-        if min_difference < diff_threshold:
+        differences = [compare_design_images(parent, new_mutated_design) for parent in to_breed]
+        if any(img_diff < diff_threshold or gen_diff < diff_threshold for (img_diff, gen_diff) in differences):
             new_mutated_design = new_mutated_design.mutate_design_positive_check(mutation_rate)
             attempts += 1
-            print("parent differences and min(differences) < diff_threshold")
+            print("Parent differences not sufficient")
             continue
 
         # Check difference with every gene in the new gene pool
-        differences = [compare_designs(gene, new_mutated_design) for gene in new_gene_pool]
-        if differences and min(differences) < diff_threshold:
+        differences_pool = [compare_design_images(gene, new_mutated_design) for gene in new_gene_pool]
+        if differences_pool and any(img_diff < diff_threshold or gen_diff < diff_threshold for (img_diff, gen_diff) in differences_pool):
             new_mutated_design = new_mutated_design.mutate_design_positive_check(mutation_rate)
             attempts += 1
-            print("new gene pool differences and min(differences) < diff_threshold")
+            print("New gene pool differences not sufficient")
             continue
 
         # Candidate is sufficiently different from both the parent and the pool
@@ -218,7 +248,7 @@ def breed_new_designs(selected_genes, mutation_rate):
 
     return new_gene_pool
 
-def breed_new_designs_with_auto_selection(selected_genes, mutation_rate, aesthetic_weight=0.7, diversity_weight=0.15, min_diversity_threshold =2):
+def breed_new_designs_with_auto_selection(selected_genes, mutation_rate, aesthetic_weight=0.7, diversity_weight=0.15, min_diversity_threshold =15):
     new_gene_pool=[]
     n_selected = len(selected_genes)
     if n_selected == 1:
@@ -228,11 +258,13 @@ def breed_new_designs_with_auto_selection(selected_genes, mutation_rate, aesthet
             new_gene_pool.append(new_design)
 
         # Score each gene: using analyse_positive for aesthetics,
-        # and compare_designs (difference from the parent) for diversity.
+        # and compare_design_images (difference from the parent) for diversity.
         scored_genes = []
         for gene in new_gene_pool:
             aesthetic_score = analyse_positive(gene)
-            div_score = compare_designs(gene, parent)
+            # For diversity, combine the image and genetic differences by averaging
+            div_scores = [(img + gen) / 2 for (img, gen) in (compare_design_images(gene, p) for p in selected_genes)]
+            div_score = sum(div_scores) / len(div_scores)
             total_score = (aesthetic_weight * aesthetic_score) + (diversity_weight * div_score)
             scored_genes.append((gene, total_score, aesthetic_score, div_score))
 
@@ -253,7 +285,7 @@ def breed_new_designs_with_auto_selection(selected_genes, mutation_rate, aesthet
                 # Iterate over the remaining candidates
                 for gene, total_score, aesthetic_score, div_score in scored_genes[1:]:
                     # Accept this gene only if it is sufficiently different from all already selected ones
-                    if all(compare_designs(gene, sel_gene) >= diversity_threshold for sel_gene in
+                    if all(compare_design_images(gene, sel_gene) >= diversity_threshold for sel_gene in
                            new_selected_genes):
                         new_selected_genes.append(gene)
                     if len(new_selected_genes) >= 3:
@@ -280,7 +312,8 @@ def breed_new_designs_with_auto_selection(selected_genes, mutation_rate, aesthet
             for gene in batch:
                 aesthetic_score = analyse_positive(gene)
                 # Measure diversity as the average difference from all parents.
-                div_score = sum(compare_designs(gene, p) for p in selected_genes) / len(selected_genes)
+                div_scores = [(img + gen) / 2 for (img, gen) in(compare_design_images(gene, p) for p in selected_genes)]
+                div_score = sum(div_scores) / len(div_scores)
                 total_score = (aesthetic_weight * aesthetic_score) + (diversity_weight * div_score)
                 scored_batch.append((gene, total_score, aesthetic_score, div_score))
             # Sort the batch by total score (descending) and select the best gene from the batch.
@@ -319,6 +352,6 @@ fig = design2.render_design()
 
 fig.show()
 
-difference = compare_designs(design, design2)
+difference = compare_design_images(design, design2)
 print("difference =",difference)
 """
