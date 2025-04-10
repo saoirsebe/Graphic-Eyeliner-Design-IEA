@@ -144,22 +144,22 @@ def compare_design_images(design2, design1, image1=None):
 
     genetic_difference = compare_designs(design1,design2)
     if image1.shape == image2.shape:
-        err = np.mean((image1.astype("float") - image2.astype("float")) ** 2)
+        image2_gray = np.dot(image2[..., :3], [0.2989, 0.5870, 0.1140])
+        image1_gray = np.dot(image1[..., :3], [0.2989, 0.5870, 0.1140])
+        err = np.mean((image1_gray.astype("float") - image2_gray.astype("float")) ** 2)
         return err, genetic_difference * 20
     else:
         return genetic_difference * 20, genetic_difference * 20
 
 
-def generate_sufficiently_different_gene(old_gene, new_gene_pool, mutation_rate, max_attempts=100):
+def generate_sufficiently_different_gene(old_gene, old_image, new_gene_pool, mutation_rate, max_attempts=100):
     """
     Generates a mutated gene that is at least `diff_threshold` different from both the parent gene
     and all genes in new_gene_pool.
     """
     attempts = 0
     new_gene = old_gene.mutate_design_positive_check(mutation_rate)
-    fig1 = old_gene.render_design()
-    old_image = figure_to_array(fig1)
-    plt.close(fig1)
+
 
     while attempts < max_attempts:
         img_diff, gen_diff = compare_design_images(new_gene, old_gene, old_image)
@@ -242,8 +242,11 @@ def breed_new_designs(selected_genes, mutation_rate):
     n_selected = len(selected_genes)
     if n_selected == 1:
         old_gene = selected_genes[0]
+        fig1 = old_gene.render_design()
+        old_image = figure_to_array(fig1)
+        plt.close(fig1)
         for i in range(6):
-            new_design = generate_sufficiently_different_gene(old_gene, new_gene_pool, mutation_rate)
+            new_design = generate_sufficiently_different_gene(old_gene, old_image, new_gene_pool, mutation_rate)
 
             new_gene_pool.append(new_design)
     else:
@@ -261,9 +264,12 @@ def avg_difference(design1, design2):
 
 
 def auto_selection_one_parent(selected_genes, parent, mutation_rate):
+    fig1 = parent.render_design()
+    old_image = figure_to_array(fig1)
+    plt.close(fig1)
     with multiprocessing.Pool() as pool:
         # Create a list of arguments for each call.
-        args = [(parent, [], mutation_rate) for _ in range(40)]
+        args = [(parent,old_image, [], mutation_rate) for _ in range(40)]
         new_gene_pool = pool.starmap(generate_sufficiently_different_gene, args)
 
     # Score each gene: using analyse_positive for aesthetics,

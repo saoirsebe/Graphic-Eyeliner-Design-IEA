@@ -8,7 +8,7 @@ from numba import njit
 diff_threshold = 12.5
 min_negative_score = -3
 min_segment_score = -2
-initial_gene_pool_size = 50
+initial_gene_pool_size = 200
 node_re_gen_max = 12
 #Parameter ranges:
 start_x_range = (20, 130)

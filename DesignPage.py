@@ -97,11 +97,11 @@ class DesignPage(ctk.CTkFrame):
         self.rowconfigure(4, minsize=500)
 
         # Configure the inner_frame's grid so that its cells expand:
-        for col in range(3):
-            self.scrollable_frame.inner_frame.grid_columnconfigure(col, weight=1)
+        #for col in range(3):
+        #    self.scrollable_frame.inner_frame.grid_columnconfigure(col, weight=1)
 
-        for row in range(4, 4 + self.number_of_rows):
-            self.scrollable_frame.inner_frame.grid_rowconfigure(row, weight=1)
+        #for row in range(4, 4 + self.number_of_rows):
+        #    self.scrollable_frame.inner_frame.grid_rowconfigure(row, weight=1)
 
     def go_home(self):
         # Close and destroy current gene pool figures
@@ -227,13 +227,14 @@ class DesignPage(ctk.CTkFrame):
             frame.grid(row=(i // 3) + 5, column=i % 3, padx=2, pady=1, sticky="nsew")
 
             fig = gene.render_design()
+            #fig.set_size_inches(3, 3)
             for ax in fig.get_axes():
                 ax.set_axis_off()
 
             canvas = FigureCanvasTkAgg(fig, master=frame)
             canvas.draw()
             canvas_widget = canvas.get_tk_widget()
-            canvas_widget.pack(expand=True, fill="both", padx=2, pady=0.5)
+            canvas_widget.pack(expand=False, padx=2, pady=0.5)
             plt.close(fig)
             self.current_gene_pool_figures.append(frame)
 
