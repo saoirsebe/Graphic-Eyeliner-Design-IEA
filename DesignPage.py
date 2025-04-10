@@ -224,7 +224,7 @@ class DesignPage(ctk.CTkFrame):
         # Display designs in the scrollable gene pool area
         for i, gene in enumerate(self.current_gene_pool):
             frame = ctk.CTkFrame(self.scrollable_frame.inner_frame, fg_color="#FFFFFF", corner_radius=10)
-            frame.grid(row=(i // 3) + 5, column=i % 3, padx=2, pady=2, sticky="nsew")
+            frame.grid(row=(i // 3) + 5, column=i % 3, padx=2, pady=1, sticky="nsew")
 
             fig = gene.render_design()
             for ax in fig.get_axes():
@@ -233,7 +233,7 @@ class DesignPage(ctk.CTkFrame):
             canvas = FigureCanvasTkAgg(fig, master=frame)
             canvas.draw()
             canvas_widget = canvas.get_tk_widget()
-            canvas_widget.pack(expand=True, fill="both", padx=2, pady=2)
+            canvas_widget.pack(expand=True, fill="both", padx=2, pady=0.5)
             plt.close(fig)
             self.current_gene_pool_figures.append(frame)
 
@@ -245,14 +245,14 @@ class DesignPage(ctk.CTkFrame):
                 fg_color="gray", hover_color="#888888"
             )
             toggle_button.configure(command=lambda index=i, b=toggle_button: self.toggle_gene(index, b))
-            toggle_button.pack(pady=2)
+            toggle_button.pack(pady=1)
 
             save_button = ctk.CTkButton(
                 frame, text="Save", font=("Helvetica", 11), width=90, height=25,
                 fg_color="gray", hover_color="#888888"
             )
             save_button.configure(command=lambda index=i, b=save_button: self.save_gene(index, b))
-            save_button.pack(pady=2)
+            save_button.pack(pady=1)
 
         # ---------- Bottom Buttons ----------
         self.regenerate_button = ctk.CTkButton(

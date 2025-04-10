@@ -1,4 +1,5 @@
 import copy
+import multiprocessing
 import random
 from io import BytesIO
 from PIL import Image
@@ -253,73 +254,109 @@ def breed_new_designs(selected_genes, mutation_rate):
 
     return new_gene_pool
 
+
+def avg_difference(design1, design2):
+    img, gen = compare_design_images(design1, design2)
+    return (img + gen) / 2
+
+
 def auto_selection_one_parent(selected_genes, parent, mutation_rate):
-    new_gene_pool = [parent.mutate_design(mutation_rate, delete=False) for _ in range(40)]
+    with multiprocessing.Pool() as pool:
+        # Create a list of arguments for each call.
+        args = [(parent, [], mutation_rate) for _ in range(40)]
+        new_gene_pool = pool.starmap(generate_sufficiently_different_gene, args)
 
     # Score each gene: using analyse_positive for aesthetics,
     # and compare_design_images (difference from the parent) for diversity.
     scored_genes = []
     for gene in new_gene_pool:
         aesthetic_score = analyse_positive(gene)
-        # Diversity score from parents
-        div_scores = [(img + gen) / 2 for (img, gen) in (compare_design_images(gene, p) for p in selected_genes)]
-        div_score = sum(div_scores) / len(div_scores)
-        scored_genes.append((gene, aesthetic_score, div_score))
+        scored_genes.append((gene, aesthetic_score))
 
     # Sort the mutations by aesthetic score
     scored_genes.sort(key=lambda x: x[1], reverse=True)
 
-    # Try to select the top 3 genes that are sufficiently diverse from each other.
-    parent_div_threshold = diff_threshold / 2
-    diverse_candidates = [(gene, aest, div) for (gene, aest, div) in scored_genes if div >= parent_div_threshold]
     # Initial threshold for checking pairwise diversity among new selected designs
-    selected_threshold = diff_threshold / 2
-    new_selected_genes = []
+    selected_threshold = diff_threshold / 1.5
     max_iterations = 10  # safety limit to prevent an infinite loop
     iteration = 0
-    selected_candidates = []
+    new_selected_genes = []
 
     while iteration < max_iterations:
-        selected_candidates = []
-        for gene, aest, comp_div in diverse_candidates:
-            if not selected_candidates:
+        for gene, aest in scored_genes:
+            if not new_selected_genes:
                 # Always add the highest aesthetic design as a starting point.
-                selected_candidates.append((gene, aest, comp_div))
+                new_selected_genes.append(gene)
             else:
-                # Add this gene only if it is sufficiently different to all already selected ones.
-                if all(((img + gen) / 2) >= selected_threshold for sel_gene, _, _ in selected_candidates for img, gen in [compare_design_images(gene, sel_gene)]):
-                    selected_candidates.append((gene, aest, comp_div))
-            if len(selected_candidates) >= 6:
+                if gene not in new_selected_genes:
+                    # Add this gene only if it is sufficiently different to all already selected ones.
+                    if all(avg_difference(gene, sel) >= selected_threshold for sel in new_selected_genes):
+                        new_selected_genes.append(gene)
+            if len(new_selected_genes) >= 6:
                 # We aim for a maximum of six designs.
                 break
-        if len(selected_candidates) >= 4:
+        if len(new_selected_genes) >= 4:
             # Sufficient number selected.
             break
         else:
-            # Relax the pairwise diversity requirement and try again.
+            # Relax the selected diversity requirement and try again.
             selected_threshold *= 0.9
             iteration += 1
 
-        # Extract only the gene objects from our candidate list.
-    new_selected_genes = [gene for gene, _, _ in selected_candidates]
 
-    # If we still have less than 4 genes, top up from the overall scored_genes (while retaining selected gene diversity).
-    if len(new_selected_genes) < 4:
-        for gene, aest, comp_div in scored_genes:
-            if gene in new_selected_genes:
-                continue
-            if all(((img + gen) / 2) >= selected_threshold for sel_gene in new_selected_genes for img, gen in [compare_design_images(gene, sel_gene)]):
-                new_selected_genes.append(gene)
-            if len(new_selected_genes) >= 4:
-                break
-
-    # Limit to at most 6 designs.
-    new_selected_genes = new_selected_genes[:6]
-
-    return new_selected_genes
+        # Return between 4 and 6 selected designs.
+    return new_selected_genes[:6]
 
 
 def auto_selection_multiple_parents(selected_genes, batch_size, mutation_rate):
+    # 1. Generate candidate pool for each parent.
+    if len(selected_genes) ==2:
+        max_batch_picked = 3
+    elif len(selected_genes) ==3:
+        max_batch_picked = 2
+    else:
+        max_batch_picked = 1
+
+    new_selected_genes = []
+    for idx, parent in enumerate(selected_genes):
+        with multiprocessing.Pool() as pool:
+            args = [(selected_genes, [], idx, mutation_rate) for _ in range(batch_size)]
+            batch_candidates = pool.starmap(generate_sufficiently_different_positive_gene_multiple_parents, args)
+
+        # 2. Score each candidate based on aesthetics
+        scored_candidates = [(gene, analyse_positive(gene)) for gene in batch_candidates]
+        scored_candidates.sort(key=lambda x: x[1], reverse=True)
+
+
+        # 4. Select between 4 and 6 mutually diverse candidates using iterative threshold relaxation.
+        iteration = 0
+        max_iterations = 10
+        # Initial selected threshold for mutual diversity.
+        selected_threshold = diff_threshold / 1.5
+        batch_selected_genes = []  # reset the selection for each iteration
+
+        while iteration < max_iterations:
+            for gene, aest in scored_candidates:
+                # Add the candidate only if it is sufficiently different from every
+                # already selected candidate. Use the helper avg_difference.
+                if all(avg_difference(gene, sel) >= selected_threshold for sel in new_selected_genes) and all(avg_difference(gene, sel) >= selected_threshold for sel in batch_selected_genes):
+                    batch_selected_genes.append(gene)
+                # Stop early if we have reached our maximum selected for one batch.
+                if len(batch_selected_genes) >= max_batch_picked:
+                    break
+            # If we have at least 4 candidates, selection is successful.
+            if len(batch_selected_genes) >= 1:
+                break
+            else:
+                # Otherwise, relax the pairwise threshold by 10% and try again.
+                selected_threshold *= 0.9
+                iteration += 1
+
+        new_selected_genes.extend(batch_selected_genes)
+    # Return between 4 and 6 selected designs.
+    return new_selected_genes[:6]
+
+def auto_selection_multiple_parents_old(selected_genes, batch_size, mutation_rate):
     new_selected_genes = []
 
     for idx, parent in enumerate(selected_genes):
@@ -328,7 +365,7 @@ def auto_selection_multiple_parents(selected_genes, batch_size, mutation_rate):
             # For each batch, call generate_gene_multiple_parents with the current parent's index.
             new_design = generate_gene_multiple_parents(selected_genes, idx, mutation_rate)
             batch.append(new_design)
-            # print("batch.append(new_design)")
+
         # Score each gene in the batch relative to all selected parents.
         scored_batch = []
         for gene in batch:
