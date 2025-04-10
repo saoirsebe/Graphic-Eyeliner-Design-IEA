@@ -147,13 +147,15 @@ def random_gene(gene_n):
 
 """
 """
-
-design =random_gene(10)
+"""
+design =random_gene(180)
 fig = design.render_design()
+
 positive_score = analyse_positive(design)
+
 while positive_score <12:
     plt.close(fig)
-    design = random_gene(10)
+    design = random_gene(180)
     fig = design.render_design()
     positive_score = analyse_positive(design)
 
@@ -163,8 +165,8 @@ positive_score = analyse_positive(design, True)
 print("Positive Score:", positive_score)
 negative_score = analyse_negative(design, True)
 print("analyse_negative score:", negative_score)
-
-
+"""
+"""
 print("New design:")
 design2 = generate_sufficiently_different_gene(design, [], 0.05, max_attempts=100)
 fig = design2.render_design()
@@ -181,7 +183,7 @@ print("Positive Score:", positive_score)
 
 negative_score = analyse_negative(design2)
 print("analyse_negative score:", negative_score)
-
+"""
 
 
 

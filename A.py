@@ -8,11 +8,11 @@ from numba import njit
 diff_threshold = 12.5
 min_negative_score = -3
 min_segment_score = -2
-initial_gene_pool_size = 200
+initial_gene_pool_size = 50
 node_re_gen_max = 12
 #Parameter ranges:
-start_x_range = (20, 140)
-start_y_range = (55, 130)
+start_x_range = (20, 130)
+start_y_range = (55, 120)
 #start_mode_options = list(StartMode)
 #Segment_type_options = list(SegmentType)
 length_range = (15, 60)
@@ -184,7 +184,7 @@ lower_eyelid_y = [coord[1] for coord in lower_eyelid_coords]
 lower_len = len(lower_eyelid_coords)
 lower_eyelid_coords_section = int(0.1 * lower_len)
 
-eye_corner_start = (118.5,93)
+eye_corner_start = (118.25,93)
 
 def draw_eye_shape(ax_n):
     ax_n.plot(lower_eyelid_x, lower_eyelid_y, label=f"$y = 0.5x^2$", color="black")

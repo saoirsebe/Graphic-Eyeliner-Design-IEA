@@ -253,81 +253,109 @@ def breed_new_designs(selected_genes, mutation_rate):
 
     return new_gene_pool
 
-def breed_new_designs_with_auto_selection(selected_genes, mutation_rate, aesthetic_weight=0.7, diversity_weight=0.15, min_diversity_threshold =15):
-    new_gene_pool=[]
+def auto_selection_one_parent(selected_genes, parent, mutation_rate):
+    new_gene_pool = [parent.mutate_design(mutation_rate, delete=False) for _ in range(40)]
+
+    # Score each gene: using analyse_positive for aesthetics,
+    # and compare_design_images (difference from the parent) for diversity.
+    scored_genes = []
+    for gene in new_gene_pool:
+        aesthetic_score = analyse_positive(gene)
+        # Diversity score from parents
+        div_scores = [(img + gen) / 2 for (img, gen) in (compare_design_images(gene, p) for p in selected_genes)]
+        div_score = sum(div_scores) / len(div_scores)
+        scored_genes.append((gene, aesthetic_score, div_score))
+
+    # Sort the mutations by aesthetic score
+    scored_genes.sort(key=lambda x: x[1], reverse=True)
+
+    # Try to select the top 3 genes that are sufficiently diverse from each other.
+    parent_div_threshold = diff_threshold / 2
+    diverse_candidates = [(gene, aest, div) for (gene, aest, div) in scored_genes if div >= parent_div_threshold]
+    # Initial threshold for checking pairwise diversity among new selected designs
+    selected_threshold = diff_threshold / 2
+    new_selected_genes = []
+    max_iterations = 10  # safety limit to prevent an infinite loop
+    iteration = 0
+    selected_candidates = []
+
+    while iteration < max_iterations:
+        selected_candidates = []
+        for gene, aest, comp_div in diverse_candidates:
+            if not selected_candidates:
+                # Always add the highest aesthetic design as a starting point.
+                selected_candidates.append((gene, aest, comp_div))
+            else:
+                # Add this gene only if it is sufficiently different to all already selected ones.
+                if all(((img + gen) / 2) >= selected_threshold for sel_gene, _, _ in selected_candidates for img, gen in [compare_design_images(gene, sel_gene)]):
+                    selected_candidates.append((gene, aest, comp_div))
+            if len(selected_candidates) >= 6:
+                # We aim for a maximum of six designs.
+                break
+        if len(selected_candidates) >= 4:
+            # Sufficient number selected.
+            break
+        else:
+            # Relax the pairwise diversity requirement and try again.
+            selected_threshold *= 0.9
+            iteration += 1
+
+        # Extract only the gene objects from our candidate list.
+    new_selected_genes = [gene for gene, _, _ in selected_candidates]
+
+    # If we still have less than 4 genes, top up from the overall scored_genes (while retaining selected gene diversity).
+    if len(new_selected_genes) < 4:
+        for gene, aest, comp_div in scored_genes:
+            if gene in new_selected_genes:
+                continue
+            if all(((img + gen) / 2) >= selected_threshold for sel_gene in new_selected_genes for img, gen in [compare_design_images(gene, sel_gene)]):
+                new_selected_genes.append(gene)
+            if len(new_selected_genes) >= 4:
+                break
+
+    # Limit to at most 6 designs.
+    new_selected_genes = new_selected_genes[:6]
+
+    return new_selected_genes
+
+
+def auto_selection_multiple_parents(selected_genes, batch_size, mutation_rate):
+    new_selected_genes = []
+
+    for idx, parent in enumerate(selected_genes):
+        batch = []
+        for i in range(batch_size):
+            # For each batch, call generate_gene_multiple_parents with the current parent's index.
+            new_design = generate_gene_multiple_parents(selected_genes, idx, mutation_rate)
+            batch.append(new_design)
+            # print("batch.append(new_design)")
+        # Score each gene in the batch relative to all selected parents.
+        scored_batch = []
+        for gene in batch:
+            aesthetic_score = analyse_positive(gene)
+            # Measure diversity as the average difference from all parents.
+            div_scores = [(img + gen) / 2 for (img, gen) in (compare_design_images(gene, p) for p in selected_genes)]
+            div_score = sum(div_scores) / len(div_scores)
+            scored_batch.append((gene, aesthetic_score, div_score))
+        # Sort the batch by total score (descending) and select the best gene from the batch.
+        scored_batch.sort(key=lambda x: x[1], reverse=True)
+        if scored_batch:
+            new_selected_genes.append(scored_batch[0][0])
+            new_selected_genes.append(scored_batch[1][0])
+    if len(new_selected_genes) < 6:
+        new_selected_genes.append(scored_batch[2][0])
+
+    return new_selected_genes
+
+
+def breed_new_designs_with_auto_selection(selected_genes, mutation_rate, aesthetic_weight=0.7, diversity_weight=0.15):
     n_selected = len(selected_genes)
     if n_selected == 1:
         parent = selected_genes[0]
-        for i in range(40):
-            new_design = parent.mutate_design(mutation_rate, delete=False)
-            new_gene_pool.append(new_design)
-
-        # Score each gene: using analyse_positive for aesthetics,
-        # and compare_design_images (difference from the parent) for diversity.
-        scored_genes = []
-        for gene in new_gene_pool:
-            aesthetic_score = analyse_positive(gene)
-            # For diversity, combine the image and genetic differences by averaging
-            div_scores = [(img + gen) / 2 for (img, gen) in (compare_design_images(gene, p) for p in selected_genes)]
-            div_score = sum(div_scores) / len(div_scores)
-            total_score = (aesthetic_weight * aesthetic_score) + (diversity_weight * div_score)
-            scored_genes.append((gene, total_score, aesthetic_score, div_score))
-
-        # Sort the mutations by total score (higher is better)
-        scored_genes.sort(key=lambda x: x[1], reverse=True)
-
-        # Try to select the top 3 genes that are sufficiently diverse from each other.
-        diversity_threshold = min_diversity_threshold
-        new_selected_genes = []
-        max_iterations = 10  # safety limit to prevent an infinite loop
-        iteration = 0
-
-        while iteration < max_iterations:
-            new_selected_genes = []
-            if scored_genes:
-                # Always take the best-scoring gene
-                new_selected_genes.append(scored_genes[0][0])
-                # Iterate over the remaining candidates
-                for gene, total_score, aesthetic_score, div_score in scored_genes[1:]:
-                    # Accept this gene only if it is sufficiently different from all already selected ones
-                    if all(compare_design_images(gene, sel_gene) >= diversity_threshold for sel_gene in
-                           new_selected_genes):
-                        new_selected_genes.append(gene)
-                    if len(new_selected_genes) >= 3:
-                        break
-            if len(new_selected_genes) >= 6:
-                break  # got enough genes
-            else:
-                # Relax the diversity requirement and try again
-                diversity_threshold *= 0.9  # reduce threshold by 10%
-                iteration += 1
+        new_selected_genes = auto_selection_one_parent(selected_genes, parent, mutation_rate)
     else:
         batch_size = 50 // n_selected
-        new_selected_genes = []
-
-        for idx, parent in enumerate(selected_genes):
-            batch = []
-            for i in range(batch_size):
-                # For each batch, call generate_gene_multiple_parents with the current parent's index.
-                new_design = generate_gene_multiple_parents(selected_genes, idx, mutation_rate)
-                batch.append(new_design)
-                #print("batch.append(new_design)")
-            # Score each gene in the batch relative to all selected parents.
-            scored_batch = []
-            for gene in batch:
-                aesthetic_score = analyse_positive(gene)
-                # Measure diversity as the average difference from all parents.
-                div_scores = [(img + gen) / 2 for (img, gen) in(compare_design_images(gene, p) for p in selected_genes)]
-                div_score = sum(div_scores) / len(div_scores)
-                total_score = (aesthetic_weight * aesthetic_score) + (diversity_weight * div_score)
-                scored_batch.append((gene, total_score, aesthetic_score, div_score))
-            # Sort the batch by total score (descending) and select the best gene from the batch.
-            scored_batch.sort(key=lambda x: x[1], reverse=True)
-            if scored_batch:
-                new_selected_genes.append(scored_batch[0][0])
-                new_selected_genes.append(scored_batch[1][0])
-        if len(new_selected_genes) < 6:
-            new_selected_genes.append(scored_batch[2][0])
+        new_selected_genes = auto_selection_multiple_parents(selected_genes, batch_size, mutation_rate)
 
     second_new_gene_pool = breed_new_designs(new_selected_genes, mutation_rate)
 

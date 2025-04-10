@@ -557,13 +557,14 @@ def validate_star_parameters(star):
     # If all checks pass, return True
     return True
 
-def line_analysis(segment, total_score, to_print=False):
+def line_analysis(segment, to_print=False):
+    total_line_score = 0
     if segment.start_mode == StartMode.JUMP:
-        total_score -= 0.5
+        total_line_score -= 0.5
     elif segment.start_mode == StartMode.CONNECT_MID:
-        total_score += 0.55
+        total_line_score += 0.55
     elif segment.start_mode == StartMode.SPLIT:
-        total_score += 0.55
+        total_line_score += 0.55
 
     if check_points_left(segment.points_array, True):
         # If 80% of segment is left of the eye corner then compare segment with eyelid curve
@@ -576,15 +577,15 @@ def line_analysis(segment, total_score, to_print=False):
             if middle_score > left_score:
                 if to_print:
                     print(f"line colour:{segment.colour} middle_score:", middle_score)
-                total_score += middle_score
+                total_line_score += middle_score
             else:
                 if to_print:
                     print(f"line colour:{segment.colour} score_segment_against_eyelid_shape:", line_score)
-                total_score += left_score
+                total_line_score += left_score
         else:
             if to_print:
                 print(f"line colour:{segment.colour} score_segment_against_eyelid_shape:", line_score)
-            total_score += left_score
+            total_line_score += left_score
 
     elif check_points_left(segment.points_array, False):
         # If 80% of segment is right of the eye corner then compare segment with wing shape curves
@@ -597,26 +598,27 @@ def line_analysis(segment, total_score, to_print=False):
             if middle_score > right_score:
                 if to_print:
                     print(f"line colour:{segment.colour} middle_score:", middle_score)
-                total_score += middle_score
+                total_line_score += middle_score
             else:
                 if to_print:
                     print(f"line colour:{segment.colour} compair_segment_wing_shape:", line_score)
-                total_score += right_score
+                total_line_score += right_score
         else:
             if to_print:
                 print(f"line colour:{segment.colour} compair_segment_wing_shape:", line_score)
-            total_score += right_score
+            total_line_score += right_score
     elif check_points_middle(segment.points_array):
         # print("checking middle")
         middle_score = compair_middle_curve_shapes(segment, to_print=to_print)
         if to_print:
             print(f"line colour:{segment.colour} middle_score:", middle_score)
-        total_score += middle_score
+        total_line_score += middle_score
 
-    return total_score
+    return total_line_score
 
 
-def polygon_analysis(segment, total_score, n_of_polygons, to_print):
+def polygon_analysis(segment, n_of_polygons, to_print):
+    polygon_score = 0
     # Score polygon based on size (bigger preferred on outside of eye and smaller nearer the inner corner)
     x_values = segment.points_array[:, 0]
     y_values = segment.points_array[:, 1]
@@ -646,18 +648,19 @@ def polygon_analysis(segment, total_score, n_of_polygons, to_print):
         if size_score > 4:
             size_score = 4
         # print(f"colour:{segment.colour} polygon positive size_score =", size_score)
-        total_score += size_score
+        polygon_score += size_score
     elif size_score < 0.35 and average_x < 90:
         negative_score = 2 * (math.log(deviation + 1))
         # print(f"colour:{segment.colour} polygon negative size_score =", -negative_score)
-        total_score -= negative_score
+        polygon_score -= negative_score
     elif size_score >= 0 and average_x > 100:
-        total_score += 1
+        polygon_score += 1
 
-    return total_score
+    return polygon_score
 
 
-def star_analysis(segment, total_score, n_of_stars, to_print):
+def star_analysis(segment, n_of_stars, to_print):
+    star_score=0
     # Score a star based on size (bigger preferred on outside of eye and smaller nearer the inner corner)
     x_values = segment.points_array[:, 0]
     y_values = segment.points_array[:, 1]
@@ -665,10 +668,10 @@ def star_analysis(segment, total_score, n_of_stars, to_print):
     average_y = np.mean(y_values)
     shape_size = max((max(x_values) - min(x_values)), (max(y_values) - min(y_values)))
     if average_x <= 100:
-        k = 0.26  # Default for small x-values
+        k = 0.25  # Default for small x-values
     else:
-        k = 0.28  # + 0.002 * (average_x - 100)  # Gradual increase for large x-values
-    if average_y < 70 and average_x < 110:
+        k = 0.26  # + 0.002 * (average_x - 100)  # Gradual increase for large x-values
+    if average_y < 70:# and average_x < 110:
         k *= 0.7
     deviation = abs(shape_size - k * average_x)
     # size_score = math.exp(-2 * deviation)
@@ -687,21 +690,21 @@ def star_analysis(segment, total_score, n_of_stars, to_print):
             size_score = 4
         if to_print:
             print(f"colour:{segment.colour} star_size_score =", size_score)
-        total_score += size_score
+        star_score += size_score
     elif size_score < 0.3 and average_x < 95:
         negative_score = 2 * (math.log(deviation + 1))
         if to_print:
             print(f"colour:{segment.colour} star_size_score =", -negative_score)
-        total_score -= negative_score
+        star_score -= negative_score
     elif size_score >= 0 and average_x > 100:
-        total_score += 1
+        star_score += 1
 
     if not validate_star_parameters(segment):
-        total_score -= 1
+        star_score -= 1
     else:
-        total_score += 0.3
+        star_score += 0.3
 
-    return total_score
+    return star_score
 
 
 def analyse_design_shapes(design, to_print = False):
@@ -750,16 +753,16 @@ def analyse_design_shapes(design, to_print = False):
                 total_score -= 5
             else:
                 if segment.segment_type == SegmentType.LINE:
-                    total_score=line_analysis(segment, total_score, to_print)
-
+                    line_score = line_analysis(segment, to_print)
+                    if average_x<75:
+                        line_score=line_score*0.8
+                    total_score +=line_score
 
                 elif segment.segment_type == SegmentType.IRREGULAR_POLYGON:
                     n_of_polygons +=1
-                    max_score = 0
-                    #Adds score of line in polygon with the highest similarity with eyelid/eyeliner shape
 
-                    #CHANGE TO JUST USE EDGE TO EDGE DIRECTIONS AND COMPAIR WITH WING DIRECTION
                     """
+                    #CHANGE TO JUST USE EDGE TO EDGE DIRECTIONS AND COMPAIR WITH WING DIRECTION
                     for line in segment.lines_list:
                         points_array = line.points_array
                         alignment_score = 0
@@ -786,11 +789,11 @@ def analyse_design_shapes(design, to_print = False):
                         elif segment_colour in dark_colours:
                             total_score+=1
                     else:
-                        total_score = polygon_analysis(segment,total_score, n_of_polygons ,to_print)
+                        total_score += polygon_analysis(segment, n_of_polygons ,to_print)
 
                 elif segment.segment_type == SegmentType.STAR:
                     n_of_stars +=1
-                    total_score = star_analysis(segment,total_score,n_of_stars, to_print)
+                    total_score += star_analysis(segment,n_of_stars, to_print)
 
     penalise_n_of_segments = len(segments) / 4
     if penalise_n_of_segments < 1:
