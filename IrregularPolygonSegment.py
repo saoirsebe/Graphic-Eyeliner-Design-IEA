@@ -83,7 +83,7 @@ class IrregularPolygonEdgeSegment:
         else:
             return value
 
-    def mutate(self, mutation_rate=0.06):
+    def mutate(self, mutation_rate=0.1):
         if self.curviness == 0:
             self.curviness = 0 if np.random.random() > mutation_rate else self.mutate_val(self.curviness, curviness_range,
                                                                                       mutation_rate)

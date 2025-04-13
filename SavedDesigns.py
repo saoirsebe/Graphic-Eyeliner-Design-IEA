@@ -3,7 +3,7 @@ import customtkinter as ctk
 from matplotlib import pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
-from AnalyseDesign import analyse_positive, analyse_negative
+from AnalyseDesign import calculate_aesthetic_fitness_score, calculate_validity_score
 
 
 class SaveDesignPage(ctk.CTkFrame):

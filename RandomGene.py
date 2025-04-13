@@ -1,9 +1,11 @@
-
+from io import BytesIO
+from PIL import Image
 from A import *
-from AnalyseDesign import check_design_overlaps, check_overlaps, analyse_negative, \
-    analyse_positive, \
-    check_segment_overlaps, is_in_eye, is_outside_face_area, check_new_segments_negative_score
-from BreedingMechanism import compare_designs, generate_sufficiently_different_gene, compare_design_images
+from AnalyseDesign import check_design_overlaps, check_overlaps, calculate_validity_score, \
+    calculate_aesthetic_fitness_score, \
+    check_segment_overlaps, is_in_eye, is_outside_face_area, check_new_segments_validity_score
+from BreedingMechanism import compare_designs, generate_sufficiently_different_gene, compare_design_images, \
+    generate_sufficiently_different_positive_gene_multiple_parents
 from EyelinerDesign import EyelinerDesign
 from Segments import create_segment, random_segment, set_prev_end_thickness_array, make_eyeliner_wing, \
     random_segment_colour
@@ -61,8 +63,8 @@ def random_gene_node(design, parent, prev_colour, segment_number=1, depth=0):
 
     regen_count = 0
 
-    new_segment_score = check_new_segments_negative_score(design, new_node)
-    while new_segment_score < min_negative_score and regen_count < node_re_gen_max:
+    new_segment_validity_score = check_new_segments_validity_score(design, new_node)
+    while new_segment_validity_score < min_validity_score and regen_count < node_re_gen_max:
         new_node = random_segment( prev_colour=prev_colour)
         new_node.render(prev_array, prev_angle, prev_colour, prev_end_thickness_array)
         """
@@ -75,9 +77,9 @@ def random_gene_node(design, parent, prev_colour, segment_number=1, depth=0):
         parent.children.remove(new_node)
         """
         regen_count+=1
-        new_segment_score = check_new_segments_negative_score(design, new_node)
+        new_segment_validity_score = check_new_segments_validity_score(design, new_node)
     if regen_count >=node_re_gen_max:
-        return False, min_negative_score * 2
+        return False, min_validity_score * 2
 
     parent.children.append(new_node)
     n_of_children = n_of_children_decreasing_likelihood(segment_number, depth, max_segments, 1.6,0.6, number_of_children_range)
@@ -87,11 +89,11 @@ def random_gene_node(design, parent, prev_colour, segment_number=1, depth=0):
     for i in range(n_of_children):
         segment_number += 1
         success,child_score = random_gene_node(design, new_node, prev_colour, segment_number=segment_number, depth=depth)
-        new_segment_score += child_score
-        if not success or new_segment_score < min_negative_score:
-            return False , min_negative_score * 2  # Propagate failure if child generation fails.
+        new_segment_validity_score += child_score
+        if not success or new_segment_validity_score < min_validity_score:
+            return False , min_validity_score * 2  # Propagate failure if child generation fails.
 
-    return True, new_segment_score
+    return True, new_segment_validity_score
 
 def random_gene(gene_n):
     success = False
@@ -122,23 +124,23 @@ def random_gene(gene_n):
             """
 
             if is_outside_face_area(root_node):
-                root_score = 2 * min_negative_score
+                root_score = 2 * min_validity_score
             else:
                 root_score = -is_in_eye(root_node)
 
         n_of_children = round(random_normal_within_range(1.2, 0.2, number_of_children_range))
         total_score = root_score
         for i in range(n_of_children):
-            if  success and total_score >= min_negative_score:
+            if  success and total_score >= min_validity_score:
                 segment_number +=1
                 success, child_score = random_gene_node(design, root_node, prev_colour, segment_number=segment_number, depth=0)
                 total_score+=child_score
 
-                if not success or total_score < min_negative_score:
+                if not success or total_score < min_validity_score:
                     success = False
 
-        neg_score = analyse_negative(design)
-        if neg_score<min_negative_score:
+        validity_score = calculate_validity_score(design)
+        if validity_score<min_validity_score:
             success = False
 
         if success:
@@ -148,37 +150,65 @@ def random_gene(gene_n):
 """
 """
 """
-design =random_gene(180)
+def figure_to_array(fig):
+
+    buf = BytesIO()
+    fig.savefig(buf, format='png', bbox_inches='tight')
+    buf.seek(0)
+    im = Image.open(buf)
+    image_array = np.array(im)
+    buf.close()
+    return image_array
+
+design =random_gene(80)
 fig = design.render_design()
 
-positive_score = analyse_positive(design)
+positive_score = calculate_aesthetic_fitness_score(design)
 
-while positive_score <12:
+while positive_score <10:
     plt.close(fig)
-    design = random_gene(180)
+    design = random_gene(80)
     fig = design.render_design()
-    positive_score = analyse_positive(design)
+    positive_score = calculate_aesthetic_fitness_score(design)
 
 fig.show()
 
-positive_score = analyse_positive(design, True)
-print("Positive Score:", positive_score)
-negative_score = analyse_negative(design, True)
-print("analyse_negative score:", negative_score)
+
+#positive_score = calculate_aesthetic_fitness_score(design, True)
+#print("Positive Score:", positive_score)
+#validity_score = analyse_negative(design, True)
+#print("analyse_negative score:", negative_score)
+
+#print("New design:")
+
+old_image = figure_to_array(fig)
+plt.close(fig)
+design2 = generate_sufficiently_different_gene(design, old_image, [], 0.06,max_attempts=100)
+#design2 = design.mutate_design_positive_check()
+fig2 = design2.render_design()
+fig2.show()
+
+design3 = generate_sufficiently_different_positive_gene_multiple_parents([design,design2],[],0,0.06)
+fig3 = design3.render_design()
+fig3.show()
+
+difference_image, difference_genetically = compare_design_images(design,design2)
+print("Image difference from 1 to 2:", difference_image)
+print("genetic difference from 1 to 2:", difference_genetically)
+print("average diff=", (difference_image+difference_genetically)/2)
+
+difference_image, difference_genetically = compare_design_images(design,design3)
+print("Image difference from 1 to 3:", difference_image)
+print("genetic difference from 1 to 3:", difference_genetically)
+print("average diff=", (difference_image+difference_genetically)/2)
+
+difference_image, difference_genetically = compare_design_images(design2,design3)
+print("Image difference from 2 to 3:", difference_image)
+print("genetic difference from 2 to 3:", difference_genetically)
+print("average diff=", (difference_image+difference_genetically)/2)
 """
 """
-print("New design:")
-design2 = generate_sufficiently_different_gene(design, [], 0.05, max_attempts=100)
-fig = design2.render_design()
-
-difference = compare_designs(design, design2)
-print("Genetic difference:", difference)
-
-difference_image = compare_design_images(design,design2)
-print("Image difference:", difference_image)
-
-fig.show()
-positive_score = analyse_positive(design2)
+positive_score = calculate_aesthetic_fitness_score(design2)
 print("Positive Score:", positive_score)
 
 negative_score = analyse_negative(design2)

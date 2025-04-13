@@ -1,8 +1,8 @@
 import pytest
 from Segments import LineSegment, StarSegment
 from EyelinerDesign import EyelinerDesign
-from AnalyseDesign import analyse_negative
-from A import SegmentType, StartMode, StarType, min_negative_score, upper_eyelid_coords
+from AnalyseDesign import calculate_validity_score
+from A import SegmentType, StartMode, StarType, min_validity_score, upper_eyelid_coords
 
 
 def create_design_case1():
@@ -97,8 +97,8 @@ def create_design_case6():
     (create_design_case6(), "<"),
 ])
 def test_analyse_negative(design, expected_relation):
-    score = analyse_negative(design)
+    validity_score = calculate_validity_score(design)
     if expected_relation == "<":
-        assert score < min_negative_score, f"Expected score {score} to be less than {min_negative_score}"
+        assert validity_score < min_validity_score, f"Expected score {validity_score} to be less than {min_validity_score}"
     else:
-        assert score >= min_negative_score, f"Expected score {score} to be >= {min_negative_score}"
+        assert validity_score >= min_validity_score, f"Expected score {validity_score} to be >= {min_validity_score}"

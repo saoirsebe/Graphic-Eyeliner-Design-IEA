@@ -2,7 +2,7 @@ from itertools import chain
 
 from scipy.spatial import cKDTree
 from seaborn import scatterplot
-from A import SegmentType, StartMode, min_negative_score, max_shape_overlaps, upper_eyelid_x, lower_eyelid_x, \
+from A import SegmentType, StartMode, min_validity_score, max_shape_overlaps, upper_eyelid_x, lower_eyelid_x, \
     upper_eyelid_y, lower_eyelid_y, SegmentType, face_end_x_values, face_end_y_values
 from AestheticAnalysis import analyse_design_shapes
 import numpy as np
@@ -88,13 +88,13 @@ def any_points_inside_filled_polygon_old(points, polygon):
     # Check for any intersection
     return len(points_set & polygon_set) > 5
 
-def check_new_segments_negative_score(design, new_segment):
+def check_new_segments_validity_score(design, new_segment):
     score = 0
     if is_outside_face_area(new_segment):
-        return min_negative_score * 2
+        return min_validity_score * 2
     eye_overlaps = is_in_eye(new_segment)
     if eye_overlaps > 0:
-        return min_negative_score * 2
+        return min_validity_score * 2
 
     average_x = np.mean(new_segment.points_array[:, 0])
     if average_x < 10:
@@ -102,7 +102,7 @@ def check_new_segments_negative_score(design, new_segment):
 
     average_y = np.mean(new_segment.points_array[:, 1])
     if average_y > 190:
-        return min_negative_score * 2
+        return min_validity_score * 2
     elif average_y > 150:
         score -= 1.5
     elif average_y < 50:
@@ -111,7 +111,7 @@ def check_new_segments_negative_score(design, new_segment):
     current_segments = design.get_all_nodes()
     for segment in current_segments:
         score -= check_segment_overlaps(segment,new_segment)
-        if score < min_negative_score:
+        if score < min_validity_score:
             return score
 
     return score
@@ -147,7 +147,7 @@ def check_segment_overlaps(segment1, segment2, segment1_tree = None, to_print = 
     if inside_shape:
         if to_print:
             print("inside shape")
-        return -min_negative_score*2
+        return -min_validity_score*2
 
     return overlaps
 
@@ -173,7 +173,7 @@ def check_design_overlaps(i, segments, to_print=False):
             #print("segment.segment_type:",segment.segment_type)
             #print("segment_j.segment_type:",segment_j.segment_type)
             #print("overlaps:", overlaps)
-        if -overlaps < min_negative_score: #Return if less than min_negative_score to save processing time
+        if -overlaps < min_validity_score: #Return if less than min_negative_score to save processing time
             return overlaps
 
     return overlaps
@@ -240,7 +240,7 @@ def wing_angle(node1,node2):
              return 3
     return 0
 
-def analyse_negative(design, to_print = False):
+def calculate_validity_score(design, to_print = False):
     #print("design:")
     segments = design.get_all_nodes()
     segments_outside_good = 0
@@ -260,7 +260,7 @@ def analyse_negative(design, to_print = False):
         if average_y > 160:
             if to_print:
                 print("average_y > 160")
-            score = min_negative_score * 2
+            score = min_validity_score * 2
         elif average_y > 130:
             segments_outside_good += 1
             if to_print:
@@ -276,15 +276,15 @@ def analyse_negative(design, to_print = False):
         if eye_overlaps>0:
             if to_print:
                 print("eye_overlaps:", eye_overlaps)
-            return min_negative_score *2
+            return min_validity_score *2
         #else:
         #    score-=eye_overlaps
         if is_outside_face_area(segments[i]):
             if to_print:
                 print("is_outside_face_area")
-            return min_negative_score * 2
+            return min_validity_score * 2
 
-        if score < min_negative_score:
+        if score < min_validity_score:
             return score
 
         if i!=len_segments-1:
@@ -292,14 +292,14 @@ def analyse_negative(design, to_print = False):
             score  -= segment_score
             if to_print and segment_score>0:
                 print(f"for {segments[i].colour} {segments[i].segment_type}, overlaps:", segment_score)
-        if score < min_negative_score:
+        if score < min_validity_score:
             return score
 
         if segments_outside_good >2:
-            return min_negative_score * 2
+            return min_validity_score * 2
     return score
 
-def analyse_positive(design, to_print = False):
+def calculate_aesthetic_fitness_score(design, to_print = False):
     #segments = design.get_all_nodes()
     score=0
     #If starts with a wing angle

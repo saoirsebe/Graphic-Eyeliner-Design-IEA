@@ -6,13 +6,13 @@ from PIL import Image, ImageTk
 
 import matplotlib.pyplot as plt
 import time
-from A import min_negative_score, initial_gene_pool_size
-from AnalyseDesign import analyse_negative, analyse_positive
+from A import min_validity_score, initial_gene_pool_size
+from AnalyseDesign import calculate_validity_score, calculate_aesthetic_fitness_score
 from RandomGene import random_gene
 import concurrent.futures
 
 def score_gene(gene):
-    return gene, analyse_positive(gene)  # overlap_score + any additional scoring
+    return gene, calculate_aesthetic_fitness_score(gene)  # overlap_score + any additional scoring
 
 def initialise_gene_pool():
     #start_time = time.time()
@@ -38,7 +38,7 @@ def initialise_gene_pool():
     for i, (gene, score) in enumerate(scored_genes):
         if i >= 6:
             break
-        analyse_positive(gene, True)
+        calculate_aesthetic_fitness_score(gene, True)
         ned_score = analyse_negative(gene,True)
         print(f"Score: {score}")
         print(f"negative Score: {ned_score}")

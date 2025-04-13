@@ -216,7 +216,7 @@ class HomePage(ctk.CTkFrame):
         from PIL import Image
         for widget in self.example_inner_frame.winfo_children():
             widget.destroy()
-        design_images = ["Design1.png", "Design2.png"]
+        design_images = ["Images_files_etc/Design1.png", "Images_files_etc/Design2.png"]
         self.example_design_images = []
         for i, img_filename in enumerate(design_images):
             try:

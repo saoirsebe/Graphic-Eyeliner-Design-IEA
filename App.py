@@ -73,10 +73,11 @@ class App(ctk.CTk):
         self.pages["HomePage"] = home_page
 
         # Initially show the LoginPage
-        self.show_page("DesignPage")
+        self.show_page("LoginPage")
 
         # Optionally bind container resize event to update page size if needed
         self.container.bind("<Configure>", self._on_container_configure)
+        self.all_saved_simulation_runs = []
 
     def _on_container_configure(self, event):
         # When the container resizes, force each page's frame to use the new size
@@ -117,6 +118,22 @@ class App(ctk.CTk):
             return designs
         except FileNotFoundError:
             return []
+
+    def add_saved_simulation_runs(self, runs):
+        """
+        Add new simulation runs to the global list (avoid duplicates).
+        Each run is a tuple: (generations, average_scores).
+        """
+        for run in runs:
+            if run not in self.all_saved_simulation_runs:
+                self.all_saved_simulation_runs.append(run)
+
+
+    def save_user_simulation_runs(self, username, simulation_runs):
+        """Save the user's simulation runs to a file using pickle."""
+        filename = f"{username}_simulation_runs.pkl"
+        with open(filename, "wb") as f:
+            pickle.dump(simulation_runs, f)
 
 
 if __name__ == "__main__":

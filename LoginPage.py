@@ -5,7 +5,7 @@ import os
 import bcrypt
 from Page import Page  # Assumed base page class
 
-USERS_FILE = "users.json"
+USERS_FILE = "Images_files_etc/users.json"
 
 def load_users():
     """Load users from the JSON file."""

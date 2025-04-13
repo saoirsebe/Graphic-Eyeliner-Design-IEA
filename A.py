@@ -5,10 +5,11 @@ from matplotlib import pyplot as plt
 from PIL import Image, ImageTk
 from numba import njit
 
-diff_threshold = 12.5
-min_negative_score = -3
+diff_threshold = 20
+average_diff_threshold = 40
+min_validity_score = -3
 min_segment_score = -2
-initial_gene_pool_size = 200
+initial_gene_pool_size = 100
 node_re_gen_max = 12
 #Parameter ranges:
 start_x_range = (20, 130)
@@ -209,7 +210,7 @@ def generate_eyeliner_curve_lines(ax_n=None):
 
     #top_eye_curve = bezier_curve(P0,P1,P2)
     if ax_n:
-        flipped_img = np.flipud(Image.open("female-face-drawing-template-one-eye.jpg"))
+        flipped_img = np.flipud(Image.open("Images_files_etc/female-face-drawing-template-one-eye.jpg"))
         ax_n.imshow(flipped_img)
         ax_n.invert_yaxis()
         ax_n.plot(top_eye_curve[:,0], top_eye_curve[:,1], color='black',label="Upper Bezier")

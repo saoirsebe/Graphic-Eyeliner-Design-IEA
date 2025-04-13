@@ -1,7 +1,7 @@
 import copy
 import random
 from conda.common.configuration import raise_errors
-from AnalyseDesign import analyse_negative, analyse_positive, check_overlaps, fix_overlaps_shape_overlaps, check_segment_overlaps, check_design_overlaps, is_outside_face_area, check_new_segments_negative_score
+from AnalyseDesign import calculate_validity_score, calculate_aesthetic_fitness_score, check_overlaps, fix_overlaps_shape_overlaps, check_segment_overlaps, check_design_overlaps, is_outside_face_area, check_new_segments_validity_score
 from Segments import *
 import cProfile
 from IrregularPolygonSegment import are_points_collinear
@@ -16,7 +16,7 @@ class EyelinerDesign:   #Creates overall design, calculates start points, render
         self.n_of_lines= 0
         self.n_of_stars= 0
         self.tree_size= 0
-        self.image_path = "female-face-drawing-template-one-eye.jpg"
+        self.image_path = "Images_files_etc/female-face-drawing-template-one-eye.jpg"
         self.eye_image = Image.open(self.image_path)
         #self.positive_score = None
 
@@ -235,7 +235,7 @@ class EyelinerDesign:   #Creates overall design, calculates start points, render
         for child in node.children:
             self.mutate_node(child, mutation_rate)
 
-    def mutate_self(self, mutation_rate=0.06, delete =True):
+    def mutate_self(self, mutation_rate=0.1, delete =True):
         nodes_list = self.get_all_nodes()
 
         if delete:
@@ -287,12 +287,12 @@ class EyelinerDesign:   #Creates overall design, calculates start points, render
             new_segment.render(new_parent_array, new_parent_angle, new_parent_colour, prev_end_thickness_array)
             #Ensure new segment doesnt overlap with other segments (try 12 times):
             regen_count = 0
-            new_segment_score = check_new_segments_negative_score(self, new_segment)
-            while new_segment_score < min_negative_score and regen_count < node_re_gen_max:
+            new_segment_score = check_new_segments_validity_score(self, new_segment)
+            while new_segment_score < min_validity_score and regen_count < node_re_gen_max:
                 new_segment = random_segment(prev_colour=new_parent_colour)
                 new_segment.render(new_parent_array, new_parent_angle, new_parent_colour, prev_end_thickness_array)
                 regen_count += 1
-                new_segment_score = check_new_segments_negative_score(self, new_segment)
+                new_segment_score = check_new_segments_validity_score(self, new_segment)
             if regen_count < node_re_gen_max:
                 if len_nodes_list>1:
                     self.add_segment_at(new_segment, new_parent_int, is_branch)
@@ -303,19 +303,19 @@ class EyelinerDesign:   #Creates overall design, calculates start points, render
 
     def mutate_design_positive_check(self,mutation_rate=0.1):
         old_gene = copy.deepcopy(self)
-        old_positive_score = analyse_positive(old_gene)
+        old_positive_score = calculate_aesthetic_fitness_score(old_gene)
 
         new_gene= old_gene.mutate_self(mutation_rate)
         new_gene.render_design(show=False)
-        overlap_score = analyse_negative(new_gene)
-        new_positive_score = analyse_positive(new_gene)
-        #print("overlap_score", overlap_score)
-        while overlap_score < min_negative_score or new_positive_score < old_positive_score:
+        validity_score = calculate_validity_score(new_gene)
+        #new_positive_score = calculate_aesthetic_fitness_score(new_gene)
+        #print("validity_score", validity_score)
+        while validity_score < min_validity_score: #or new_positive_score < old_positive_score:
             old_gene = copy.deepcopy(self)
             new_gene = old_gene.mutate_self(mutation_rate)
             new_gene.render_design(show=False)
-            overlap_score = analyse_negative(new_gene)
-            new_positive_score = analyse_positive(new_gene)
+            validity_score = calculate_validity_score(new_gene)
+            #new_positive_score = calculate_aesthetic_fitness_score(new_gene)
 
         return new_gene
 
@@ -324,15 +324,14 @@ class EyelinerDesign:   #Creates overall design, calculates start points, render
 
         new_gene= old_gene.mutate_self(mutation_rate, delete)
         new_gene.render_design(show=False)
-        overlap_score = analyse_negative(new_gene)
-        #print("overlap_score", overlap_score)
-        while overlap_score < min_negative_score:
+        validity_score = calculate_validity_score(new_gene)
+        #print("validity_score", validity_score)
+        while validity_score < min_validity_score:
             old_gene = copy.deepcopy(self)
             new_gene = old_gene.mutate_self(mutation_rate, delete)
             new_gene.render_design(show=False)
-            overlap_score = analyse_negative(new_gene)
+            validity_score = calculate_validity_score(new_gene)
 
-        return new_gene
 
 
 """
@@ -434,9 +433,17 @@ prev_end_thickness= shape.end_thickness
 shape.render(prev_array, prev_angle, prev_colour, prev_end_thickness, ax_n)
 
 fig.show()
-"""
 
-"""
+#fig, ax_n = plt.subplots(figsize=(3, 3))
+#ax_n.grid(False)
+#ax_n.set_axis_off()
+#star1 = StarSegment(SegmentType.STAR, (125,97), "violet", StarType.FLOWER, 5,7,5,0.3,StartMode.JUMP,1.5,257,True)
+#star1.render((0,0), 0, 'green', 2, ax_n=ax_n)
+
+#ax_n.set_xlim(-2, 4)  # Set x-axis limits
+#ax_n.set_ylim(0, 3)  # Set y-axis limits
+#fig.show()
+
 
 fig, ax_n = plt.subplots(figsize=(3, 3))
 line = IrregularPolygonEdgeSegment(0.7, 0.2)
@@ -468,30 +475,32 @@ fig, ax_n = plt.subplots(figsize=(3, 3))
 #line1 = LineSegment(SegmentType.LINE, (120,160), StartMode.CONNECT_MID,60, 100, 2, 2, 'purple', 0.8, False, 0.8, 0.8, 0)
 #design = EyelinerDesign(line)
 #line.add_child_segment(line1)
-star1 = StarSegment(SegmentType.STAR, (125,97), "violet", StarType.STRAIGHT, 7,7,5,0.3,StartMode.JUMP,1.5,260,True)
-line = LineSegment(SegmentType.LINE, upper_eyelid_coords[-1], StartMode.JUMP, 20, 30, 1, 2, 'purple', 0, True, 0.4,0, 0)
-line1 = LineSegment(SegmentType.LINE, (80, 120), StartMode.CONNECT_MID, 30, 230, 1, 2, 'pink', 0.3, False, 0.5, 0.7,0)
+star1 = StarSegment(SegmentType.STAR, (125,97), "violet", StarType.CURVED, 7,7,5,0.3,StartMode.JUMP,1.5,260,True)
+#line = LineSegment(SegmentType.LINE, upper_eyelid_coords[-1], StartMode.JUMP, 20, 30, 1, 2, 'purple', 0, True, 0.4,0, 0)
+#line1 = LineSegment(SegmentType.LINE, (80, 120), StartMode.CONNECT_MID, 30, 230, 1, 2, 'pink', 0.3, False, 0.5, 0.7,0)
 
-design = EyelinerDesign(line)
-line.add_child_segment(star1)
-star1.add_child_segment(line1)
+design = EyelinerDesign(star1)
+fig = design.render_design()
+fig.show()
+#line.add_child_segment(star1)
+#star1.add_child_segment(line1)
 
 #design = EyelinerDesign(line)
 #line.add_child_segment(star)
 #star.add_child_segment(line1)
 #line2.add_child_segment(line3)
-fig = design.render_design()
+
 #print(design.root.points_array)
 #print(upper_eyelid_coords)
 
 #a,b = generate_eyeliner_curve_lines()
 #b,c = generate_middle_curve_lines()
-fig.show()
+
 
 
 negative_score = analyse_negative(design, True)
 print("negative_score:",negative_score)
-#positive_score = analyse_positive(design,True)
+#positive_score = calculate_aesthetic_fitness_score(design,True)
 #print("positive_score:",positive_score)
 
 #print(is_outside_face_area(line2))
@@ -503,7 +512,7 @@ design = EyelinerDesign(random_irregular_polygon())
 fig, ax_n = plt.subplots(figsize=(3, 3))
 fig = design.render_design()
 fig.show()
-positive_score = analyse_positive(design)
+positive_score = calculate_aesthetic_fitness_score(design)
 negative_score = analyse_negative(design)
 print("analyse_negative score:", negative_score)
 print("Positive Score:", positive_score)
@@ -512,7 +521,7 @@ design = EyelinerDesign(random_star())
 fig, ax_n = plt.subplots(figsize=(3, 3))
 fig = design.render_design()
 fig.show()
-positive_score = analyse_positive(design)
+positive_score = calculate_aesthetic_fitness_score(design)
 negative_score = analyse_negative(design)
 print("analyse_negative score:", negative_score)
 print("Positive Score:", positive_score)

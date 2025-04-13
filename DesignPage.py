@@ -5,6 +5,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import matplotlib.pyplot as plt
 from statsmodels.tsa.ardl.pss_critical_values import large_p
 
+from AnalyseDesign import calculate_aesthetic_fitness_score
 from DualScrollableFrame import DualScrollableFrame
 from BreedingMechanism import breed_new_designs, breed_new_designs_with_auto_selection
 from InitialiseGenePool import initialise_gene_pool
@@ -13,12 +14,14 @@ class DesignPage(ctk.CTkFrame):
     def __init__(self, parent, controller):
         # Use a light background for a modern look.
         super().__init__(parent, width=1250, height=800, fg_color="#F9FAFB")
+        self.average_scores = []
+        self.generations = []
         self.number_of_rows = 3
         self.grid_propagate(False)
         self.controller = controller
         self.current_gene_pool = []
         self.selected_gene_indices = []
-        self.mutation_rate = 0.06
+        self.mutation_rate = 0.1
         self.saved_genes = []
         self.saved_genes_indices = []
         # saved_gene_widgets now stores tuples: (fig, widget)
@@ -121,6 +124,7 @@ class DesignPage(ctk.CTkFrame):
         self.controller.pages["HomePage"].show_recent_designs()
         self.controller.show_page("HomePage")
 
+
     def finish_designing(self):
         # Close and destroy current gene pool figures
         for widget in self.current_gene_pool_figures:
@@ -130,11 +134,22 @@ class DesignPage(ctk.CTkFrame):
         for widget in self.saved_gene_widgets.values():
             widget.destroy()
         self.saved_gene_widgets = {}
-        # Add the saved designs from this page to the global list in the controller.
+        # Add the saved designs from this page to the global list in the controller. And simulation run data.
         self.controller.add_saved_designs(self.saved_genes)
+        current_run = (self.generations.copy(), self.average_scores.copy())
+        self.controller.add_saved_simulation_runs([current_run])
+
         if self.controller.current_user:
             self.controller.save_user_designs(self.controller.current_user,
                                               self.controller.all_saved_designs)
+            self.controller.save_user_simulation_runs(
+                self.controller.current_user,
+                self.controller.all_saved_simulation_runs
+            )
+
+        # Plot all saved simulation runs.
+        self.plot_aesthetic_scores(self.controller.all_saved_simulation_runs)
+
         # Reset lists and indices
         self.current_gene_pool = []
         self.gene_pools_previous = []
@@ -207,7 +222,8 @@ class DesignPage(ctk.CTkFrame):
 
         if not self.current_gene_pool:
             self.current_gene_pool = initialise_gene_pool()
-
+        self.update_aesthetic_score()
+        
         if len(self.current_gene_pool) == 6:
             self.number_of_rows = 3
         else:
@@ -215,7 +231,7 @@ class DesignPage(ctk.CTkFrame):
 
         # Mutation rate selection
         ctk.CTkLabel(self, text="Select Mutation Rate:", font=("Arial", 12)).grid(row=3, column=0, pady=10)
-        mutation_rate_values = [0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.1, 0.11, 0.12]
+        mutation_rate_values = [0.05, 0.06, 0.07, 0.08, 0.09, 0.1, 0.11, 0.12, 0.13, 0.14, 0.15]
         mutation_rate_dropdown = ctk.CTkOptionMenu(self, values=[str(x) for x in mutation_rate_values],
                                                    command=lambda val: self.set_mutation_rate(val))
         mutation_rate_dropdown.set(str(self.mutation_rate))
@@ -385,3 +401,42 @@ class DesignPage(ctk.CTkFrame):
         close_button = ctk.CTkButton(content_frame, text="Close")
         close_button.configure(command=lambda the_popup=popup, the_large_fig = large_fig: self.on_close_popup(the_popup, the_large_fig))
         close_button.pack(pady=5)
+
+    def update_aesthetic_score(self):
+        # Compute the average aesthetic score for the current gene pool.
+        scores = [calculate_aesthetic_fitness_score(design) for design in self.current_gene_pool]
+        avg_score = sum(scores) / len(scores) if scores else 0
+
+        # Append the current generation (simply the count of updates)
+        self.generations.append(len(self.average_scores) + 1)
+        # Append the computed average score for this generation
+        self.average_scores.append(avg_score)
+
+        # Build a tuple for the current run. We use .copy() so that further updates do not change the saved data.
+        current_run = (self.generations.copy(), self.average_scores.copy())
+
+        # Merge previous simulation runs with the current run.
+        # (We assume self.controller.all_saved_simulation_runs exists and is maintained by your controller.)
+        combined_runs = self.controller.all_saved_simulation_runs.copy()
+        combined_runs.append(current_run)
+
+        # Update the plot with all runs.
+        self.plot_aesthetic_scores(combined_runs)
+
+    def plot_aesthetic_scores(self, all_runs_data):
+        # Clear the current figure before updating.
+        plt.clf()
+        plt.figure(figsize=(10, 6))
+
+        # Plot each simulation run on the same figure.
+        for idx, (gens, scores) in enumerate(all_runs_data):
+            plt.plot(gens, scores, marker='o', linestyle='-', label=f"Run {idx + 1}")
+
+        plt.xlabel('Generation')
+        plt.ylabel('Average Aesthetic Score')
+        plt.title('Average Aesthetic Score Over Generations')
+        plt.legend()
+        plt.grid(True)
+        plt.draw()
+        plt.pause(0.01)  # Brief pause for interactive mode.
+        plt.show()

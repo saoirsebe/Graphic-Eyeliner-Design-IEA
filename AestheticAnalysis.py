@@ -466,7 +466,7 @@ def check_overlap_length_then_similarity(overlapping_points_segment, overlapping
     return overall_similarity , segment_overlap_length
 
 
-def compair_middle_curve_shapes(segment, to_print = False):
+def compare_middle_curve_shapes(segment, to_print = False):
     curve1 = middle_curve_upper
     curve2 = middle_curve_lower
     points = segment.points_array
@@ -495,7 +495,7 @@ def compair_middle_curve_shapes(segment, to_print = False):
         score_overall = 0
     return score_overall
 
-def compair_segment_wing_shape(segment, curve1, curve2, to_print=False):
+def compare_segment_wing_shape(segment, curve1, curve2, to_print=False):
     points = segment.points_array
 
     overlapping_points_segment_1, overlapping_points_curve1 = get_overlapping_points(points, curve1)
@@ -560,11 +560,11 @@ def validate_star_parameters(star):
 def line_analysis(segment, to_print=False):
     total_line_score = 0
     if segment.start_mode == StartMode.JUMP:
-        total_line_score -= 0.5
+        total_line_score -= 0.2
     elif segment.start_mode == StartMode.CONNECT_MID:
-        total_line_score += 0.55
+        total_line_score += 0.4
     elif segment.start_mode == StartMode.SPLIT:
-        total_line_score += 0.55
+        total_line_score += 0.4
 
     if check_points_left(segment.points_array, True):
         # If 80% of segment is left of the eye corner then compare segment with eyelid curve
@@ -572,7 +572,7 @@ def line_analysis(segment, to_print=False):
         line_score = score_segment_against_eyelid_shape(segment, to_print=to_print)
         left_score = line_score
         if check_points_middle(segment.points_array):
-            middle_score = compair_middle_curve_shapes(segment, to_print=to_print)
+            middle_score = compare_middle_curve_shapes(segment, to_print=to_print)
 
             if middle_score > left_score:
                 if to_print:
@@ -591,25 +591,25 @@ def line_analysis(segment, to_print=False):
         # If 80% of segment is right of the eye corner then compare segment with wing shape curves
         # print("checking against eyeliner shape")
 
-        line_score = compair_segment_wing_shape(segment, eyeliner_curve1, eyeliner_curve2, to_print=to_print)
+        line_score = compare_segment_wing_shape(segment, eyeliner_curve1, eyeliner_curve2, to_print=to_print)
         right_score = line_score
         if check_points_middle(segment.points_array):
-            middle_score = compair_middle_curve_shapes(segment, to_print=to_print)
+            middle_score = compare_middle_curve_shapes(segment, to_print=to_print)
             if middle_score > right_score:
                 if to_print:
                     print(f"line colour:{segment.colour} middle_score:", middle_score)
                 total_line_score += middle_score
             else:
                 if to_print:
-                    print(f"line colour:{segment.colour} compair_segment_wing_shape:", line_score)
+                    print(f"line colour:{segment.colour} compare_segment_wing_shape:", line_score)
                 total_line_score += right_score
         else:
             if to_print:
-                print(f"line colour:{segment.colour} compair_segment_wing_shape:", line_score)
+                print(f"line colour:{segment.colour} compare_segment_wing_shape:", line_score)
             total_line_score += right_score
     elif check_points_middle(segment.points_array):
         # print("checking middle")
-        middle_score = compair_middle_curve_shapes(segment, to_print=to_print)
+        middle_score = compare_middle_curve_shapes(segment, to_print=to_print)
         if to_print:
             print(f"line colour:{segment.colour} middle_score:", middle_score)
         total_line_score += middle_score
@@ -650,9 +650,9 @@ def polygon_analysis(segment, n_of_polygons, to_print):
         # print(f"colour:{segment.colour} polygon positive size_score =", size_score)
         polygon_score += size_score
     elif size_score < 0.35 and average_x < 90:
-        negative_score = 2 * (math.log(deviation + 1))
-        # print(f"colour:{segment.colour} polygon negative size_score =", -negative_score)
-        polygon_score -= negative_score
+        penalisation_score = 2 * (math.log(deviation + 1))
+        # print(f"colour:{segment.colour} polygon negative size_score =", -penalisation_score)
+        polygon_score -= penalisation_score
     elif size_score >= 0 and average_x > 100:
         polygon_score += 1
 
@@ -692,10 +692,10 @@ def star_analysis(segment, n_of_stars, to_print):
             print(f"colour:{segment.colour} star_size_score =", size_score)
         star_score += size_score
     elif size_score < 0.3 and average_x < 95:
-        negative_score = 2 * (math.log(deviation + 1))
+        penalisation_score = 2 * (math.log(deviation + 1))
         if to_print:
-            print(f"colour:{segment.colour} star_size_score =", -negative_score)
-        star_score -= negative_score
+            print(f"colour:{segment.colour} star_size_score =", -penalisation_score)
+        star_score -= penalisation_score
     elif size_score >= 0 and average_x > 100:
         star_score += 1
 
@@ -727,7 +727,7 @@ def analyse_design_shapes(design, to_print = False):
             if to_print:
                 print("same colour as previous segment")
         elif c2 in similar_colours.get(c1, []):
-            total_score += 0.5
+            total_score += 0.4
             if to_print:
                 print("Similar colour as previous segment")
         else:
@@ -737,63 +737,64 @@ def analyse_design_shapes(design, to_print = False):
             n_of_jumps += 1
 
         average_y = np.mean(segment.points_array[:, 1])
+        average_x = np.mean(segment.points_array[:, 0])
         if average_y < 50:
             total_score -= 5
-            average_x = np.mean(segment.points_array[:, 0])
             if average_x < 0:
                 total_score -= 5
         elif average_y > 140:
             total_score -= 5
-            average_x = np.mean(segment.points_array[:, 0])
             if average_x < 0:
                 total_score -= 5
+        elif average_x < 0:
+            total_score -= 5
         else:
-            average_x = np.mean(segment.points_array[:, 0])
-            if average_x < 0:
-                total_score -= 5
-            else:
-                if segment.segment_type == SegmentType.LINE:
-                    line_score = line_analysis(segment, to_print)
-                    if average_x<75:
-                        line_score=line_score*0.8
-                    total_score +=line_score
+            if segment.segment_type == SegmentType.LINE:
+                line_score = line_analysis(segment, to_print)
+                if average_x<75 and line_score>0:
+                    line_score=line_score*0.8
+                total_score +=line_score
 
-                elif segment.segment_type == SegmentType.IRREGULAR_POLYGON:
-                    n_of_polygons +=1
+            elif segment.segment_type == SegmentType.IRREGULAR_POLYGON:
+                n_of_polygons +=1
 
-                    """
-                    #CHANGE TO JUST USE EDGE TO EDGE DIRECTIONS AND COMPAIR WITH WING DIRECTION
-                    for line in segment.lines_list:
-                        points_array = line.points_array
-                        alignment_score = 0
-                        if check_points_left(points_array, True):
-                            # If 80% of segment is left of the eye corner then compare segment with eyelid curve
-                            alignment_score = score_segment_against_eyelid_shape(line)
-                        elif check_points_left(points_array, False):
-                            # If 80% of segment is right of the eye corner then compare segment with wing shape curves
-        
-                            alignment_score = compair_segment_wing_shape(line, eyeliner_curve1, eyeliner_curve2)
-        
-                        if alignment_score > max_score:
-                            max_score = alignment_score
-                    print(f"polygon colour:{segment.colour} curve shape score:", max_score)
-                    total_score += max_score
-                    """
+                """
+                #CHANGE TO JUST USE EDGE TO EDGE DIRECTIONS AND COMPAIR WITH WING DIRECTION
+                for line in segment.lines_list:
+                    points_array = line.points_array
+                    alignment_score = 0
+                    if check_points_left(points_array, True):
+                        # If 80% of segment is left of the eye corner then compare segment with eyelid curve
+                        alignment_score = score_segment_against_eyelid_shape(line)
+                    elif check_points_left(points_array, False):
+                        # If 80% of segment is right of the eye corner then compare segment with wing shape curves
+    
+                        alignment_score = compare_segment_wing_shape(line, eyeliner_curve1, eyeliner_curve2)
+    
+                    if alignment_score > max_score:
+                        max_score = alignment_score
+                print(f"polygon colour:{segment.colour} curve shape score:", max_score)
+                total_score += max_score
+                """
 
-                    if segment.is_eyeliner_wing:
-                        #Size of eyeliner wing polygon is 1 so size will be penalised
-                        total_score +=4.5
-                        segment_colour = segment.colour
-                        if segment_colour == 'black':
-                            total_score+=2
-                        elif segment_colour in dark_colours:
-                            total_score+=1
-                    else:
-                        total_score += polygon_analysis(segment, n_of_polygons ,to_print)
+                if segment.is_eyeliner_wing:
+                    #Size of eyeliner wing polygon is 1 so size will be penalised
+                    total_score +=4.5
+                    segment_colour = segment.colour
+                    if segment_colour == 'black':
+                        total_score+=2
+                    elif segment_colour in dark_colours:
+                        total_score+=1
+                else:
+                    total_score += polygon_analysis(segment, n_of_polygons ,to_print)
 
-                elif segment.segment_type == SegmentType.STAR:
-                    n_of_stars +=1
-                    total_score += star_analysis(segment,n_of_stars, to_print)
+            elif segment.segment_type == SegmentType.STAR:
+                n_of_stars +=1
+                star_score = star_analysis(segment, n_of_stars, to_print)
+                if average_x<75 and star_score>0:
+                    star_score=star_score*0.8
+                total_score += star_score
+
 
     penalise_n_of_segments = len(segments) / 4
     if penalise_n_of_segments < 1:
@@ -802,12 +803,12 @@ def analyse_design_shapes(design, to_print = False):
     total_score = total_score / penalise_n_of_segments
 
     if n_of_stars + n_of_polygons > 4:
-        total_score -=5
+        total_score -=6
     else:
         if n_of_polygons >2:
-            total_score -=2
+            total_score -=3
         if n_of_stars >2:
-            total_score -=2
+            total_score -=3
 
     if n_of_jumps >4:
         total_score -=6
