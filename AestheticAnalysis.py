@@ -294,8 +294,8 @@ def compair_overlapping_sections(overlapping_points_segment, overlapping_points_
     """Calculates curvature and direction similarities between two sections (points arrays)"""
     if overlapping_points_segment[0][0]>overlapping_points_segment[-1][0]:
         overlapping_points_segment = overlapping_points_segment[::-1]
-    if overlapping_points_eye_shape[0][0]>overlapping_points_eye_shape[-1][0]:
-        overlapping_points_eye_shape = overlapping_points_eye_shape[::-1]
+    #if overlapping_points_eye_shape[0][0]>overlapping_points_eye_shape[-1][0]:
+    #    overlapping_points_eye_shape = overlapping_points_eye_shape[::-1]
 
     shape_similarity = curvature_similarity(overlapping_points_segment, overlapping_points_eye_shape)
 
@@ -303,37 +303,6 @@ def compair_overlapping_sections(overlapping_points_segment, overlapping_points_
     eye_curve_direction = compute_global_direction(overlapping_points_eye_shape)#compute_directions(overlapping_points_eye_shape)
     direction_similarity = 1 - np.abs(segment_direction - eye_curve_direction)
     #print("direction_similarity",direction_similarity)
-
-    """
-    if segment_directions.size == 0:
-        print("bezier_directions.size == 0")
-        print("overlapping_points_bezier", overlapping_points_segment)
-        direction_similarity = 0
-    else:
-        # print("eye_curve_directions",eye_curve_directions)
-        num_resize = max(len(overlapping_points_segment), len(overlapping_points_eye_shape))
-        bezier_directions_resampled = resample_directions_or_curvatures(segment_directions, overlapping_points_segment,
-                                                                        num_resize)
-        eye_directions_resampled = resample_directions_or_curvatures(eye_curve_directions, overlapping_points_eye_shape,
-                                                                     num_resize)
-
-        # Compute direction similarity
-        similarities = [cosine_similarity(v1, v2) for v1, v2 in zip(bezier_directions_resampled, eye_directions_resampled)]
-        direction_similarity  = np.mean(similarities)
-        #direction_similarity = 1 - (mean_angle_difference / np.pi)
-        def total_deflection(vectors):
-            #Compute total angle change across a vector sequence.
-            vectors = np.squeeze(vectors)  # Remove extra dimensions
-            angle_changes = [angle_between_vectors(vectors[i], vectors[i + 1])
-                             for i in range(len(vectors) - 1)]
-            return np.sum(angle_changes)  # Sum total angle changes
-
-        #eye_deflection = total_deflection(eye_directions_resampled)
-        #bezier_deflection = total_deflection(bezier_directions_resampled)
-        #print("eye_deflection:", eye_deflection)
-        #print("bezier_deflection:", bezier_deflection)
-        #direction_similarity = 1 - abs(eye_deflection - bezier_deflection) / max(eye_deflection, bezier_deflection)
-    """
 
 
     return shape_similarity, direction_similarity

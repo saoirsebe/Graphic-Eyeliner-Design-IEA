@@ -3,7 +3,7 @@ from matplotlib import pyplot as plt
 
 def test_performance(monkeypatch, benchmark):
     import InitialiseGenePool
-    monkeypatch.setattr(InitialiseGenePool, "initial_gene_pool_size", 200)
+    monkeypatch.setattr(InitialiseGenePool, "initial_gene_pool_size", 100)
     # Benchmark the function
     stats = benchmark.pedantic(InitialiseGenePool.initialise_gene_pool, rounds=50, iterations=1)
 

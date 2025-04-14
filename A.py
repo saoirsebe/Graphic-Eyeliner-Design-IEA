@@ -4,9 +4,13 @@ import numpy as np
 from matplotlib import pyplot as plt
 from PIL import Image, ImageTk
 from numba import njit
+first_population_size = 50
+Second_population_size = 30
+max_crossover_attempts = 30
+max_mutation_attempts = 30
 
 diff_threshold = 20
-average_diff_threshold = 40
+average_diff_threshold = 50
 min_validity_score = -3
 min_segment_score = -2
 initial_gene_pool_size = 100

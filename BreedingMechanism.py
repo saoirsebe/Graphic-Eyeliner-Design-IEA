@@ -8,7 +8,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 
 from A import min_validity_score, SegmentType, StartMode, eye_corner_start, random_normal_within_range, diff_threshold, \
-    average_diff_threshold
+    average_diff_threshold, Second_population_size, first_population_size, max_crossover_attempts, max_mutation_attempts
 from AnalyseDesign import calculate_validity_score, calculate_aesthetic_fitness_score
 from CompareSegments import compare_segments, random_irregular_polygon
 from EyelinerDesign import EyelinerDesign
@@ -19,7 +19,7 @@ def crossover_designs(designs,try_n=0):
     """
        Performs a crossover between trees by swapping a subtree with each design it is breeding with.
     """
-    if try_n<40:
+    if try_n<max_crossover_attempts:
         offspring_choice = designs[0]
         if len(offspring_choice.get_all_nodes()) == 1:
             valid_designs = [d for d in designs if len(d.get_all_nodes()) > 1]
@@ -28,7 +28,7 @@ def crossover_designs(designs,try_n=0):
             else:
                 offspring_choice = None
     else:
-        print("aaaaaaaaa base not used")
+        #print("aaaaaaaaa base not used")
         return designs[0]
 
         valid_designs = [d for d in designs if len(d.get_all_nodes()) > 1]
@@ -156,7 +156,7 @@ def compare_design_images(design2, design1, image1=None):
         return genetic_difference * 20, genetic_difference * 20
 
 
-def generate_sufficiently_different_gene(old_gene, old_image, new_gene_pool, mutation_rate, max_attempts=50):
+def generate_sufficiently_different_gene(old_gene, old_image, new_gene_pool, mutation_rate):
     """
     Generates a mutated gene that is at least `diff_threshold` different from both the parent gene
     and all genes in new_gene_pool.
@@ -166,7 +166,7 @@ def generate_sufficiently_different_gene(old_gene, old_image, new_gene_pool, mut
     new_gene = old_gene.mutate_design_positive_check(mutation_rate)
 
 
-    while attempts < max_attempts:
+    while attempts < max_mutation_attempts:
         img_diff, gen_diff = compare_design_images(new_gene, old_gene, old_image)
         if img_diff < average_diff_threshold or gen_diff < diff_threshold:
             gene_attempts.append(new_gene)
@@ -288,24 +288,68 @@ def breed_new_designs(selected_genes, mutation_rate, old_selected_genes = None):
         fig1 = old_gene.render_design()
         old_image = figure_to_array(fig1)
         plt.close(fig1)
-        for i in range(20):
+        for i in range(Second_population_size):
             new_design = generate_sufficiently_different_gene(old_gene, old_image, new_gene_pool, mutation_rate)
 
             new_gene_pool.append(new_design)
+
+        new_gene_pool_scored = []
+        for gene in new_gene_pool:
+            aesthetic_score = calculate_aesthetic_fitness_score(gene)
+            new_gene_pool_scored.append((gene, aesthetic_score))
+
+        # Sort the mutations by aesthetic score and show top 6
+        new_gene_pool_scored.sort(key=lambda x: x[1], reverse=True)
+        gene_pool_to_show = [gene for gene, score in new_gene_pool_scored[:6]]
     else:
-        for i in range(20):
-            new_design = generate_sufficiently_different_positive_gene_multiple_parents(selected_genes, new_gene_pool, i, mutation_rate, old_selected_genes=old_selected_genes)
+        batch_size = Second_population_size // n_selected
+        batch_candidates = []
 
-            new_gene_pool.append(new_design)
+        for idx, parent in enumerate(selected_genes):
+            for _ in range(batch_size):
+                new_design = generate_sufficiently_different_positive_gene_multiple_parents(selected_genes, new_gene_pool, idx, mutation_rate, old_selected_genes=old_selected_genes)
 
-    new_gene_pool_scored=[]
-    for gene in new_gene_pool:
-        aesthetic_score = calculate_aesthetic_fitness_score(gene)
-        new_gene_pool_scored.append((gene, aesthetic_score))
+                batch_candidates.append((new_design, idx))
+                new_gene_pool.append(new_design)
 
-    # Sort the mutations by aesthetic score and show top 6
-    new_gene_pool_scored.sort(key=lambda x: x[1], reverse=True)
-    gene_pool_to_show = [gene for gene, score in new_gene_pool_scored[:6]]
+        new_gene_pool_scored = []
+        for gene, idx in batch_candidates:
+            aesthetic_score = calculate_aesthetic_fitness_score(gene)
+            new_gene_pool_scored.append((gene, idx, aesthetic_score))
+
+        # Sort the mutations by aesthetic score and show top 6
+        new_gene_pool_scored.sort(key=lambda x: x[2], reverse=True)
+
+        # Group candidates by parent's index, ensuring that each batch contributes its best candidate.
+        from collections import defaultdict
+
+        grouped = defaultdict(list)
+        for gene, idx, score in new_gene_pool_scored:
+            grouped[idx].append((gene, score))
+
+        mandatory_candidates = []
+        for idx in grouped:
+            # Select the best candidate from this parent's batch.
+            best_gene, best_score = max(grouped[idx], key=lambda x: x[1])
+            mandatory_candidates.append(best_gene)
+
+        # Ensure at least one candidate from each parent's batch appears in gene_pool_to_show.
+        # Then fill list (up to 6) with the overall top genes.
+        gene_pool_to_show = list(mandatory_candidates)  # start with the best from each batch
+        selected_set = set(gene_pool_to_show)
+
+        # Add additional candidates from the overall sorted list if we don't have 6 yet.
+        for gene, idx, score in new_gene_pool_scored:
+            if gene not in selected_set:
+                gene_pool_to_show.append(gene)
+                selected_set.add(gene)
+            if len(gene_pool_to_show) >= 6:
+                break
+
+        # Limit the list to 6.
+        gene_pool_to_show = gene_pool_to_show[:6]
+
+
 
     return gene_pool_to_show
 
@@ -321,7 +365,7 @@ def auto_selection_one_parent(selected_genes, parent, mutation_rate):
     plt.close(fig1)
     with multiprocessing.Pool() as pool:
         # Create a list of arguments for each call.
-        args = [(parent,old_image, [], mutation_rate) for _ in range(40)]
+        args = [(parent,old_image, [], mutation_rate) for _ in range(Second_population_size)]
         new_gene_pool = pool.starmap(generate_sufficiently_different_gene, args)
 
     # Score each gene: using analyse_positive for aesthetics,
@@ -336,7 +380,7 @@ def auto_selection_one_parent(selected_genes, parent, mutation_rate):
 
     # Initial threshold for checking pairwise diversity among new selected designs
     selected_threshold = average_diff_threshold / 1.5
-    max_iterations = 10  # safety limit to prevent an infinite loop
+    max_iterations = 10
     iteration = 0
     new_selected_genes = []
 
@@ -452,7 +496,7 @@ def breed_new_designs_with_auto_selection(selected_genes, mutation_rate, aesthet
         parent = selected_genes[0]
         new_to_breed = auto_selection_one_parent(selected_genes, parent, mutation_rate)
     else:
-        batch_size = 50 // n_selected
+        batch_size = first_population_size // n_selected
         new_to_breed = auto_selection_multiple_parents(selected_genes, batch_size, mutation_rate)
 
     for design in new_to_breed:
