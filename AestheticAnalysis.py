@@ -124,9 +124,9 @@ def curvature_similarity(curve1, curve2, smoothing=True, window_size=3):
     k2 = compute_curvature(curve2)
 
     # Optionally smooth the curvature profiles to reduce noise
-    if smoothing:
-        k1 = smooth_curve(k1, window_size)
-        k2 = smooth_curve(k2, window_size)
+    #if smoothing:
+    #    k1 = smooth_curve(k1, window_size)
+    #    k2 = smooth_curve(k2, window_size)
     #print("")
     #k1 = normalise_curvature(k1)
     #k2 = normalise_curvature(k2)

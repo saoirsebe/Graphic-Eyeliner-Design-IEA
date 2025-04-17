@@ -476,9 +476,9 @@ def random_eyeliner_lines_corners():
         """
     start_at_corner = random.choice([True, False])
     p2 = upper_eyelid_coords[random.randint(-upper_eyelid_coords_40, -upper_eyelid_coords_10)]
-    p2[1] = p2[1] + 0.15
+    p2[1] = p2[1] + 0.3
     p0 = np.array(eye_corner_start)
-    p0[0] = p0[0] + 0.15
+    p0[0] = p0[0] + 0.2
     wing_length = random_normal_within_range(30, 20, length_range)
 
     if start_at_corner:

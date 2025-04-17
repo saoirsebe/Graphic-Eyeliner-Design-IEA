@@ -163,20 +163,20 @@ def generate_sufficiently_different_gene(old_gene, old_image, new_gene_pool, mut
     """
     gene_attempts = []
     attempts = 0
-    new_gene = old_gene.mutate_design_positive_check(mutation_rate)
+    new_gene = old_gene.mutate_design(mutation_rate)
 
 
     while attempts < max_mutation_attempts:
         img_diff, gen_diff = compare_design_images(new_gene, old_gene, old_image)
         if img_diff < average_diff_threshold or gen_diff < diff_threshold:
             gene_attempts.append(new_gene)
-            new_gene = old_gene.mutate_design_positive_check(mutation_rate)
+            new_gene = old_gene.mutate_design(mutation_rate)
             attempts += 1
             continue
 
         differences = [avg_difference(new_gene, gene) for gene in new_gene_pool]
         if differences and any(avr_diff < average_diff_threshold for (avr_diff) in differences):
-            new_gene = old_gene.mutate_design_positive_check(mutation_rate)
+            new_gene = old_gene.mutate_design(mutation_rate)
             attempts += 1
             continue
 
@@ -195,13 +195,13 @@ def generate_sufficiently_different_gene(old_gene, old_image, new_gene_pool, mut
 
     if gene_attempts:
         best_gene = max(gene_attempts, key=overall_difference)
-        return best_gene.mutate_design_positive_check(mutation_rate)
+        return best_gene.mutate_design(mutation_rate)
 
     return new_gene
 
 
-def generate_sufficiently_different_positive_gene_multiple_parents(parents, new_gene_pool, i, mutation_rate,
-                                                                   max_attempts=20, old_selected_genes=None):
+def generate_sufficiently_different_gene_multiple_parents(parents, new_gene_pool, i, mutation_rate,
+                                                          max_attempts=20, old_selected_genes=None):
     """
     Generates a mutated gene that is at least `diff_threshold` different from all parent genes
     and all genes in new_gene_pool. It continues mutating until such a gene is found, or until
@@ -219,18 +219,20 @@ def generate_sufficiently_different_positive_gene_multiple_parents(parents, new_
     to_breed.extend(additional)
 
     new_design = produce_correct_crossover(to_breed)
-    new_mutated_design = new_design.mutate_design_positive_check(mutation_rate)
+    new_mutated_design = new_design.mutate_design(mutation_rate)
 
     # Determine which parent set to compare against and define the current difference threshold
     parents_to_compare = old_selected_genes if old_selected_genes else parents
     current_diff_threshold = average_diff_threshold if old_selected_genes else average_diff_threshold / 2
 
+    #print(parents)
+    #print(parents_to_compare)
     while attempts < max_attempts:
         # Check differences with each parent
         parent_diffs = [avg_difference(parent, new_mutated_design) for parent in parents_to_compare]
         if any(avr_diff < current_diff_threshold for avr_diff in parent_diffs):
             gene_attempts.append(new_mutated_design)
-            new_mutated_design = new_design.mutate_design_positive_check(mutation_rate)
+            new_mutated_design = new_design.mutate_design(mutation_rate)
             attempts += 1
             continue
 
@@ -238,7 +240,7 @@ def generate_sufficiently_different_positive_gene_multiple_parents(parents, new_
         pool_diffs = [avg_difference(gene, new_mutated_design) for gene in new_gene_pool]
         if pool_diffs and any(avr_diff < average_diff_threshold for avr_diff in pool_diffs):
             gene_attempts.append(new_mutated_design)
-            new_mutated_design = new_design.mutate_design_positive_check(mutation_rate)
+            new_mutated_design = new_design.mutate_design(mutation_rate)
             attempts += 1
             continue
 
@@ -255,7 +257,7 @@ def generate_sufficiently_different_positive_gene_multiple_parents(parents, new_
             return parent_sum + pool_sum
 
         best_candidate = max(gene_attempts, key=overall_difference)
-        return best_candidate.mutate_design_positive_check(mutation_rate)
+        return best_candidate.mutate_design(mutation_rate)
 
     # As a fallback, return the last mutation attempt.
     return new_mutated_design
@@ -307,7 +309,7 @@ def breed_new_designs(selected_genes, mutation_rate, old_selected_genes = None):
 
         for idx, parent in enumerate(selected_genes):
             for _ in range(batch_size):
-                new_design = generate_sufficiently_different_positive_gene_multiple_parents(selected_genes, new_gene_pool, idx, mutation_rate, old_selected_genes=old_selected_genes)
+                new_design = generate_sufficiently_different_gene_multiple_parents(selected_genes, new_gene_pool, idx, mutation_rate, old_selected_genes=old_selected_genes)
 
                 batch_candidates.append((new_design, idx))
                 new_gene_pool.append(new_design)
@@ -349,8 +351,6 @@ def breed_new_designs(selected_genes, mutation_rate, old_selected_genes = None):
         # Limit the list to 6.
         gene_pool_to_show = gene_pool_to_show[:6]
 
-
-
     return gene_pool_to_show
 
 
@@ -365,7 +365,7 @@ def auto_selection_one_parent(selected_genes, parent, mutation_rate):
     plt.close(fig1)
     with multiprocessing.Pool() as pool:
         # Create a list of arguments for each call.
-        args = [(parent,old_image, [], mutation_rate) for _ in range(Second_population_size)]
+        args = [(parent,old_image, [], mutation_rate) for _ in range(first_population_size)]
         new_gene_pool = pool.starmap(generate_sufficiently_different_gene, args)
 
     # Score each gene: using analyse_positive for aesthetics,
@@ -423,7 +423,7 @@ def auto_selection_multiple_parents(selected_genes, batch_size, mutation_rate):
     for idx, parent in enumerate(selected_genes):
         with multiprocessing.Pool() as pool:
             args = [(selected_genes, [], idx, mutation_rate) for _ in range(batch_size)]
-            batch_candidates = pool.starmap(generate_sufficiently_different_positive_gene_multiple_parents, args)
+            batch_candidates = pool.starmap(generate_sufficiently_different_gene_multiple_parents, args)
 
         # 2. Score each candidate based on aesthetics
         scored_candidates = [(gene, calculate_aesthetic_fitness_score(gene)) for gene in batch_candidates]

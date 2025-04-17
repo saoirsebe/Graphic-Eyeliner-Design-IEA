@@ -365,7 +365,7 @@ class DesignPage(ctk.CTkFrame):
         if self.selected_gene_indices:
             self.gene_pools_previous.append(self.current_gene_pool)
             selected_genes = [self.current_gene_pool[i] for i in self.selected_gene_indices]
-            self.current_gene_pool = breed_new_designs_with_auto_selection(selected_genes, self.mutation_rate)
+            self.current_gene_pool = breed_new_designs_with_auto_selection(selected_genes, self.mutation_rate) #breed_new_designs(selected_genes, self.mutation_rate)
             self.selected_gene_indices.clear()
             self.saved_genes_indices.clear()
             self.start_designing()

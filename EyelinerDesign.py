@@ -308,14 +308,14 @@ class EyelinerDesign:   #Creates overall design, calculates start points, render
         new_gene= old_gene.mutate_self(mutation_rate)
         new_gene.render_design(show=False)
         validity_score = calculate_validity_score(new_gene)
-        #new_positive_score = calculate_aesthetic_fitness_score(new_gene)
+        new_positive_score = calculate_aesthetic_fitness_score(new_gene)
         #print("validity_score", validity_score)
-        while validity_score < min_validity_score: #or new_positive_score < old_positive_score:
+        while validity_score < min_validity_score or new_positive_score < old_positive_score:
             old_gene = copy.deepcopy(self)
             new_gene = old_gene.mutate_self(mutation_rate)
             new_gene.render_design(show=False)
             validity_score = calculate_validity_score(new_gene)
-            #new_positive_score = calculate_aesthetic_fitness_score(new_gene)
+            new_positive_score = calculate_aesthetic_fitness_score(new_gene)
 
         return new_gene
 
@@ -331,6 +331,8 @@ class EyelinerDesign:   #Creates overall design, calculates start points, render
             new_gene = old_gene.mutate_self(mutation_rate, delete)
             new_gene.render_design(show=False)
             validity_score = calculate_validity_score(new_gene)
+
+        return new_gene
 
 
 

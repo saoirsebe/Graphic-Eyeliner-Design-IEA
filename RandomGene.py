@@ -5,7 +5,7 @@ from AnalyseDesign import check_design_overlaps, check_overlaps, calculate_valid
     calculate_aesthetic_fitness_score, \
     check_segment_overlaps, is_in_eye, is_outside_face_area, check_new_segments_validity_score
 from BreedingMechanism import compare_designs, generate_sufficiently_different_gene, compare_design_images, \
-    generate_sufficiently_different_positive_gene_multiple_parents
+    generate_sufficiently_different_gene_multiple_parents
 from EyelinerDesign import EyelinerDesign
 from Segments import create_segment, random_segment, set_prev_end_thickness_array, make_eyeliner_wing, \
     random_segment_colour
@@ -149,7 +149,7 @@ def random_gene(gene_n):
 
 """
 """
-"""
+
 def figure_to_array(fig):
 
     buf = BytesIO()
@@ -159,7 +159,7 @@ def figure_to_array(fig):
     image_array = np.array(im)
     buf.close()
     return image_array
-
+"""
 design =random_gene(80)
 fig = design.render_design()
 
@@ -188,7 +188,7 @@ design2 = generate_sufficiently_different_gene(design, old_image, [], 0.06,max_a
 fig2 = design2.render_design()
 fig2.show()
 
-design3 = generate_sufficiently_different_positive_gene_multiple_parents([design,design2],[],0,0.06)
+design3 = generate_sufficiently_different_gene_multiple_parents([design,design2],[],0,0.06)
 fig3 = design3.render_design()
 fig3.show()
 
@@ -215,6 +215,24 @@ negative_score = analyse_negative(design2)
 print("analyse_negative score:", negative_score)
 """
 
+design =random_gene(80)
+fig = design.render_design()
 
+positive_score = calculate_aesthetic_fitness_score(design)
 
+while positive_score <13:
+    plt.close(fig)
+    design = random_gene(80)
+    fig = design.render_design()
+    positive_score = calculate_aesthetic_fitness_score(design)
+
+fig.show()
+
+old_image = figure_to_array(fig)
+plt.close(fig)
+design2 = design.mutate_design_positive_check(0.1)
+#design2 = generate_sufficiently_different_gene(design, old_image, [], 0.06)
+#design2 = design.mutate_design_positive_check()
+fig2 = design2.render_design()
+fig2.show()
 
